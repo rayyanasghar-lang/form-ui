@@ -3,7 +3,7 @@ import PermitPlansetForm from "@/components/permit-planset-form"
 
 export default function FormsPage() {
   return (
-    <main className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-slate-400 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
