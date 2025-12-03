@@ -1,25 +1,20 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Stepper from "./stepper"
 import FormCard from "./form-card"
 import FormButtons from "./form-buttons"
-import FileUploader from "./file-uploader"
-import SystemComponentsTable, { Component } from "./system-components-table"
+import ProjectContactStep from "./permit-form/project-contact-step"
+import SystemSummaryStep from "./permit-form/system-summary-step"
+import UploadsStep from "./permit-form/uploads-step"
+import GeneralNotesStep from "./permit-form/general-notes-step"
 import SiteDetails from "./site-details"
 import ElectricalDetails from "./electrical-details"
 import UtilityDetails from "./utility-details"
 import OptionalExtras from "./optional-extras"
 import ProjectSummary from "./project-summary"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Textarea } from "@/components/ui/textarea"
-import { Separator } from "@/components/ui/separator"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Switch } from "@/components/ui/switch"
-import { Info } from "lucide-react"
+import { uploadToDriveAction } from "@/app/actions/upload-drive"
+import { submitProjectAction } from "@/app/actions/submit-project"
 
 const QUICK_STEPS = ["Project & Contact", "System Summary", "Uploads", "Notes"]
 const DETAILED_STEPS = [
@@ -39,12 +34,13 @@ const PERMIT_SERVICES = [
   { id: "fullPackage", label: "Full Project Package" },
 ]
 
+import { Component } from "./system-components-table"
+
 export default function PermitPlansetForm() {
   const [currentStep, setCurrentStep] = useState(0)
   const [submissionMode, setSubmissionMode] = useState<"quick" | "detailed">("quick")
   const [components, setComponents] = useState<Component[]>([])
-
-  const STEPS = submissionMode === "detailed" ? DETAILED_STEPS : QUICK_STEPS
+  const [filesToUpload, setFilesToUpload] = useState<File[]>([])
 
   const [formData, setFormData] = useState({
     // Company Profile (auto-filled simulation)
@@ -124,10 +120,46 @@ export default function PermitPlansetForm() {
     batterySldRequested: false,
     batterySldNotes: "",
   })
+
+  // Load draft from local storage on mount
+  useEffect(() => {
+    const savedDraft = localStorage.getItem("permit-planset-draft")
+    if (savedDraft) {
+      try {
+        const parsed = JSON.parse(savedDraft)
+        if (parsed.formData) setFormData(parsed.formData)
+        if (parsed.submissionMode) setSubmissionMode(parsed.submissionMode)
+        if (parsed.components) setComponents(parsed.components)
+        if (parsed.currentStep) setCurrentStep(parsed.currentStep)
+      } catch (e) {
+        console.error("Failed to load draft:", e)
+      }
+    }
+  }, [])
+
+  // Save draft to local storage on change
+  useEffect(() => {
+    const draft = {
+      formData,
+      submissionMode,
+      components,
+      currentStep,
+    }
+    localStorage.setItem("permit-planset-draft", JSON.stringify(draft))
+  }, [formData, submissionMode, components, currentStep])
+
+  const STEPS = submissionMode === "detailed" ? DETAILED_STEPS : QUICK_STEPS
+
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const updateField = (field: string, value: string | string[] | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+  const updateField = (field: string, value: string | string[] | boolean | File[]) => {
+    if (field === "projectFiles" && Array.isArray(value) && value.length > 0 && value[0] instanceof File) {
+      setFilesToUpload(value as File[])
+      setFormData((prev) => ({ ...prev, [field]: (value as File[]).map((f) => f.name) }))
+    } else {
+      setFormData((prev) => ({ ...prev, [field]: value as string | string[] | boolean }))
+    }
+
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }))
     }
@@ -189,13 +221,178 @@ export default function PermitPlansetForm() {
     return Object.keys(newErrors).length === 0
   }
 
+  const submitForm = async () => {
+    // Service name mapping (from IDs to names)
+    const SERVICE_NAME_MAP: Record<string, string> = {
+      planset: "Planset",
+      electrical: "Electrical Engineering",
+      rlc: "RLC Report",
+      technical: "Technical Review",
+      fullPackage: "Full Project Package",
+    }
+
+    // Map services to names instead of IDs
+    const serviceNames = formData.services.map((s) => SERVICE_NAME_MAP[s] || s).filter((name) => name !== "")
+
+    // Upload files to Google Drive
+    const uploadedFiles: { name: string; url: string }[] = []
+    const uploadErrors: string[] = []
+
+    if (filesToUpload.length > 0) {
+      console.log(`Starting upload of ${filesToUpload.length} file(s) to Google Drive...`)
+
+      try {
+        await Promise.all(
+          filesToUpload.map(async (file) => {
+            const uploadData = new FormData()
+            uploadData.append("file", file)
+            uploadData.append("projectName", formData.projectName || "Untitled Project")
+
+            console.log(`Uploading: ${file.name}`)
+            const result = await uploadToDriveAction(uploadData)
+
+            // Check if upload was successful
+            if (result.error) {
+              console.error(`❌ Failed to upload ${file.name}:`, result.error)
+              if (result.details) {
+                console.error(`   Details:`, result.details)
+              }
+              uploadErrors.push(`${file.name}: ${result.error}`)
+            } else if (result.webViewLink) {
+              console.log(`✓ Successfully uploaded ${file.name}`)
+              uploadedFiles.push({ name: file.name, url: result.webViewLink })
+            } else {
+              console.error(`❌ Unexpected response for ${file.name}:`, result)
+              uploadErrors.push(`${file.name}: Unexpected response from server`)
+            }
+          }),
+        )
+
+        // Report results
+        if (uploadErrors.length > 0) {
+          console.error(`\n❌ Upload Summary: ${uploadErrors.length} file(s) failed, ${uploadedFiles.length} succeeded`)
+          const errorMessage = `Failed to upload ${uploadErrors.length} file(s) to Google Drive:\n\n${uploadErrors.join('\n')}\n\nPlease check the browser console and terminal for details.`
+          alert(errorMessage)
+
+          // Don't proceed if all uploads failed
+          if (uploadedFiles.length === 0) {
+            return
+          }
+        } else {
+          console.log(`✓ Upload Summary: All ${uploadedFiles.length} file(s) uploaded successfully!`)
+        }
+      } catch (error) {
+        console.error("❌ Unexpected error during file upload:", error)
+        alert("An unexpected error occurred while uploading files to Google Drive. Check console for details.")
+        return
+      }
+    }
+
+    // Construct payload to match API expectations
+    const payload = {
+      user_profile: {
+        company_name: formData.companyName,
+        contact_name: formData.contactName,
+        email: formData.email,
+        phone: formData.phone,
+      },
+      project: {
+        name: formData.projectName,
+        address: formData.projectAddress,
+        type: formData.projectType,
+        submission_type_name: submissionMode, // Changed from submission_type_id to submission_type_name
+        general_notes: formData.generalNotes,
+      },
+      services: serviceNames, // Changed from serviceIds to serviceNames array
+      system_summary: {
+        system_size: parseFloat(formData.systemSize) || 0,
+        system_type: formData.systemType,
+        pv_modules: parseInt(formData.pvModules) || 0,
+        inverters: parseInt(formData.inverters) || 0,
+      },
+      battery_info: formData.batteryBackup
+        ? {
+          qty: parseInt(formData.batteryQty) || 0,
+          model: formData.batteryModel,
+          image: formData.batteryImage,
+        }
+        : {
+          qty: 0,
+          model: "",
+          image: [],
+        },
+      site_details: {
+        roof_material: formData.roofMaterial || "",
+        roof_pitch: formData.roofPitch || "",
+        number_of_arrays: parseInt(formData.numberOfArrays) || 0,
+        utility_provider: formData.utilityProvider || "",
+        jurisdiction: formData.jurisdiction || "",
+      },
+      electrical_details: {
+        main_panel_size: formData.mainPanelSize || "",
+        bus_rating: formData.busRating || "",
+        main_breaker: formData.mainBreaker || "",
+        pv_breaker_location: formData.pvBreakerLocation || "",
+        one_line_diagram: formData.oneLineDiagram || [],
+      },
+      advanced_electrical_details: {
+        meter_location: formData.meterLocation || "",
+        service_entrance_type: formData.serviceEntranceType || "",
+        subpanel_details: formData.subpanelDetails || "",
+      },
+      optional_extra_details: {
+        miracle_watt_required: formData.miracleWattRequired || false,
+        der_rlc_required: formData.derRlcRequired || false,
+        der_rlc_notes: formData.derRlcNotes || "",
+        setback_constraints: formData.setbackConstraints || false,
+        site_access_restrictions: formData.siteAccessRestrictions || false,
+        inspection_notes: formData.inspectionNotes || false,
+        inspection_notes_text: formData.inspectionNotesText || "",
+        battery_sld_requested: formData.batterySldRequested || false,
+      },
+      system_components: components.map((c) => ({
+        type: c.type,
+        make_model: c.makeModel,
+        qty: parseInt(c.qty) || 0,
+        attachment: c.attachment,
+        notes: c.notes,
+      })),
+      uploads: formData.projectFiles.map((f) => {
+        const uploaded = uploadedFiles.find((u) => u.name === f)
+        return {
+          url: uploaded?.url || "",
+          name: f,
+          category: "Plan",
+          mime_type: "application/pdf", // Default to PDF, could be improved
+          size: 0,
+        }
+      }),
+    }
+
+    try {
+      const result = await submitProjectAction(payload)
+
+      if (result.success) {
+        console.log("Form submitted successfully:", result.data)
+        localStorage.removeItem("permit-planset-draft")
+        alert("Project created successfully!")
+        // Reset form or redirect
+      } else {
+        console.error("Submission failed:", result)
+        alert(`Failed to submit project: ${JSON.stringify(result.error)} (Status: ${result.status})`)
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error)
+      alert("Error submitting form. Check console for details.")
+    }
+  }
+
   const handleNext = () => {
     if (validateStep(currentStep)) {
       if (currentStep < STEPS.length - 1) {
         setCurrentStep(currentStep + 1)
       } else {
-        console.log("Form submitted:", formData)
-        // Handle form submission
+        submitForm()
       }
     }
   }
@@ -212,284 +409,28 @@ export default function PermitPlansetForm() {
 
       {/* STEP 1 — Project & Contact */}
       {currentStep === 0 && (
-        <FormCard title="Project & Contact Information">
-          <div className="space-y-6">
-            {/* Company Profile */}
-            <div>
-              <h3 className="text-sm font-medium mb-4">Company Profile</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="companyName">Company Name</Label>
-                  <Input
-                    id="companyName"
-                    value={formData.companyName}
-                    onChange={(e) => updateField("companyName", e.target.value)}
-                    className="bg-muted/50"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="contactName">Contact Name</Label>
-                  <Input
-                    id="contactName"
-                    value={formData.contactName}
-                    onChange={(e) => updateField("contactName", e.target.value)}
-                    className="bg-muted/50"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => updateField("email", e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => updateField("phone", e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Project Information */}
-            <div>
-              <h3 className="text-sm font-medium mb-4">Project Information</h3>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="projectName">Project Name *</Label>
-                  <Input
-                    id="projectName"
-                    placeholder="Enter project name"
-                    value={formData.projectName}
-                    onChange={(e) => updateField("projectName", e.target.value)}
-                  />
-                  {errors.projectName && <p className="text-sm text-destructive">{errors.projectName}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="projectAddress">Project Address *</Label>
-                  <Input
-                    id="projectAddress"
-                    placeholder="Start typing address... (Google Places autocomplete)"
-                    value={formData.projectAddress}
-                    onChange={(e) => updateField("projectAddress", e.target.value)}
-                  />
-                  <p className="text-xs text-muted-foreground">📍 Map pin will appear here</p>
-                  {errors.projectAddress && <p className="text-sm text-destructive">{errors.projectAddress}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="projectType">Project Type *</Label>
-                  <Select value={formData.projectType} onValueChange={(v) => updateField("projectType", v)}>
-                    <SelectTrigger id="projectType">
-                      <SelectValue placeholder="Select project type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="residential">Residential</SelectItem>
-                      <SelectItem value="commercial">Commercial</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.projectType && <p className="text-sm text-destructive">{errors.projectType}</p>}
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Permit Services Requested */}
-            <div>
-              <h3 className="text-sm font-medium mb-4">Permit Services Requested *</h3>
-              <div className="space-y-3">
-                {PERMIT_SERVICES.map((service) => (
-                  <div key={service.id} className="flex items-center space-x-3">
-                    <Checkbox
-                      id={service.id}
-                      checked={formData.services.includes(service.id)}
-                      onCheckedChange={() => toggleService(service.id)}
-                    />
-                    <Label htmlFor={service.id} className="font-normal cursor-pointer">
-                      {service.label}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-              {errors.services && <p className="text-sm text-destructive mt-2">{errors.services}</p>}
-            </div>
-
-            <Separator />
-
-            {/* Submission Type */}
-            <div>
-              <h3 className="text-sm font-medium mb-4">Submission Type</h3>
-              <Tabs value={submissionMode} onValueChange={(v) => setSubmissionMode(v as "quick" | "detailed")} className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="quick">⚡ Quick Upload (Recommended)</TabsTrigger>
-                  <TabsTrigger value="detailed">📘 Provide Full Details</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="quick" className="mt-4">
-                  <p className="text-sm text-muted-foreground">
-                    Upload your files and we'll handle the rest. Perfect for most projects.
-                  </p>
-                </TabsContent>
-
-                <TabsContent value="detailed" className="mt-4">
-                  <p className="text-sm text-muted-foreground">
-                    Provide comprehensive project details for complex installations.
-                  </p>
-                </TabsContent>
-              </Tabs>
-            </div>
-          </div>
-        </FormCard>
+        <ProjectContactStep
+          formData={formData}
+          updateField={updateField}
+          errors={errors}
+          submissionMode={submissionMode}
+          setSubmissionMode={setSubmissionMode}
+          toggleService={toggleService}
+        />
       )}
 
       {/* STEP 2 — System Summary */}
       {currentStep === 1 && (
-        <>
-          <FormCard title="System Summary">
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="systemSize">System Size (kW DC) *</Label>
-                  <Input
-                    id="systemSize"
-                    type="number"
-                    step="0.01"
-                    placeholder="e.g., 10.5"
-                    value={formData.systemSize}
-                    onChange={(e) => updateField("systemSize", e.target.value)}
-                  />
-                  {errors.systemSize && <p className="text-sm text-destructive">{errors.systemSize}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="systemType">System Type *</Label>
-                  <Select value={formData.systemType} onValueChange={(v) => updateField("systemType", v)}>
-                    <SelectTrigger id="systemType">
-                      <SelectValue placeholder="Select system type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="roofmount">Roof Mount</SelectItem>
-                      <SelectItem value="groundmount">Ground Mount</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.systemType && <p className="text-sm text-destructive">{errors.systemType}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="pvModules">Number of PV Modules (optional)</Label>
-                  <Input
-                    id="pvModules"
-                    type="number"
-                    placeholder="e.g., 24"
-                    value={formData.pvModules}
-                    onChange={(e) => updateField("pvModules", e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="inverters">Number of Inverters (optional)</Label>
-                  <Input
-                    id="inverters"
-                    type="number"
-                    placeholder="e.g., 1"
-                    value={formData.inverters}
-                    onChange={(e) => updateField("inverters", e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Battery Backup */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="batteryBackup" className="text-base">Battery Backup?</Label>
-                    <p className="text-sm text-muted-foreground">Enable if project includes battery storage</p>
-                  </div>
-                  <Switch
-                    id="batteryBackup"
-                    checked={formData.batteryBackup}
-                    onCheckedChange={(checked) => updateField("batteryBackup", checked)}
-                  />
-                </div>
-
-                {formData.batteryBackup && (
-                  <div className="space-y-4 pl-4 border-l-2 border-primary/20">
-                    <div className="flex items-start gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                      <Info className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm text-green-700 dark:text-green-400">
-                        Battery engineering add-on ($100) required.
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="batteryQty">Battery Quantity</Label>
-                        <Input
-                          id="batteryQty"
-                          type="number"
-                          placeholder="e.g., 2"
-                          value={formData.batteryQty}
-                          onChange={(e) => updateField("batteryQty", e.target.value)}
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="batteryModel">Battery Make/Model (optional)</Label>
-                        <Input
-                          id="batteryModel"
-                          placeholder="e.g., Tesla Powerwall 2"
-                          value={formData.batteryModel}
-                          onChange={(e) => updateField("batteryModel", e.target.value)}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Battery Closeup Image (optional)</Label>
-                      <FileUploader
-                        label=""
-                        description="Upload battery image"
-                        onFilesSelected={(files) =>
-                          updateField(
-                            "batteryImage",
-                            files.map((f) => f.name),
-                          )
-                        }
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </FormCard>
-
-          {submissionMode === "detailed" && (
-            <FormCard title="System Components">
-              <SystemComponentsTable
-                components={components}
-                onAddComponent={addComponent}
-                onUpdateComponent={updateComponent}
-                onRemoveComponent={removeComponent}
-              />
-            </FormCard>
-          )}
-        </>
+        <SystemSummaryStep
+          formData={formData}
+          updateField={updateField}
+          errors={errors}
+          submissionMode={submissionMode}
+          components={components}
+          addComponent={addComponent}
+          updateComponent={updateComponent}
+          removeComponent={removeComponent}
+        />
       )}
 
       {/* DETAILED STEP 2 — Site & Electrical Details */}
@@ -544,72 +485,12 @@ export default function PermitPlansetForm() {
       {/* STEP 3 — Required Uploads */}
       {/* UPLOADS STEP (Index 2 for Quick, Index 4 for Detailed) */}
       {((submissionMode === "quick" && currentStep === 2) || (submissionMode === "detailed" && currentStep === 4)) && (
-        <FormCard title="Required Uploads">
-          <div className="space-y-6">
-            {/* Upload Checklist */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium">Upload Checklist</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-start gap-2">
-                  <span className="text-muted-foreground mt-0.5">1.</span>
-                  <span>Proposed Layout</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-muted-foreground mt-0.5">2.</span>
-                  <span>Electric Utility Bill</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-muted-foreground mt-0.5">3.</span>
-                  <span>Roof Pictures</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-muted-foreground mt-0.5">4.</span>
-                  <span>Attic Pictures</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-muted-foreground mt-0.5">5.</span>
-                  <span>Electric Pictures</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-muted-foreground mt-0.5">6.</span>
-                  <span>Property Sketch <span className="text-muted-foreground">(mentioning location of MSP, meter, roof vent, chimney)</span></span>
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            <FileUploader
-              label="Upload all project files here"
-              description="We automatically categorize your files. Accepted: images, PDFs, ZIPs, CSV, DOCX, etc."
-              onFilesSelected={(files) =>
-                updateField(
-                  "projectFiles",
-                  files.map((f) => f.name),
-                )
-              }
-            />
-            <p className="text-xs text-muted-foreground">
-              💡 Tip: You can drag and drop multiple files at once
-            </p>
-          </div>
-        </FormCard>
+        <UploadsStep formData={formData} updateField={updateField} />
       )}
 
       {/* NOTES STEP (Index 3 for Quick, Index 5 for Detailed) */}
       {((submissionMode === "quick" && currentStep === 3) || (submissionMode === "detailed" && currentStep === 5)) && (
-        <FormCard title="General Notes">
-          <div className="space-y-2">
-            <Label htmlFor="generalNotes">Anything we should know?</Label>
-            <Textarea
-              id="generalNotes"
-              placeholder="Site access, special requirements, HOA concerns, microinverters required, setback requirements, equipment preferences, etc."
-              className="resize-none min-h-[120px]"
-              value={formData.generalNotes}
-              onChange={(e) => updateField("generalNotes", e.target.value)}
-            />
-          </div>
-        </FormCard>
+        <GeneralNotesStep formData={formData} updateField={updateField} />
       )}
 
       <FormButtons
