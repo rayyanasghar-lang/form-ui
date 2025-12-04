@@ -8,21 +8,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-const PERMIT_SERVICES = [
-    { id: "planset", label: "Planset" },
-    { id: "electrical", label: "Electrical Engineering" },
-    { id: "rlc", label: "RLC Report" },
-    { id: "technical", label: "Technical Review" },
-    { id: "fullPackage", label: "Full Project Package" },
-]
+import { Service } from "@/app/actions/fetch-services"
 
 interface ProjectContactStepProps {
     formData: any
     updateField: (field: string, value: any) => void
     errors: Record<string, string>
-    submissionMode: "quick" | "detailed"
-    setSubmissionMode: (mode: "quick" | "detailed") => void
-    toggleService: (serviceId: string) => void
+    submissionMode: "quick" | "provide details"
+    setSubmissionMode: (mode: "quick" | "provide details") => void
+    toggleService: (serviceName: string) => void
+    availableServices: Service[]
+    servicesLoading: boolean
 }
 
 export default function ProjectContactStep({
@@ -32,6 +28,8 @@ export default function ProjectContactStep({
     submissionMode,
     setSubmissionMode,
     toggleService,
+    availableServices,
+    servicesLoading,
 }: ProjectContactStepProps) {
     return (
         <FormCard title="Project & Contact Information">
@@ -132,20 +130,24 @@ export default function ProjectContactStep({
                 {/* Permit Services Requested */}
                 <div>
                     <h3 className="text-sm font-medium mb-4">Permit Services Requested *</h3>
-                    <div className="space-y-3">
-                        {PERMIT_SERVICES.map((service) => (
-                            <div key={service.id} className="flex items-center space-x-3">
-                                <Checkbox
-                                    id={service.id}
-                                    checked={formData.services.includes(service.id)}
-                                    onCheckedChange={() => toggleService(service.id)}
-                                />
-                                <Label htmlFor={service.id} className="font-normal cursor-pointer">
-                                    {service.label}
-                                </Label>
-                            </div>
-                        ))}
-                    </div>
+                    {servicesLoading ? (
+                        <p className="text-sm text-muted-foreground">Loading services...</p>
+                    ) : (
+                        <div className="space-y-3">
+                            {availableServices.map((service) => (
+                                <div key={service.id} className="flex items-center space-x-3">
+                                    <Checkbox
+                                        id={service.id}
+                                        checked={formData.services.includes(service.name)}
+                                        onCheckedChange={() => toggleService(service.name)}
+                                    />
+                                    <Label htmlFor={service.id} className="font-normal cursor-pointer">
+                                        {service.name}
+                                    </Label>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                     {errors.services && <p className="text-sm text-destructive mt-2">{errors.services}</p>}
                 </div>
 
@@ -154,10 +156,10 @@ export default function ProjectContactStep({
                 {/* Submission Type */}
                 <div>
                     <h3 className="text-sm font-medium mb-4">Submission Type</h3>
-                    <Tabs value={submissionMode} onValueChange={(v) => setSubmissionMode(v as "quick" | "detailed")} className="w-full">
+                    <Tabs value={submissionMode} onValueChange={(v) => setSubmissionMode(v as "quick" | "provide details")} className="w-full">
                         <TabsList className="grid w-full grid-cols-2">
                             <TabsTrigger value="quick">⚡ Quick Upload (Recommended)</TabsTrigger>
-                            <TabsTrigger value="detailed">📘 Provide Full Details</TabsTrigger>
+                            <TabsTrigger value="provide details">📘 Provide Full Details</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="quick" className="mt-4">

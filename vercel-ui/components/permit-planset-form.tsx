@@ -13,8 +13,9 @@ import ElectricalDetails from "./electrical-details"
 import UtilityDetails from "./utility-details"
 import OptionalExtras from "./optional-extras"
 import ProjectSummary from "./project-summary"
-import { uploadToDriveAction } from "@/app/actions/upload-drive"
+import { uploadWithRcloneAction } from "@/app/actions/upload-rclone"
 import { submitProjectAction } from "@/app/actions/submit-project"
+import { fetchServicesAction, Service } from "@/app/actions/fetch-services"
 
 const QUICK_STEPS = ["Project & Contact", "System Summary", "Uploads", "Notes"]
 const DETAILED_STEPS = [
@@ -25,22 +26,15 @@ const DETAILED_STEPS = [
   "Uploads",
   "Notes",
 ]
-
-const PERMIT_SERVICES = [
-  { id: "planset", label: "Planset" },
-  { id: "electrical", label: "Electrical Engineering" },
-  { id: "rlc", label: "RLC Report" },
-  { id: "technical", label: "Technical Review" },
-  { id: "fullPackage", label: "Full Project Package" },
-]
-
 import { Component } from "./system-components-table"
 
 export default function PermitPlansetForm() {
   const [currentStep, setCurrentStep] = useState(0)
-  const [submissionMode, setSubmissionMode] = useState<"quick" | "detailed">("quick")
+  const [submissionMode, setSubmissionMode] = useState<"quick" | "provide details">("quick")
   const [components, setComponents] = useState<Component[]>([])
   const [filesToUpload, setFilesToUpload] = useState<File[]>([])
+  const [availableServices, setAvailableServices] = useState<Service[]>([])
+  const [servicesLoading, setServicesLoading] = useState(true)
 
   const [formData, setFormData] = useState({
     // Company Profile (auto-filled simulation)
@@ -121,6 +115,24 @@ export default function PermitPlansetForm() {
     batterySldNotes: "",
   })
 
+  // Fetch services from API on mount
+  useEffect(() => {
+    const loadServices = async () => {
+      setServicesLoading(true)
+      const result = await fetchServicesAction()
+      
+      if ("error" in result) {
+        console.error("Failed to fetch services:", result.error)
+        // Optionally show error to user
+      } else if (result.data) {
+        setAvailableServices(result.data)
+      }
+      setServicesLoading(false)
+    }
+    
+    loadServices()
+  }, [])
+
   // Load draft from local storage on mount
   useEffect(() => {
     const savedDraft = localStorage.getItem("permit-planset-draft")
@@ -148,7 +160,7 @@ export default function PermitPlansetForm() {
     localStorage.setItem("permit-planset-draft", JSON.stringify(draft))
   }, [formData, submissionMode, components, currentStep])
 
-  const STEPS = submissionMode === "detailed" ? DETAILED_STEPS : QUICK_STEPS
+  const STEPS = submissionMode === "provide details" ? DETAILED_STEPS : QUICK_STEPS
 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -165,16 +177,15 @@ export default function PermitPlansetForm() {
     }
   }
 
-
-  const toggleService = (serviceId: string) => {
+  const toggleService = (serviceName: string) => {
     const current = formData.services
-    if (current.includes(serviceId)) {
+    if (current.includes(serviceName)) {
       updateField(
         "services",
-        current.filter((id) => id !== serviceId),
+        current.filter((name) => name !== serviceName),
       )
     } else {
-      updateField("services", [...current, serviceId])
+      updateField("services", [...current, serviceName])
     }
   }
 
@@ -222,17 +233,8 @@ export default function PermitPlansetForm() {
   }
 
   const submitForm = async () => {
-    // Service name mapping (from IDs to names)
-    const SERVICE_NAME_MAP: Record<string, string> = {
-      planset: "Planset",
-      electrical: "Electrical Engineering",
-      rlc: "RLC Report",
-      technical: "Technical Review",
-      fullPackage: "Full Project Package",
-    }
-
-    // Map services to names instead of IDs
-    const serviceNames = formData.services.map((s) => SERVICE_NAME_MAP[s] || s).filter((name) => name !== "")
+    // Services are already stored as names from the API, so just use them directly
+    const serviceNames = formData.services
 
     // Upload files to Google Drive
     const uploadedFiles: { name: string; url: string }[] = []
@@ -249,7 +251,7 @@ export default function PermitPlansetForm() {
             uploadData.append("projectName", formData.projectName || "Untitled Project")
 
             console.log(`Uploading: ${file.name}`)
-            const result = await uploadToDriveAction(uploadData)
+            const result = await uploadWithRcloneAction(uploadData)
 
             // Check if upload was successful
             if (result.error) {
@@ -416,6 +418,8 @@ export default function PermitPlansetForm() {
           submissionMode={submissionMode}
           setSubmissionMode={setSubmissionMode}
           toggleService={toggleService}
+          availableServices={availableServices}
+          servicesLoading={servicesLoading}
         />
       )}
 
@@ -434,7 +438,7 @@ export default function PermitPlansetForm() {
       )}
 
       {/* DETAILED STEP 2 — Site & Electrical Details */}
-      {currentStep === 2 && submissionMode === "detailed" && (
+      {currentStep === 2 && submissionMode === "provide details" && (
         <>
           <FormCard title="Site Details">
             <SiteDetails
@@ -456,7 +460,7 @@ export default function PermitPlansetForm() {
       )}
 
       {/* DETAILED STEP 3 — Jurisdiction & Extras */}
-      {currentStep === 3 && submissionMode === "detailed" && (
+      {currentStep === 3 && submissionMode === "provide details" && (
         <>
           <FormCard title="Utility & Jurisdiction">
             <UtilityDetails
@@ -484,12 +488,12 @@ export default function PermitPlansetForm() {
 
       {/* STEP 3 — Required Uploads */}
       {/* UPLOADS STEP (Index 2 for Quick, Index 4 for Detailed) */}
-      {((submissionMode === "quick" && currentStep === 2) || (submissionMode === "detailed" && currentStep === 4)) && (
+      {((submissionMode === "quick" && currentStep === 2) || (submissionMode === "provide details" && currentStep === 4)) && (
         <UploadsStep formData={formData} updateField={updateField} />
       )}
 
       {/* NOTES STEP (Index 3 for Quick, Index 5 for Detailed) */}
-      {((submissionMode === "quick" && currentStep === 3) || (submissionMode === "detailed" && currentStep === 5)) && (
+      {((submissionMode === "quick" && currentStep === 3) || (submissionMode === "provide details" && currentStep === 5)) && (
         <GeneralNotesStep formData={formData} updateField={updateField} />
       )}
 

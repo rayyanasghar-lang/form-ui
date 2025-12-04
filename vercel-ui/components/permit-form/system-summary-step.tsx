@@ -14,7 +14,7 @@ interface SystemSummaryStepProps {
     formData: any
     updateField: (field: string, value: any) => void
     errors: Record<string, string>
-    submissionMode: "quick" | "detailed"
+    submissionMode: "quick" | "provide details"
     components: Component[]
     addComponent: () => void
     updateComponent: (id: string, field: keyof Component, value: any) => void
@@ -135,26 +135,14 @@ export default function SystemSummaryStep({
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <Label>Battery Closeup Image (optional)</Label>
-                                    <FileUploader
-                                        label=""
-                                        description="Upload battery image"
-                                        onFilesSelected={(files) =>
-                                            updateField(
-                                                "batteryImage",
-                                                files.map((f) => f.name),
-                                            )
-                                        }
-                                    />
-                                </div>
+
                             </div>
                         )}
                     </div>
                 </div>
             </FormCard>
 
-            {submissionMode === "detailed" && (
+            {submissionMode === "provide details" && (
                 <FormCard title="System Components">
                     <SystemComponentsTable
                         components={components}

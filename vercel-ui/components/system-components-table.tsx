@@ -5,7 +5,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Plus, Trash2 } from "lucide-react"
+import { Plus, Trash2, Upload, Loader2, Eye } from "lucide-react"
+import { useState } from "react"
+import { uploadWithRcloneAction } from "@/app/actions/upload-rclone"
 
 const COMPONENT_TYPES = [
     "Module",
@@ -97,9 +99,11 @@ export default function SystemComponentsTable({
                                         />
                                     </TableCell>
                                     <TableCell>
-                                        <Button variant="outline" size="sm" className="h-9 w-full">
-                                            Upload
-                                        </Button>
+                                        <ComponentUploader 
+                                            componentId={component.id}
+                                            currentAttachment={component.attachment?.[0]}
+                                            onUploadComplete={(url) => onUpdateComponent(component.id, "attachment", [url])}
+                                        />
                                     </TableCell>
                                     <TableCell>
                                         <Input
@@ -132,6 +136,95 @@ export default function SystemComponentsTable({
                     Add Component
                 </Button>
             </div>
+        </div>
+    )
+}
+
+function ComponentUploader({ 
+    componentId, 
+    currentAttachment, 
+    onUploadComplete 
+}: { 
+    componentId: string
+    currentAttachment?: string
+    onUploadComplete: (url: string) => void 
+}) {
+    const [uploading, setUploading] = useState(false)
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setUploading(true)
+        const formData = new FormData()
+        formData.append("file", file)
+        formData.append("projectName", "System Components")
+
+        try {
+            const result = await uploadWithRcloneAction(formData)
+            if (result.success && result.webViewLink) {
+                onUploadComplete(result.webViewLink)
+            } else {
+                console.error("Upload failed:", result.error)
+                alert("Upload failed: " + result.error)
+            }
+        } catch (error) {
+            console.error("Upload error:", error)
+            alert("Upload error occurred")
+        } finally {
+            setUploading(false)
+        }
+    }
+
+    if (currentAttachment) {
+        return (
+            <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" className="h-9 w-full gap-2" asChild>
+                    <a href={currentAttachment} target="_blank" rel="noopener noreferrer">
+                        <Eye className="h-4 w-4" />
+                        View
+                    </a>
+                </Button>
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-9 w-9"
+                    onClick={() => onUploadComplete("")} // Clear attachment
+                >
+                    <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                </Button>
+            </div>
+        )
+    }
+
+    return (
+        <div className="relative">
+            <input
+                type="file"
+                id={`upload-${componentId}`}
+                className="hidden"
+                onChange={handleFileChange}
+                disabled={uploading}
+            />
+            <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-9 w-full gap-2"
+                disabled={uploading}
+                onClick={() => document.getElementById(`upload-${componentId}`)?.click()}
+            >
+                {uploading ? (
+                    <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Uploading...
+                    </>
+                ) : (
+                    <>
+                        <Upload className="h-4 w-4" />
+                        Upload
+                    </>
+                )}
+            </Button>
         </div>
     )
 }

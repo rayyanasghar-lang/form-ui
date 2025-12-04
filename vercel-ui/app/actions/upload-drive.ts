@@ -90,15 +90,50 @@ export async function uploadToDriveAction(formData: FormData) {
         const fileRes = await drive.files.create({
             requestBody: fileMetadata,
             media: media,
-            fields: "id, webViewLink",
+            fields: "id, webViewLink, webContentLink, name, mimeType, parents",
         })
 
-        console.log(`✓ File uploaded successfully! File ID: ${fileRes.data.id}`)
-        console.log(`✓ View link: ${fileRes.data.webViewLink}`)
+        console.log(`✓ File uploaded successfully!`)
+        console.log(`  - File ID: ${fileRes.data.id}`)
+        console.log(`  - File Name: ${fileRes.data.name}`)
+        console.log(`  - MIME Type: ${fileRes.data.mimeType}`)
+        console.log(`  - Parent Folder: ${fileRes.data.parents?.[0]}`)
+        console.log(`  - Web View Link: ${fileRes.data.webViewLink}`)
+        console.log(`  - Web Content Link: ${fileRes.data.webContentLink}`)
+
+        // Verify the file exists by listing it
+        try {
+            const verifyRes = await drive.files.get({
+                fileId: fileRes.data.id!,
+                fields: "id, name, size, createdTime",
+            })
+            console.log(`✓ File verified in Drive:`)
+            console.log(`  - Size: ${verifyRes.data.size} bytes`)
+            console.log(`  - Created: ${verifyRes.data.createdTime}`)
+        } catch (verifyError) {
+            console.warn(`⚠️ Could not verify file (but upload may have succeeded):`, verifyError)
+        }
+
+        // List files in the folder to confirm it's there
+        try {
+            const listRes = await drive.files.list({
+                q: `'${folderId}' in parents and trashed=false`,
+                fields: "files(id, name, size)",
+                pageSize: 10,
+            })
+            console.log(`📁 Files in folder (showing up to 10):`)
+            listRes.data.files?.forEach((f) => {
+                console.log(`  - ${f.name} (${f.size} bytes, ID: ${f.id})`)
+            })
+        } catch (listError) {
+            console.warn(`⚠️ Could not list folder contents:`, listError)
+        }
 
         return {
             fileId: fileRes.data.id,
             webViewLink: fileRes.data.webViewLink,
+            webContentLink: fileRes.data.webContentLink,
+            fileName: fileRes.data.name,
         }
     } catch (error: any) {
         console.error("❌ Google Drive upload error:", error)
