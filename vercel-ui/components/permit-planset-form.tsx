@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import Stepper from "./stepper"
 import FormCard from "./form-card"
 import FormButtons from "./form-buttons"
@@ -35,6 +35,10 @@ export default function PermitPlansetForm() {
   const [filesToUpload, setFilesToUpload] = useState<File[]>([])
   const [availableServices, setAvailableServices] = useState<Service[]>([])
   const [servicesLoading, setServicesLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<"saving" | "saved" | "idle">("idle")
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const [formData, setFormData] = useState({
     // Company Profile (auto-filled simulation)
@@ -149,16 +153,41 @@ export default function PermitPlansetForm() {
     }
   }, [])
 
-  // Save draft to local storage on change
-  useEffect(() => {
+  // Debounced auto-save to local storage
+  const saveDraft = useCallback(() => {
     const draft = {
       formData,
       submissionMode,
       components,
       currentStep,
+      savedAt: new Date().toISOString(),
     }
     localStorage.setItem("permit-planset-draft", JSON.stringify(draft))
+    setLastSaved(new Date())
+    setSaveStatus("saved")
   }, [formData, submissionMode, components, currentStep])
+
+  // Save draft to local storage on change with debounce
+  useEffect(() => {
+    // Clear any pending save
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    // Show saving indicator
+    setSaveStatus("saving")
+
+    // Debounce the save by 500ms
+    saveTimeoutRef.current = setTimeout(() => {
+      saveDraft()
+    }, 500)
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
+  }, [formData, submissionMode, components, currentStep, saveDraft])
 
   const STEPS = submissionMode === "provide details" ? DETAILED_STEPS : QUICK_STEPS
 
@@ -233,6 +262,9 @@ export default function PermitPlansetForm() {
   }
 
   const submitForm = async () => {
+    setIsSubmitting(true)
+    console.log("[Frontend] submitForm called. Files to upload:", filesToUpload.length)
+
     // Services are already stored as names from the API, so just use them directly
     const serviceNames = formData.services
 
@@ -250,8 +282,9 @@ export default function PermitPlansetForm() {
             uploadData.append("file", file)
             uploadData.append("projectName", formData.projectName || "Untitled Project")
 
-            console.log(`Uploading: ${file.name}`)
+            console.log(`[Frontend] calling uploadWithRcloneAction for: ${file.name}`)
             const result = await uploadWithRcloneAction(uploadData)
+            console.log(`[Frontend] upload result:`, result)
 
             // Check if upload was successful
             if (result.error) {
@@ -386,6 +419,8 @@ export default function PermitPlansetForm() {
     } catch (error) {
       console.error("Error submitting form:", error)
       alert("Error submitting form. Check console for details.")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -489,7 +524,7 @@ export default function PermitPlansetForm() {
       {/* STEP 3 — Required Uploads */}
       {/* UPLOADS STEP (Index 2 for Quick, Index 4 for Detailed) */}
       {((submissionMode === "quick" && currentStep === 2) || (submissionMode === "provide details" && currentStep === 4)) && (
-        <UploadsStep formData={formData} updateField={updateField} />
+        <UploadsStep formData={formData} updateField={updateField} setFilesToUpload={setFilesToUpload} />
       )}
 
       {/* NOTES STEP (Index 3 for Quick, Index 5 for Detailed) */}
@@ -502,6 +537,9 @@ export default function PermitPlansetForm() {
         onBack={handleBack}
         isFirstStep={currentStep === 0}
         isLastStep={currentStep === STEPS.length - 1}
+        isLoading={isSubmitting}
+        saveStatus={saveStatus}
+        lastSaved={lastSaved}
       />
     </form>
   )

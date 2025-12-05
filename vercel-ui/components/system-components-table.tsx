@@ -161,7 +161,9 @@ function ComponentUploader({
         formData.append("projectName", "System Components")
 
         try {
+            console.log(`[Frontend] ComponentUploader calling action for file: ${file.name}`)
             const result = await uploadWithRcloneAction(formData)
+            console.log(`[Frontend] ComponentUploader result:`, result)
             if (result.success && result.webViewLink) {
                 onUploadComplete(result.webViewLink)
             } else {

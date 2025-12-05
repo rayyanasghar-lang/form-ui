@@ -1,7 +1,7 @@
 "use server"
 
 import { writeFile, unlink } from "fs/promises"
-import { join } from "path"
+import { join, basename } from "path"
 import { exec } from "child_process"
 import { promisify } from "util"
 import { tmpdir } from "os"
@@ -10,7 +10,7 @@ const execAsync = promisify(exec)
 
 export async function uploadWithRcloneAction(formData: FormData) {
   const file = formData.get("file") as File
-  const projectName = formData.get("projectName") as string || "Uploads"
+  const projectName = (formData.get("projectName") as string || "Uploads").trim()
 
   if (!file) {
     return { error: "No file provided" }
@@ -18,7 +18,8 @@ export async function uploadWithRcloneAction(formData: FormData) {
 
   const buffer = Buffer.from(await file.arrayBuffer())
   // Use process.cwd() instead of tmpdir() to match reproduction script
-  const tempFilePath = join(process.cwd(), `upload-${Date.now()}-${file.name}`)
+  const tempFileName = `upload-${Date.now()}-${file.name}`
+  const tempFilePath = join(process.cwd(), tempFileName)
 
   try {
     // 0. Debug Environment
@@ -66,22 +67,28 @@ export async function uploadWithRcloneAction(formData: FormData) {
 
     let webViewLink = ""
     try {
-        const lsCommand = `rclone lsjson "${targetPath}/${file.name}"`
-        console.log(`Executing lsjson: ${lsCommand}`)
+        // List the FOLDER contents, not the file directly
+        const lsCommand = `rclone lsjson "${targetPath}"`
+        console.log(`Executing lsjson on folder: ${lsCommand}`)
         
         const { stdout: lsStdout, stderr: lsStderr } = await execAsync(lsCommand)
-        console.log("lsjson stdout:", lsStdout)
+        console.log("lsjson raw stdout:", lsStdout)
         if (lsStderr) console.warn("lsjson stderr:", lsStderr)
 
         const files = JSON.parse(lsStdout)
+        console.log("Parsed files:", JSON.stringify(files, null, 2))
         
-        if (files && files.length > 0 && files[0].ID) {
-            const fileId = files[0].ID
+        // Find the specific file we just uploaded by its temp file name
+        console.log(`Looking for file: ${tempFileName}`)
+        const uploadedFile = files.find((f: any) => f.Name === tempFileName)
+        
+        if (uploadedFile && uploadedFile.ID) {
+            const fileId = uploadedFile.ID
             // Construct a standard Google Drive view link
             webViewLink = `https://drive.google.com/file/d/${fileId}/view?usp=drivesdk`
             console.log(`Generated link from ID: ${webViewLink}`)
         } else {
-            console.warn("File uploaded but ID not found in lsjson output")
+            console.warn("File uploaded but not found in folder listing. Files in folder:", files.map((f: any) => f.Name))
         }
     } catch (e) {
         console.warn("Failed to verify file with lsjson:", e)

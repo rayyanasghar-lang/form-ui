@@ -7,9 +7,10 @@ import FileUploader from "../file-uploader"
 interface UploadsStepProps {
     formData: any
     updateField: (field: string, value: any) => void
+    setFilesToUpload: (files: File[]) => void
 }
 
-export default function UploadsStep({ formData, updateField }: UploadsStepProps) {
+export default function UploadsStep({ formData, updateField, setFilesToUpload }: UploadsStepProps) {
     return (
         <FormCard title="Required Uploads">
             <div className="space-y-6">
@@ -49,12 +50,16 @@ export default function UploadsStep({ formData, updateField }: UploadsStepProps)
                 <FileUploader
                     label="Upload all project files here"
                     description="We automatically categorize your files. Accepted: images, PDFs, ZIPs, CSV, DOCX, etc."
-                    onFilesSelected={(files) =>
+                    onFilesSelected={(files) => {
+                        // Update the actual File objects for upload
+                        setFilesToUpload(files)
+                        
+                        // Update the names in formData for the API payload
                         updateField(
                             "projectFiles",
                             files.map((f) => f.name),
                         )
-                    }
+                    }}
                 />
                 <p className="text-xs text-muted-foreground">
                     💡 Tip: You can drag and drop multiple files at once
