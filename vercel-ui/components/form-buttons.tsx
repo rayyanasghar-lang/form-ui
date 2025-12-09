@@ -48,7 +48,7 @@ export default function FormButtons({
         variant="outline"
         onClick={onBack}
         disabled={isFirstStep || isLoading}
-        className="px-8 bg-transparent"
+        className="px-8 bg-transparent text-white border-white/20 hover:bg-white/10 hover:text-white hover:border-white/40"
       >
         {backLabel}
       </Button>

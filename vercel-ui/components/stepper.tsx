@@ -19,20 +19,20 @@ export default function Stepper({ steps, currentStep }: StepperProps) {
             key={index}
             className={cn(
               "text-sm font-medium transition-all duration-300",
-              index <= currentStep ? "text-primary" : "text-muted-foreground"
+              index <= currentStep ? "text-white" : "text-white/60"
             )}
           >
             <span className={cn(
               "inline-flex items-center gap-2",
-              index === currentStep && "text-foreground font-semibold"
+              index === currentStep && "text-white font-semibold"
             )}>
               <span className={cn(
                 "flex items-center justify-center w-7 h-7 rounded-full text-xs font-semibold transition-all duration-300",
                 index < currentStep 
                   ? "bg-primary text-primary-foreground scale-100" 
                   : index === currentStep 
-                    ? "bg-primary/20 text-primary ring-2 ring-primary/40 scale-110 animate-bounce-subtle"
-                    : "bg-muted text-muted-foreground scale-90 opacity-60"
+                    ? "bg-primary/20 text-white ring-2 ring-primary/40 scale-110 animate-bounce-subtle"
+                    : "bg-white/10 text-white/60 scale-90"
               )}>
                 {index < currentStep ? (
                   <span className="animate-scale-in">✓</span>

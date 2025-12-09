@@ -452,6 +452,11 @@ export default function PermitPlansetForm() {
     }
   }
 
+  // Scroll to top on step change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }, [currentStep])
+
   return (
     <form className="space-y-6">
       <Stepper steps={STEPS} currentStep={currentStep} />

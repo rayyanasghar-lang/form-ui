@@ -111,9 +111,13 @@ export default function ElectricalDetails({ formData, onUpdateField, onFileUploa
             {/* Advanced Electrical (Collapsible) */}
             <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
                 <CollapsibleTrigger asChild>
-                    <Button variant="ghost" className="w-full justify-between p-0 hover:bg-transparent">
-                        <span className="text-sm font-medium">Advanced Electrical Details</span>
-                        {showAdvanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    <Button variant="ghost" className="w-full justify-between p-0 hover:bg-transparent group">
+                        <span className="text-sm font-medium group-hover:text-primary transition-colors">Advanced Electrical Details</span>
+                        {showAdvanced ? (
+                            <ChevronUp className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                        ) : (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                        )}
                     </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-4 pt-4">
