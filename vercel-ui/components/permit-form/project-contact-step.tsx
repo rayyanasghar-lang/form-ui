@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { Service } from "@/app/actions/fetch-services"
@@ -131,20 +131,22 @@ export default function ProjectContactStep({
                 <div>
                     <h3 className="text-sm font-medium mb-4">Permit Services Requested *</h3>
                     {servicesLoading ? (
-                        <p className="text-sm text-muted-foreground">Loading services...</p>
+                        <div className="flex gap-2 flex-wrap">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="h-9 w-32 rounded-full bg-muted/50 animate-pulse" />
+                            ))}
+                        </div>
                     ) : (
-                        <div className="space-y-3">
+                        <div className="flex flex-wrap gap-2">
                             {availableServices.map((service) => (
-                                <div key={service.id} className="flex items-center space-x-3">
-                                    <Checkbox
-                                        id={service.id}
-                                        checked={formData.services.includes(service.name)}
-                                        onCheckedChange={() => toggleService(service.name)}
-                                    />
-                                    <Label htmlFor={service.id} className="font-normal cursor-pointer">
-                                        {service.name}
-                                    </Label>
-                                </div>
+                                <Badge
+                                    key={service.id}
+                                    variant={formData.services.includes(service.name) ? "selected" : "selectable"}
+                                    onClick={() => toggleService(service.name)}
+                                    className="px-4 py-2 text-sm"
+                                >
+                                    {service.name}
+                                </Badge>
                             ))}
                         </div>
                     )}

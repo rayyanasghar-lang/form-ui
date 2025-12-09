@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
+import { toast } from "sonner"
 import Stepper from "./stepper"
 import FormCard from "./form-card"
 import FormButtons from "./form-buttons"
@@ -306,11 +307,13 @@ export default function PermitPlansetForm() {
         // Report results
         if (uploadErrors.length > 0) {
           console.error(`\n❌ Upload Summary: ${uploadErrors.length} file(s) failed, ${uploadedFiles.length} succeeded`)
-          const errorMessage = `Failed to upload ${uploadErrors.length} file(s) to Google Drive:\n\n${uploadErrors.join('\n')}\n\nPlease check the browser console and terminal for details.`
-          alert(errorMessage)
+          toast.error(`Upload Error`, {
+            description: `Failed to upload ${uploadErrors.length} file(s). Check console for details.`,
+          })
 
           // Don't proceed if all uploads failed
           if (uploadedFiles.length === 0) {
+            setIsSubmitting(false)
             return
           }
         } else {
@@ -318,7 +321,10 @@ export default function PermitPlansetForm() {
         }
       } catch (error) {
         console.error("❌ Unexpected error during file upload:", error)
-        alert("An unexpected error occurred while uploading files to Google Drive. Check console for details.")
+        toast.error("Upload Failed", {
+          description: "An unexpected error occurred while uploading files.",
+        })
+        setIsSubmitting(false)
         return
       }
     }
@@ -410,15 +416,21 @@ export default function PermitPlansetForm() {
       if (result.success) {
         console.log("Form submitted successfully:", result.data)
         localStorage.removeItem("permit-planset-draft")
-        alert("Project created successfully!")
+        toast.success("Success!", {
+          description: "Project created successfully!",
+        })
         // Reset form or redirect
       } else {
         console.error("Submission failed:", result)
-        alert(`Failed to submit project: ${JSON.stringify(result.error)} (Status: ${result.status})`)
+        toast.error("Submission Failed", {
+          description: `Failed to submit project: ${result.error}`,
+        })
       }
     } catch (error) {
       console.error("Error submitting form:", error)
-      alert("Error submitting form. Check console for details.")
+      toast.error("Submission Error", {
+        description: "An unexpected error occurred. Check console for details.",
+      })
     } finally {
       setIsSubmitting(false)
     }
