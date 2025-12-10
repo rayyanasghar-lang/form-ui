@@ -45,10 +45,10 @@ export default function FormButtons({
     <div className="flex gap-4 justify-between mt-8">
       <Button
         type="button"
-        variant="outline"
+        variant="secondary"
         onClick={onBack}
         disabled={isFirstStep || isLoading}
-        className="px-8 bg-transparent text-white border-white/20 hover:bg-white/10 hover:text-white hover:border-white/40"
+        className="px-8 min-w-[140px]"
       >
         {backLabel}
       </Button>

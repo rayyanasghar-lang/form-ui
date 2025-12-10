@@ -66,10 +66,10 @@ export default function Stepper({ steps, currentStep }: StepperProps) {
 
       {/* Current step indicator text */}
       <div className="flex justify-between items-center mt-2">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground text-white">
           Step {currentStep + 1} of {steps.length}
         </p>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground text-white">
           {Math.round(progress)}% complete
         </p>
       </div>
