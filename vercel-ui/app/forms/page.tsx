@@ -14,21 +14,12 @@ export default function FormsPage() {
   }, [])
 
   return (
-    <main className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Background image with overlay */}
-      <div className="absolute inset-0 -z-10 transition-opacity duration-500">
-        {/* Light Mode Background */}
-        <div 
-          className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-700 ${mounted && theme === 'dark' ? 'opacity-0' : 'opacity-100'}`}
-          style={{ backgroundImage: "url('/bg-solar.jpg')" }}
-        />
-        {/* Dark Mode Background */}
-        <div 
-          className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-700 ${mounted && theme === 'dark' ? 'opacity-100' : 'opacity-0'}`}
-          style={{ backgroundImage: "url('/bg-solar-dark.jpg')" }}
-        />
-        {/* Dark overlay for readability */}
-        <div className="absolute inset-0 bg-black/50" />
+    <main className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-background">
+      {/* Dynamic Background Gradient */}
+      <div className="absolute inset-0 -z-10 bg-background">
+        <div className="absolute bottom-0 left-0 right-0 h-2/3 bg-gradient-to-t from-primary/40 via-secondary/20 to-transparent" />
+        <div className="absolute -bottom-64 -left-64 w-[800px] h-[800px] bg-secondary/20 rounded-full blur-[160px] animate-pulse" />
+        <div className="absolute -bottom-64 -right-64 w-[800px] h-[800px] bg-primary/20 rounded-full blur-[160px] animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
       <div className="max-w-4xl mx-auto relative">
@@ -48,8 +39,8 @@ export default function FormsPage() {
               <div className="absolute inset-0 bg-primary/20 rounded-lg blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-semibold text-balance text-white drop-shadow-md">Permit Planset Form</h1>
-              <p className="text-white/80 text-sm sm:text-base drop-shadow-md">Complete your permit planset request</p>
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-balance text-primary drop-shadow-sm tracking-tight">Permit Planset Form</h1>
+              <p className="text-foreground/70 font-medium text-sm sm:text-base">Complete your permit planset request</p>
             </div>
           </div>
           <ThemeToggle />
@@ -58,6 +49,9 @@ export default function FormsPage() {
         {/* Form */}
         <PermitPlansetForm />
       </div>
+
+      {/* Gradient overlay from bottom */}
+      <div className="gradient-overlay" />
     </main>
   )
 }

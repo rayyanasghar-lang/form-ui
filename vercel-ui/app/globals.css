@@ -4,60 +4,55 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(0.92 0.01 240);
-  --foreground: oklch(0.20 0.02 30);
-  --card: oklch(1 0.005 240 / 0.45);
-  --card-foreground: oklch(0.20 0.02 30);
-  --popover: oklch(0.98 0.005 240 / 0.9);
-  --popover-foreground: oklch(0.20 0.02 30);
-  --primary: oklch(0.78 0.15 75);
-  --primary-foreground: oklch(0.20 0.02 75);
-  --secondary: oklch(0.90 0.01 240);
-  --secondary-foreground: oklch(0.25 0.03 30);
-  --muted: oklch(0.92 0.008 240);
-  --muted-foreground: oklch(0.40 0.02 30);
-  --accent: oklch(0.70 0.12 75);
-  --accent-foreground: oklch(0.20 0.02 75);
+  --background: oklch(0.88 0.02 75);
+  --foreground: oklch(0.25 0.04 45);
+  --card: oklch(0.96 0.01 75);
+  --card-foreground: oklch(0.25 0.04 45);
+  --popover: oklch(0.96 0.01 75 / 0.9);
+  --popover-foreground: oklch(0.25 0.04 45);
+  --primary: oklch(0.75 0.14 35);
+  --primary-foreground: oklch(0.98 0.01 75);
+  --secondary: oklch(0.78 0.16 65);
+  --secondary-foreground: oklch(0.25 0.04 45);
+  --muted: oklch(0.85 0.01 75);
+  --muted-foreground: oklch(0.45 0.04 45);
+  --accent: oklch(0.78 0.16 65 / 0.1);
+  --accent-foreground: oklch(0.75 0.14 35);
   --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.85 0.015 240 / 0.5);
-  --input: oklch(0.85 0.01 240);
-  --ring: oklch(0.78 0.15 75);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.5rem;
-  --sidebar: oklch(0.97 0.005 240);
-  --sidebar-foreground: oklch(0.15 0.02 240);
-  --sidebar-primary: oklch(0.78 0.15 75);
-  --sidebar-primary-foreground: oklch(0.20 0.02 75);
-  --sidebar-accent: oklch(0.92 0.01 240);
-  --sidebar-accent-foreground: oklch(0.20 0.02 240);
-  --sidebar-border: oklch(0.88 0.01 240);
-  --sidebar-ring: oklch(0.78 0.15 75);
+  --border: oklch(0.75 0.14 35 / 0.15);
+  --input: oklch(0.96 0.01 75);
+  --ring: oklch(0.75 0.14 35);
+  --radius: 0.75rem;
+  --sidebar: oklch(0.96 0.01 75);
+  --sidebar-foreground: oklch(0.25 0.04 45);
+  --sidebar-primary: oklch(0.75 0.14 35);
+  --sidebar-primary-foreground: oklch(0.98 0.01 75);
+  --sidebar-accent: oklch(0.78 0.16 65 / 0.1);
+  --sidebar-accent-foreground: oklch(0.75 0.14 35);
+  --sidebar-border: oklch(0.85 0.01 75);
+  --sidebar-ring: oklch(0.75 0.14 35);
 }
 
 .dark {
-  --background: oklch(23.923% 0.01171 237.275);
-  --foreground: oklch(0.98 0 0);
-  --card: oklch(0.15 0.015 240 / 0.35);
-  --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.25 0.012 240 / 0.85);
-  --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.82 0.15 75);
+  --background: oklch(30% 0.01 240);
+  --foreground: oklch(1 0 0);
+  --card: oklch(35% 0.015 240);
+  --card-foreground: oklch(1 0 0);
+  --popover: oklch(35% 0.015 240);
+  --popover-foreground: oklch(1 0 0);
+  --primary: oklch(0.85 0.15 75);
   --primary-foreground: oklch(0.15 0.02 75);
-  --secondary: oklch(0.28 0.015 240);
-  --secondary-foreground: oklch(0.95 0.01 0);
-  --muted: oklch(0.30 0.012 240);
-  --muted-foreground: oklch(0.75 0.01 0);
-  --accent: oklch(0.72 0.12 75);
+  --secondary: oklch(0.35 0.015 240);
+  --secondary-foreground: oklch(1 0 0);
+  --muted: oklch(0.35 0.012 240);
+  --muted-foreground: oklch(0.9 0 0);
+  --accent: oklch(0.75 0.12 75);
   --accent-foreground: oklch(0.15 0.02 75);
-  --destructive: oklch(0.55 0.20 25);
-  --destructive-foreground: oklch(0.95 0 0);
-  --border: oklch(0.35 0.02 240 / 0.4);
-  --input: oklch(0.26 0.012 240);
+  --destructive: oklch(0.6 0.2 25);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.45 0.02 240 / 0.4);
+  --input: oklch(0.35 0.012 240);
   --ring: oklch(0.82 0.15 75);
   --chart-1: oklch(0.7 0.2 41.116);
   --chart-2: oklch(0.65 0.15 184.704);
@@ -127,7 +122,8 @@
 
 /* Custom Animations */
 @keyframes bounce-subtle {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1.1) translateY(0);
   }
   50% {
@@ -150,7 +146,8 @@
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 20px var(--primary);
   }
   50% {
@@ -191,7 +188,19 @@
 }
 
 /* Hide scrollbar for IE, Edge and Firefox */
-html, body {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+html,
+body {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+/* Custom gradient fade overlay from bottom */
+.gradient-overlay {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 250px;
+  background: linear-gradient(to top, oklch(0% 0 0 / 0.103), transparent);
+  pointer-events: none;
+  z-index: 50;
 }

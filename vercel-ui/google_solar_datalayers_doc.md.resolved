@@ -1,0 +1,37 @@
+# Google Solar API DataLayers Documentation
+
+This document explains the structure of the `dataLayers` endpoint response. This endpoint returns raw **GeoTIFF** URLs rather than processed statistics. These files allow developers to render custom solar maps or perform pixel-level analysis.
+
+## 1. Imagery Metadata
+Information about the source data used to generate the layers.
+
+| Key | Description |
+| :--- | :--- |
+| `imageryDate` | The specific date (`year`, `month`, `day`) the aerial photo was captured. |
+| `imageryProcessedDate` | The date when Google processed this imagery into the solar model. |
+| `imageryQuality` | The quality rating of the imagery (e.g., `HIGH`, `MEDIUM`, `LOW`). High quality is required for accurate solar potential calculations. |
+
+## 2. GeoTIFF Data Layers
+The response contains signed URLs to download GeoTIFF files. These images are georeferenced rasters where every pixel contains data.
+
+> [!IMPORTANT]
+> These URLs are **signed and temporary**. They will expire after a short period. Do not hardcode them; always request fresh URLs from the API.
+
+### 2.1 Physical Layers
+| Key | Description |
+| :--- | :--- |
+| `rgbUrl` | **The Aerial Image.** A standard visible-light photo of the roof and surrounding area. Used as the background map. |
+| `maskUrl` | **The Roof Mask.** A strict binary or categorical mask. It defines which pixels are "roof" and which are "not roof" (ground, trees, etc.). Crucial for clipping visualization to just the building. |
+| `dsmUrl` | **Digital Surface Model.** An elevation map. Each pixel value represents the height of that point above sea level (or geoid). Used to visualize 3D shape, pitch, and slope. |
+
+### 2.2 Solar Data Layers
+| Key | Description |
+| :--- | :--- |
+| `annualFluxUrl` | **Yearly Energy Map.** Each pixel value represents the total solar energy (flux) falling on that specific square of the roof over one year (kWh/kW/year). Brighter pixels = more sun. |
+| `monthlyFluxUrl` | **Seasonal Energy Map.** A multi-band GeoTIFF where each "band" (layer) of the image corresponds to a month (January through December). Used to analyze seasonal variances (e.g., winter vs. summer production). |
+| `hourlyShadeUrls` | **Shadow Analysis.** A list of 12 GeoTIFFs (one for each month). Each file contains data describing which parts of the roof are in shade at different hours of the day. Essential for determining where trees or chimneys block sunlight. |
+
+## 3. Data Interpretation
+*   **Resolution:** Typically 10cm per pixel for High Quality imagery.
+*   **Alignment:** All GeoTIFFs (RGB, Mask, DSM, Flux) are perfectly aligned pixel-for-pixel. You can overlay them directly.
+*   **Values:** You must read the raw pixel values (using a library like GDAL, Rasterio, or specialized Frontend libraries like `geotiff.js`) to get the actual physical data (meters, kWh, etc.).

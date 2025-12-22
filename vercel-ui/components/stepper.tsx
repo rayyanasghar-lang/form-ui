@@ -18,21 +18,21 @@ export default function Stepper({ steps, currentStep }: StepperProps) {
           <div
             key={index}
             className={cn(
-              "text-sm font-medium transition-all duration-300",
-              index <= currentStep ? "text-white" : "text-white/60"
+              "text-sm font-extrabold transition-all duration-300",
+              index <= currentStep ? "text-foreground" : "text-foreground/40"
             )}
           >
             <span className={cn(
               "inline-flex items-center gap-2",
-              index === currentStep && "text-white font-semibold"
+              index === currentStep && "text-primary font-bold"
             )}>
               <span className={cn(
-                "flex items-center justify-center w-7 h-7 rounded-full text-xs font-semibold transition-all duration-300",
+                "flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold transition-all duration-300 shadow-sm",
                 index < currentStep 
-                  ? "bg-primary text-primary-foreground scale-100" 
+                  ? "bg-secondary text-secondary-foreground scale-100" 
                   : index === currentStep 
-                    ? "bg-primary/20 text-white ring-2 ring-primary/40 scale-110 animate-bounce-subtle"
-                    : "bg-white/10 text-white/60 scale-90"
+                    ? "bg-primary text-primary-foreground ring-4 ring-primary/20 scale-110 animate-bounce-subtle"
+                    : "bg-muted text-muted-foreground scale-90"
               )}>
                 {index < currentStep ? (
                   <span className="animate-scale-in">✓</span>
@@ -51,25 +51,20 @@ export default function Stepper({ steps, currentStep }: StepperProps) {
       </div>
 
       {/* Progress bar track */}
-      <div className="relative w-full h-2.5 bg-muted border border-border rounded-full overflow-hidden">
+      <div className="relative w-full h-3 bg-primary/10 border border-primary/20 rounded-full overflow-hidden shadow-inner backdrop-blur-sm">
         {/* Animated progress fill */}
         <div
-          className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all duration-500 ease-out shadow-sm shadow-primary/30"
-          style={{ width: `${progress}%` }}
-        />
-        {/* Subtle glow effect on progress */}
-        <div
-          className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary/50 to-primary rounded-full blur-sm transition-all duration-500 ease-out"
+          className="absolute inset-y-0 left-0 bg-gradient-to-r from-secondary to-primary rounded-full transition-all duration-500 ease-out shadow-lg shadow-primary/20"
           style={{ width: `${progress}%` }}
         />
       </div>
 
       {/* Current step indicator text */}
-      <div className="flex justify-between items-center mt-2">
-        <p className="text-xs text-muted-foreground text-white">
+      <div className="flex justify-between items-center mt-3">
+        <p className="text-xs font-bold text-foreground/60">
           Step {currentStep + 1} of {steps.length}
         </p>
-        <p className="text-xs text-muted-foreground text-white">
+        <p className="text-xs font-bold text-foreground/60">
           {Math.round(progress)}% complete
         </p>
       </div>

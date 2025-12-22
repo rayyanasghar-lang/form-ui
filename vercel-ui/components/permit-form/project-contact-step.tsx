@@ -7,11 +7,16 @@ import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-
+import { cn } from "@/lib/utils"
+import { Zap, NotebookIcon, Building2, User, Mail, Phone, ClipboardList, MapPin, Briefcase, CheckSquare } from "lucide-react"
 import { Service } from "@/app/actions/fetch-services"
+import AddressAutocomplete from "../address-autocomplete"
 
 interface ProjectContactStepProps {
     formData: any
+// ... (rest of props)
+
+
     updateField: (field: string, value: any) => void
     errors: Record<string, string>
     submissionMode: "quick" | "provide details"
@@ -36,10 +41,16 @@ export default function ProjectContactStep({
             <div className="space-y-6">
                 {/* Company Profile */}
                 <div>
-                    <h3 className="text-sm font-medium mb-4">Company Profile</h3>
+                    <h3 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+                        <Building2 className="w-5 h-5 text-primary" />
+                        Company Profile
+                    </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="companyName">Company Name</Label>
+                            <Label htmlFor="companyName" className="flex items-center gap-2">
+                                <Building2 className="w-4 h-4 text-muted-foreground" />
+                                Company Name
+                            </Label>
                             <Input
                                 id="companyName"
                                 value={formData.companyName}
@@ -49,7 +60,10 @@ export default function ProjectContactStep({
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="contactName">Contact Name</Label>
+                            <Label htmlFor="contactName" className="flex items-center gap-2">
+                                <User className="w-4 h-4 text-muted-foreground" />
+                                Contact Name
+                            </Label>
                             <Input
                                 id="contactName"
                                 value={formData.contactName}
@@ -59,7 +73,10 @@ export default function ProjectContactStep({
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
+                            <Label htmlFor="email" className="flex items-center gap-2">
+                                <Mail className="w-4 h-4 text-muted-foreground" />
+                                Email
+                            </Label>
                             <Input
                                 id="email"
                                 type="email"
@@ -69,7 +86,10 @@ export default function ProjectContactStep({
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="phone">Phone</Label>
+                            <Label htmlFor="phone" className="flex items-center gap-2">
+                                <Phone className="w-4 h-4 text-muted-foreground" />
+                                Phone
+                            </Label>
                             <Input
                                 id="phone"
                                 type="tel"
@@ -84,10 +104,16 @@ export default function ProjectContactStep({
 
                 {/* Project Information */}
                 <div>
-                    <h3 className="text-sm font-medium mb-4">Project Information</h3>
+                    <h3 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+                        <ClipboardList className="w-5 h-5 text-primary" />
+                        Project Information
+                    </h3>
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="projectName">Project Name *</Label>
+                            <Label htmlFor="projectName" className="flex items-center gap-2">
+                                <ClipboardList className="w-4 h-4 text-muted-foreground" />
+                                Project Name
+                            </Label>
                             <Input
                                 id="projectName"
                                 placeholder="Enter project name"
@@ -98,19 +124,25 @@ export default function ProjectContactStep({
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="projectAddress">Project Address *</Label>
-                            <Input
-                                id="projectAddress"
-                                placeholder="Start typing address... (Google Places autocomplete)"
+                            <Label htmlFor="projectAddress" className="flex items-center gap-2">
+                                <MapPin className="w-4 h-4 text-muted-foreground" />
+                                Project Address
+                            </Label>
+                            <AddressAutocomplete
                                 value={formData.projectAddress}
-                                onChange={(e) => updateField("projectAddress", e.target.value)}
+                                onChange={(value) => updateField("projectAddress", value)}
+                                className="bg-muted/50"
                             />
-                            <p className="text-xs text-muted-foreground">📍 Map pin will appear here</p>
                             {errors.projectAddress && <p className="text-sm text-destructive">{errors.projectAddress}</p>}
                         </div>
 
+
+
                         <div className="space-y-2">
-                            <Label htmlFor="projectType">Project Type *</Label>
+                            <Label htmlFor="projectType" className="flex items-center gap-2">
+                                <Briefcase className="w-4 h-4 text-muted-foreground" />
+                                Project Type
+                            </Label>
                             <Select value={formData.projectType} onValueChange={(v) => updateField("projectType", v)}>
                                 <SelectTrigger id="projectType">
                                     <SelectValue placeholder="Select project type" />
@@ -129,7 +161,10 @@ export default function ProjectContactStep({
 
                 {/* Permit Services Requested */}
                 <div>
-                    <h3 className="text-sm font-medium mb-4">Permit Services Requested *</h3>
+                    <h3 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+                        <CheckSquare className="w-5 h-5 text-primary" />
+                        Permit Services Requested
+                    </h3>
                     {servicesLoading ? (
                         <div className="flex gap-2 flex-wrap">
                             {[1, 2, 3].map((i) => (
@@ -157,11 +192,11 @@ export default function ProjectContactStep({
 
                 {/* Submission Type */}
                 <div>
-                    <h3 className="text-sm font-medium mb-4">Submission Type</h3>
+                    <h3 className="text-xl font-bold text-foreground mb-4">Submission Type</h3>
                     <Tabs value={submissionMode} onValueChange={(v) => setSubmissionMode(v as "quick" | "provide details")} className="w-full">
                         <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="quick">⚡ Quick Upload (Recommended)</TabsTrigger>
-                            <TabsTrigger value="provide details">📘 Provide Full Details</TabsTrigger>
+                            <TabsTrigger value="quick"><Zap className="mr-2 h-4 w-4" />Quick Upload (Recommended)</TabsTrigger>
+                            <TabsTrigger value="provide details"><NotebookIcon className="mr-2 h-4 w-4" /> Provide Full Details</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="quick" className="mt-4">
@@ -170,7 +205,7 @@ export default function ProjectContactStep({
                             </p>
                         </TabsContent>
 
-                        <TabsContent value="detailed" className="mt-4">
+                        <TabsContent value="provide details" className="mt-4">
                             <p className="text-sm text-muted-foreground">
                                 Provide comprehensive project details for complex installations.
                             </p>

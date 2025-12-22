@@ -1,0 +1,104 @@
+# Google Solar API JSON Documentation
+
+This document explains the structure and key definitions of the Solar API JSON response provided.
+
+## 1. Top-Level Location Data
+Essential coordinates and identifiers for the property.
+
+| Key | Description |
+| :--- | :--- |
+| `address` | The human-readable postal address of the location. |
+| `lat` / `lng` | The latitude and longitude coordinates of the query point. |
+
+## 2. Solar Object (`solar`)
+The core container for the Building Insights response.
+
+| Key | Description |
+| :--- | :--- |
+| `name` | The resource name in the format `buildings/{id}`. |
+| `center` | The center of the building structure (`latitude`, `longitude`). |
+| `imageryDate` | The date (`year`, `month`, `day`) of the satellite imagery used for the solar analysis. This is crucial for verifying if recent renovations are included. |
+| `postalCode` | ZIP/Postal code of the building. |
+| `administrativeArea` | State or province code (e.g., "PA"). |
+| `statisticalArea` | Census tract or statistical area ID. |
+| `regionCode` | Country code (e.g., "US"). |
+
+## 3. Solar Potential (`solarPotential`)
+High-level summary of the roof's solar capability.
+
+| Key | Description |
+| :--- | :--- |
+| `maxArrayPanelsCount` | The maximum number of solar panels that can fundamentally fit on the roof. |
+| `maxArrayAreaMeters2` | The total surface area available for panel installation (in square meters). |
+| `maxSunshineHoursPerYear` | The maximum hours of usable sunlight the best part of the roof receives annually. |
+| `carbonOffsetFactorKgPerMwh` | How many kilograms of CO2 are offset by generating 1 MWh of solar electricity in this region. |
+
+### 3.1 Whole Roof Statistics (`wholeRoofStats`)
+Aggregated data for the entire building footprint.
+
+| Key | Description |
+| :--- | :--- |
+| `areaMeters2` | Total surface area of the roof (including slope). |
+| `groundAreaMeters2` | The footprint area of the roof on the ground (flat projected area). |
+| `sunshineQuantiles` | An array of 11 numbers representing solar irradiance (kWh/kW/year). It shows the distribution of sunlight across the roof, from the darkest point (index 0) to the brightest point (index 10). |
+
+### 3.2 Roof Segment Statistics (`roofSegmentStats`)
+A list where every flat plane of the roof is analyzed separately.
+
+| Key | Description |
+| :--- | :--- |
+| `pitchDegrees` | The angle/steepness of the roof segment (0° is flat). |
+| `azimuthDegrees` | The compass direction the roof segment faces (0°=North, 90°=East, 180°=South, 270°=West). |
+| `center` | Center coordinates of this specific roof plane. |
+| `boundingBox` | The implementation box (`sw`, `ne`) defining the segment's corners. |
+| `planeHeightAtCenterMeters` | Approx. height of this roof segment from absolute sea level (or geoid). |
+| `stats.areaMeters2` | Surface area of this specific segment. |
+| `stats.sunshineQuantiles` | Sunlight distribution specific to this segment. |
+
+## 4. Solar Panel Configurations (`solarPanelConfigs`)
+A series of potential layouts ranging from a few panels to the maximum possible.
+
+| Key | Description |
+| :--- | :--- |
+| `panelsCount` | Total number of panels in this configuration. |
+| `yearlyEnergyDcKwh` | Estimated annual energy generation (DC) in kWh. |
+| `roofSegmentSummaries` | details on which roof segments are used in this config. |
+| `segmentIndex` | Index referencing the specific segment in `roofSegmentStats`. |
+
+## 5. Financial Analysis (`financialAnalyses`)
+Calculations for different financial scenarios based on the user's current electricity usage.
+
+### 5.1 Monthly Bill & Usage
+| Key | Description |
+| :--- | :--- |
+| `monthlyBill` | The monthly electric bill amount used for this estimate (`currencyCode`, `units`). |
+| `averageKwhPerMonth` | Estimated energy consumption based on the bill amount. |
+| `panelConfigIndex` | The index of the recommended `solarPanelConfiguration` for this bill size. |
+
+### 5.2 Financial Details (`financialDetails`)
+| Key | Description |
+| :--- | :--- |
+| `initialAcKwhPerYear` | Estimated AC energy production in the first year (after DC-to-AC conversion loss). |
+| `remainingLifetimeUtilityBill`| Estimated utility payments over the system lifetime *with* solar. |
+| `costOfElectricityWithoutSolar` | Estimated utility payments over the same period *without* solar. |
+| `federalIncentive` | Value of the Federal Tax Credit (ITC). |
+| `lifetimeSrecTotal` | Estimated value of Solar Renewable Energy Credits (SRECs). |
+| `netMeteringAllowed` | Boolean indicating if the utility buys back excess power. |
+| `solarPercentage` | Percentage of the electric bill covered by solar. |
+| `percentageExportedToGrid` | How much generated energy is sent back to the grid vs. used immediately. |
+
+### 5.3 Savings Scenarios
+Three common ways to pay for the system:
+*   **`cashPurchaseSavings`**: Paying 100% upfront.
+*   **`financedPurchaseSavings`**: Taking a loan.
+*   **`leasingSavings`**: Leasing the panels (PPA).
+
+**Common Keys in Savings Objects:**
+| Key | Description |
+| :--- | :--- |
+| `upfrontCost` | The initial payment required. |
+| `outOfPocketCost` | Total cost before rebates/incentives. |
+| `paybackYears` | Time to break even on the investment. |
+| `savingsYear1` | Savings in the first year alone. |
+| `savingsLifetime` | Total savings over the system's lifespan (usually 20 years). |
+| `presentValueOfSavings...` | The value of future savings discounted to today's dollars (accounting for inflation/interest). |

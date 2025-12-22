@@ -39,6 +39,7 @@ export default function PermitPlansetForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [saveStatus, setSaveStatus] = useState<"saving" | "saved" | "idle">("idle")
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [scrapingStatus, setScrapingStatus] = useState<"idle" | "scraping" | "completed" | "error">("idle")
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const [formData, setFormData] = useState({
@@ -118,6 +119,12 @@ export default function PermitPlansetForm() {
     inspectionNotesText: "",
     batterySldRequested: false,
     batterySldNotes: "",
+
+    // Scraped Data
+    lotSize: "",
+    parcelNumber: "",
+    windSpeed: "",
+    snowLoad: "",
   })
 
   // Fetch services from API on mount
@@ -153,6 +160,27 @@ export default function PermitPlansetForm() {
       }
     }
   }, [])
+
+  // Listen for scraped property data
+  useEffect(() => {
+    const handlePropertyUpdate = (event: any) => {
+      const { lotSize, parcelNumber, windSpeed, snowLoad } = event.detail;
+      setFormData(prev => ({
+        ...prev,
+        lotSize: lotSize || prev.lotSize,
+        parcelNumber: parcelNumber || prev.parcelNumber,
+        windSpeed: windSpeed || prev.windSpeed,
+        snowLoad: snowLoad || prev.snowLoad,
+      }));
+      setScrapingStatus("completed");
+      toast.success("Property data updated", {
+        description: "Lot size, parcel number, and hazard data fetched successfully."
+      });
+    };
+
+    window.addEventListener("property-data-updated", handlePropertyUpdate);
+    return () => window.removeEventListener("property-data-updated", handlePropertyUpdate);
+  }, []);
 
   // Debounced auto-save to local storage
   const saveDraft = useCallback(() => {

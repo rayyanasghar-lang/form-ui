@@ -9,9 +9,9 @@ interface FormCardProps {
 
 export default function FormCard({ title, description, children }: FormCardProps) {
   return (
-    <Card className="bg-card border-border animate-fade-in-up">
-      <CardHeader>
-        <CardTitle className="text-xl">{title}</CardTitle>
+    <Card className="relative bg-card/30 backdrop-blur-3xl border border-white/10 transition-all duration-700 shadow-2xl animate-fade-in-up overflow-hidden rounded-2xl">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-2xl font-bold tracking-tight text-foreground">{title}</CardTitle>
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent>{children}</CardContent>

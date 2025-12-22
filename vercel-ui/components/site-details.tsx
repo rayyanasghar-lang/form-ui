@@ -19,12 +19,63 @@ interface SiteDetailsProps {
         rowCount: string
         moduleCountPerRow: string
         structuralNotes: string
+        lotSize: string
+        parcelNumber: string
+        windSpeed: string
+        snowLoad: string
     }
     onUpdateField: (field: string, value: string | boolean) => void
     onFileUpload: (field: string, files: string[]) => void
 }
 
 export default function SiteDetails({ systemType, formData, onUpdateField, onFileUpload }: SiteDetailsProps) {
+    const EnvironmentalInfo = () => (
+        <div className="mt-8 space-y-4 pt-6 border-t border-border">
+            <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                Property & Environmental Info
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="lotSize">Lot Size</Label>
+                    <Input
+                        id="lotSize"
+                        placeholder="e.g., 0.25 Acres"
+                        value={formData.lotSize}
+                        onChange={(e) => onUpdateField("lotSize", e.target.value)}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="parcelNumber">Parcel Number (APN)</Label>
+                    <Input
+                        id="parcelNumber"
+                        placeholder="e.g., 123-456-789"
+                        value={formData.parcelNumber}
+                        onChange={(e) => onUpdateField("parcelNumber", e.target.value)}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="windSpeed">Wind Speed (Vmph)</Label>
+                    <Input
+                        id="windSpeed"
+                        placeholder="e.g., 115 Vmph"
+                        value={formData.windSpeed}
+                        onChange={(e) => onUpdateField("windSpeed", e.target.value)}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="snowLoad">Ground Snow Load (lb/ft²)</Label>
+                    <Input
+                        id="snowLoad"
+                        placeholder="e.g., 30 lb/ft²"
+                        value={formData.snowLoad}
+                        onChange={(e) => onUpdateField("snowLoad", e.target.value)}
+                    />
+                </div>
+            </div>
+        </div>
+    );
+
     if (systemType === "roofmount") {
         return (
             <div className="space-y-4">
@@ -83,6 +134,8 @@ export default function SiteDetails({ systemType, formData, onUpdateField, onFil
                         I don't know — use my roof images
                     </Label>
                 </div>
+
+                <EnvironmentalInfo />
             </div>
         )
     }
@@ -164,13 +217,18 @@ export default function SiteDetails({ systemType, formData, onUpdateField, onFil
                         onFilesSelected={(files) => onFileUpload("structuralSketch", files.map((f) => f.name))}
                     />
                 </div>
+
+                <EnvironmentalInfo />
             </div>
         )
     }
 
     return (
-        <p className="text-sm text-muted-foreground">
-            Please select a system type in the previous section to configure site details.
-        </p>
+        <div className="space-y-6">
+            <p className="text-sm text-muted-foreground">
+                Please select a system type in the previous section to configure site details.
+            </p>
+            <EnvironmentalInfo />
+        </div>
     )
 }
