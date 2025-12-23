@@ -93,24 +93,86 @@ function PlacesAutocomplete({ value, onChange, disabled, className }: AddressAut
       // 🔍 Scrape Zillow and ASCE Data
       try {
         console.log("🔍 Starting property scraping for:", address);
-        const { scrapeZillowAction, scrapeASCEAction } = await import("@/app/actions/scrape-service");
-        const { savePropertyData } = await import("@/lib/property-store");
+        // Dispatch event to notify listeners that scraping has started
+        window.dispatchEvent(new CustomEvent("property-data-scraping-started"));
+        
+        const { scrapeZillowAction, scrapeASCEAction, scrapeRegridAction } = await import("@/app/actions/scrape-service");
+        const { savePropertyData, updatePropertyData } = await import("@/lib/property-store");
 
-        // Run scrapers in parallel
-        const [zillowRes, asceRes] = await Promise.all([
-          scrapeZillowAction(address),
-          scrapeASCEAction(address)
-        ]);
-
-        console.log("🔍 Scrape results:", { zillowRes, asceRes });
-
+        // Initial empty save to establish the address and timestamp
         savePropertyData({
-          address,
-          lotSize: zillowRes.success ? zillowRes.data?.lot_size || null : null,
-          parcelNumber: zillowRes.success ? zillowRes.data?.parcel_number || null : null,
-          windSpeed: asceRes.success ? asceRes.data?.windSpeed || null : null,
-          snowLoad: asceRes.success ? asceRes.data?.snowLoad || null : null,
+            address,
+            lotSize: null,
+            parcelNumber: null,
+            owner: null,
+            landUse: null,
+            windSpeed: null,
+            snowLoad: null,
+            sources: {}
         });
+
+        // Run all scrapers in parallel, but update independently
+        Promise.allSettled([
+            scrapeZillowAction(address).then(res => {
+                if (res.success && res.data) {
+                    updatePropertyData({
+                        lotSize: res.data.lot_size,
+                        parcelNumber: res.data.parcel_number,
+                        interiorArea: res.data.interior_area,
+                        structureArea: res.data.structure_area,
+                        newConstruction: res.data.new_construction,
+                        yearBuilt: res.data.year_built,
+                        sources: {
+                            zillow: {
+                                parcelNumber: res.data.parcel_number || null,
+                                lotSize: res.data.lot_size || null,
+                                interiorArea: res.data.interior_area || null,
+                                structureArea: res.data.structure_area || null,
+                                newConstruction: res.data.new_construction ?? null,
+                                yearBuilt: res.data.year_built || null,
+                            }
+                        }
+                    });
+                }
+            }),
+            scrapeASCEAction(address).then(res => {
+                if (res.success && res.data) {
+                    updatePropertyData({
+                        windSpeed: res.data.windSpeed || null,
+                        snowLoad: res.data.snowLoad || null,
+                        sources: {
+                            asce: {
+                                windSpeed: res.data.windSpeed || null,
+                                snowLoad: res.data.snowLoad || null
+                            }
+                        }
+                    });
+                }
+            }),
+            scrapeRegridAction(address).then(res => {
+                if (res.success && res.data) {
+                    updatePropertyData({
+                        lotSize: res.data.lot_size,
+                        parcelNumber: res.data.parcel_number,
+                        owner: res.data.owner,
+                        landUse: res.data.land_use,
+                        sources: {
+                            regrid: {
+                                parcelNumber: res.data.parcel_number || null,
+                                owner: res.data.owner || null,
+                                lotSize: res.data.lot_size || null,
+                                landUse: res.data.land_use || null
+                            }
+                        }
+                    });
+                }
+            })
+        ]).finally(() => {
+            setIsScraping(false);
+            window.dispatchEvent(new CustomEvent("property-data-scraping-completed"));
+        });
+
+        return; // Don't block on the scrapers completing
         console.log("💾 Property data saved to store");
       } catch (err: any) {
         console.error("❌ Scraping Error:", err);

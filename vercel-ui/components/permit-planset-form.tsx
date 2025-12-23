@@ -17,6 +17,7 @@ import ProjectSummary from "./project-summary"
 import { uploadWithRcloneAction } from "@/app/actions/upload-rclone"
 import { submitProjectAction } from "@/app/actions/submit-project"
 import { fetchServicesAction, Service } from "@/app/actions/fetch-services"
+import { fetchNearbyStations, geocodeAddress } from "@/app/actions/weather-service"
 
 const QUICK_STEPS = ["Project & Contact", "System Summary", "Uploads", "Notes"]
 const DETAILED_STEPS = [
@@ -40,6 +41,8 @@ export default function PermitPlansetForm() {
   const [saveStatus, setSaveStatus] = useState<"saving" | "saved" | "idle">("idle")
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [scrapingStatus, setScrapingStatus] = useState<"idle" | "scraping" | "completed" | "error">("idle")
+  const [weatherStations, setWeatherStations] = useState<any[]>([])
+  const [weatherLoading, setWeatherLoading] = useState(false)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const [formData, setFormData] = useState({
@@ -123,8 +126,17 @@ export default function PermitPlansetForm() {
     // Scraped Data
     lotSize: "",
     parcelNumber: "",
+    owner: "",
+    landUse: "",
     windSpeed: "",
     snowLoad: "",
+    interiorArea: "",
+    structureArea: "",
+    newConstruction: null as boolean | null,
+    yearBuilt: "",
+    
+    // Scraper Sources (Nested)
+    sources: {} as any, // Using 'any' briefly to map to SourceData
   })
 
   // Fetch services from API on mount
@@ -164,23 +176,87 @@ export default function PermitPlansetForm() {
   // Listen for scraped property data
   useEffect(() => {
     const handlePropertyUpdate = (event: any) => {
-      const { lotSize, parcelNumber, windSpeed, snowLoad } = event.detail;
+      const { lotSize, parcelNumber, owner, landUse, windSpeed, snowLoad, sources } = event.detail;
       setFormData(prev => ({
         ...prev,
         lotSize: lotSize || prev.lotSize,
         parcelNumber: parcelNumber || prev.parcelNumber,
+        owner: owner || prev.owner,
+        landUse: landUse || prev.landUse,
         windSpeed: windSpeed || prev.windSpeed,
         snowLoad: snowLoad || prev.snowLoad,
+        interiorArea: event.detail.interiorArea || prev.interiorArea,
+        structureArea: event.detail.structureArea || prev.structureArea,
+        newConstruction: event.detail.newConstruction ?? prev.newConstruction,
+        yearBuilt: event.detail.yearBuilt || prev.yearBuilt,
+        sources: sources || prev.sources
       }));
+    };
+
+    const handleScrapingCompleted = () => {
       setScrapingStatus("completed");
       toast.success("Property data updated", {
-        description: "Lot size, parcel number, and hazard data fetched successfully."
+        description: "Data from Regrid, Zillow and ASCE fetched successfully."
+      });
+    };
+
+    const handleScrapingStarted = () => {
+      setScrapingStatus("scraping");
+      // Clear previous data
+      setFormData(prev => ({
+        ...prev,
+        lotSize: "",
+        parcelNumber: "",
+        owner: "",
+        landUse: "",
+        windSpeed: "",
+        snowLoad: "",
+        interiorArea: "",
+        structureArea: "",
+        newConstruction: null,
+        yearBuilt: "",
+        sources: {},
+      }));
+      setWeatherStations([]);
+      toast.info("Fetching property data...", {
+        description: "Getting data from Regrid, Zillow and ASCE Hazard Tool."
       });
     };
 
     window.addEventListener("property-data-updated", handlePropertyUpdate);
-    return () => window.removeEventListener("property-data-updated", handlePropertyUpdate);
+    window.addEventListener("property-data-scraping-started", handleScrapingStarted);
+    window.addEventListener("property-data-scraping-completed", handleScrapingCompleted);
+    
+    return () => {
+      window.removeEventListener("property-data-updated", handlePropertyUpdate);
+      window.removeEventListener("property-data-scraping-started", handleScrapingStarted);
+      window.removeEventListener("property-data-scraping-completed", handleScrapingCompleted);
+    };
   }, []);
+
+  // Fetch weather stations when address changes
+  useEffect(() => {
+    if (!formData.projectAddress || formData.projectAddress.length < 5) return;
+
+    const timer = setTimeout(async () => {
+      setWeatherLoading(true);
+      try {
+        const geoResult = await geocodeAddress(formData.projectAddress);
+        if (geoResult.success && geoResult.lat && geoResult.lng) {
+          const stationsResult = await fetchNearbyStations(geoResult.lat, geoResult.lng);
+          if (stationsResult.success && stationsResult.data) {
+            setWeatherStations(stationsResult.data);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching weather stations:", err);
+      } finally {
+        setWeatherLoading(false);
+      }
+    }, 2000); // 2 second debounce
+
+    return () => clearTimeout(timer);
+  }, [formData.projectAddress]);
 
   // Debounced auto-save to local storage
   const saveDraft = useCallback(() => {
@@ -500,6 +576,9 @@ export default function PermitPlansetForm() {
           toggleService={toggleService}
           availableServices={availableServices}
           servicesLoading={servicesLoading}
+          scrapingStatus={scrapingStatus}
+          weatherStations={weatherStations}
+          weatherLoading={weatherLoading}
         />
       )}
 

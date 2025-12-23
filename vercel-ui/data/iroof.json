@@ -1,0 +1,90 @@
+{
+  "name": "Tim Smith",
+  "street": "292 Dunn Road, Honesdale, PA 18431",
+  "city": "Honesdale",
+  "state": "NY",
+  "zip": "12345",
+  "plan_set_at": "2023-01-01",
+  "client_id": 124,
+  "details": {
+    "ID": 2214,
+    "ClientID": 124,
+    "BuildingYear": 2001,
+    "FieldVisit": {
+      "PersonnelName": "Joe Smith",
+      "Date": "2023-01-01"
+    },
+    "RackTypes": {
+        "Roof": true,
+        "Ground": true,
+        "Battery": true
+    }
+  },
+  "equipment": [
+    {
+      "Type": "Module",
+      "Manufacturer": "AstroNergy",
+      "Model": "CHSM 6610P (230)",
+      "Quantity": 1
+    },
+    {
+      "Type": "Module",
+      "Manufacturer": "Ablytek",
+      "Model": "6MN6A270",
+      "Quantity": 1
+    },
+    {
+      "Type": "Inverter",
+      "Manufacturer": "Enphase",
+      "Model": "IQ7-60-2-US",
+      "Quantity": 1
+    },
+    {
+      "Type": "Stanchion",
+      "Manufacturer": "Ecolibrium Solar",
+      "Model": "ECO-X",
+      "Quantity": 1
+    },
+    {
+      "Type": "Racking",
+      "Manufacturer": "IronRidge",
+      "Model": "XR100 Rail",
+      "Quantity": 1
+    }
+  ],
+  "services": {
+    "SealRequired": {
+        "Electrical": true,
+        "Structural": true
+    },
+    "Prints": {
+      "PlanReview": {
+        "Enabled": true,
+        "Data": {
+          "address": {
+            "company_name": "Company ABC",
+            "contact_name": "Tim Smith",
+            "address1": "1000 N 123rd Street",
+            "address2": "",
+            "city": "New York",
+            "state": "NY",
+            "zip": "12345",
+            "telno": "123-456-7890",
+            "extension": ""
+          },
+          "delivery_method": 1,
+          "user_notes" : "",
+          "files": [
+            {
+              "file_tag": "sealed cad",
+              "copies": 1,
+              "seal_type": 1,
+              "signature": false,
+              "color": false
+            }
+          ]
+        }
+      }
+    }
+  }
+}

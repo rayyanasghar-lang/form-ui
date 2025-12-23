@@ -8,14 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
-import { Zap, NotebookIcon, Building2, User, Mail, Phone, ClipboardList, MapPin, Briefcase, CheckSquare } from "lucide-react"
+import { Zap, NotebookIcon, Building2, User, Mail, Phone, ClipboardList, MapPin, Briefcase, CheckSquare, Loader2, CloudSun, Database, Search, CheckCircle2, Activity } from "lucide-react"
 import { Service } from "@/app/actions/fetch-services"
 import AddressAutocomplete from "../address-autocomplete"
 
 interface ProjectContactStepProps {
     formData: any
 // ... (rest of props)
-
 
     updateField: (field: string, value: any) => void
     errors: Record<string, string>
@@ -24,6 +23,9 @@ interface ProjectContactStepProps {
     toggleService: (serviceName: string) => void
     availableServices: Service[]
     servicesLoading: boolean
+    scrapingStatus?: "idle" | "scraping" | "completed" | "error"
+    weatherStations?: any[]
+    weatherLoading?: boolean
 }
 
 export default function ProjectContactStep({
@@ -35,6 +37,9 @@ export default function ProjectContactStep({
     toggleService,
     availableServices,
     servicesLoading,
+    scrapingStatus = "idle",
+    weatherStations = [],
+    weatherLoading = false,
 }: ProjectContactStepProps) {
     return (
         <FormCard title="Project & Contact Information">
@@ -42,7 +47,7 @@ export default function ProjectContactStep({
                 {/* Company Profile */}
                 <div>
                     <h3 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-                        <Building2 className="w-5 h-5 text-primary" />
+                        {/* <Building2 className="w-5 h-5 text-primary" /> */}
                         Company Profile
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -105,7 +110,7 @@ export default function ProjectContactStep({
                 {/* Project Information */}
                 <div>
                     <h3 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-                        <ClipboardList className="w-5 h-5 text-primary" />
+                        {/* <ClipboardList className="w-5 h-5 text-primary" /> */}
                         Project Information
                     </h3>
                     <div className="space-y-4">
@@ -134,6 +139,251 @@ export default function ProjectContactStep({
                                 className="bg-muted/50"
                             />
                             {errors.projectAddress && <p className="text-sm text-destructive">{errors.projectAddress}</p>}
+                            
+                            {/* Scraped Data display */}
+                            {/* Scraped Data display (Separate Boxes) */}
+                <Separator />
+                
+                {/* Property Intelligence (Scraped & Weather Data) */}
+                <div className="space-y-6 mt-6">
+                    {/* Live Analysis Status Bar (Always show while anything is loading) */}
+                    {(scrapingStatus === "scraping" || weatherLoading) && (
+                        <div className="p-4 rounded-xl border border-primary/10 bg-primary/5 animate-in fade-in slide-in-from-bottom-2">
+                            <div className="flex items-center justify-between mb-4">
+                                <h4 className="text-sm font-semibold text-primary flex items-center gap-2">
+                                    <Activity className="h-4 w-4 animate-pulse" />
+                                    Live Property Analysis
+                                </h4>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] text-muted-foreground animate-pulse font-medium uppercase tracking-wider">
+                                        {scrapingStatus === "scraping" && weatherLoading ? "Dual-Stream Syncing..." : "Syncing Data Streams..."}
+                                    </span>
+                                    <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Weather Analysis Status */}
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2 text-xs font-medium text-foreground">
+                                        {weatherLoading ? <Search className="h-3 w-3 text-primary animate-pulse" /> : <CheckCircle2 className="h-3 w-3 text-green-500" />}
+                                        Nearby Weather (NWS)
+                                    </div>
+                                    <div className="pl-5">
+                                        {weatherStations.length > 0 ? (
+                                            <div className="flex flex-wrap gap-1 items-center">
+                                                {weatherStations.slice(0, 3).map(s => (
+                                                    <Badge key={s.id} variant="secondary" className={cn("text-[9px] h-4 px-1.5 font-medium bg-background/50", weatherLoading && "animate-pulse")}>
+                                                        {s.id}
+                                                    </Badge>
+                                                ))}
+                                                {weatherStations.length > 3 && <span className="text-[9px] text-muted-foreground">+{weatherStations.length - 3}</span>}
+                                                {weatherLoading && <Loader2 className="h-2.5 w-2.5 animate-spin text-primary/40 ml-1" />}
+                                            </div>
+                                        ) : weatherLoading ? (
+                                            <p className="text-[10px] text-muted-foreground italic">Scanning frequency bands...</p>
+                                        ) : (
+                                            <p className="text-[10px] text-muted-foreground italic">Syncing stations...</p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Scraper Analysis Status */}
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2 text-xs font-medium text-foreground">
+                                        {scrapingStatus === "scraping" ? <Database className="h-3 w-3 text-primary animate-spin" /> : <CheckCircle2 className="h-3 w-3 text-green-500" />}
+                                        Jurisdiction Records
+                                    </div>
+                                    <div className="pl-5 flex flex-col gap-1.5">
+                                        {[
+                                            { name: "Regrid", key: "regrid" },
+                                            { name: "ASCE Hazard", key: "asce" },
+                                            { name: "Zillow Data", key: "zillow" }
+                                        ].map(source => {
+                                            const isLoaded = !!formData.sources?.[source.key];
+                                            return (
+                                                <div key={source.key} className="flex items-center justify-between text-[10px]">
+                                                    <span className={cn("font-medium", isLoaded ? "text-green-600" : "text-muted-foreground")}>
+                                                        {source.name}
+                                                    </span>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className={cn("italic", isLoaded ? "text-green-600/70" : "text-muted-foreground/60")}>
+                                                            {isLoaded ? "Synchronized" : "Connecting..."}
+                                                        </span>
+                                                        {isLoaded ? (
+                                                            <CheckCircle2 className="h-2.5 w-2.5 text-green-500" />
+                                                        ) : (
+                                                            <Loader2 className="h-2.5 w-2.5 animate-spin text-primary/40" />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Report Sections (Pop in as data arrives) */}
+                    {(Object.keys(formData.sources || {}).length > 0 || weatherStations.length > 0) && (
+                        <div className="space-y-4 animate-in fade-in duration-500">
+                            <div className="flex items-center justify-between border-b pb-2 mb-2">
+                                <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                                    <CheckSquare className="h-4 w-4 text-green-500" />
+                                    Property Intelligence Report
+                                </h4>
+                                {(!weatherLoading && scrapingStatus !== "scraping") && (
+                                    <Badge variant="outline" className="text-[10px] bg-green-500/5 text-green-600 border-green-500/20 px-2 py-0 animate-in zoom-in-50">VERIFIED</Badge>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {/* Regrid Card */}
+                                {formData.sources?.regrid && (
+                                    <div className="border rounded-md bg-card/50 p-3 shadow-sm group hover:border-primary/20 transition-all animate-in zoom-in-95 fill-mode-both">
+                                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
+                                            <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20 text-[10px] uppercase font-bold tracking-wider">Regrid</Badge>
+                                        </div>
+                                        <div className="space-y-2 text-sm">
+                                            <div className="grid grid-cols-[80px_1fr]">
+                                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Owner</span>
+                                                <span className="font-medium truncate" title={formData.sources.regrid.owner}>{formData.sources.regrid.owner || "-"}</span>
+                                            </div>
+                                            <div className="grid grid-cols-[80px_1fr]">
+                                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Parcel ID</span>
+                                                <span className="font-medium truncate" title={formData.sources.regrid.parcelNumber}>{formData.sources.regrid.parcelNumber || "-"}</span>
+                                            </div>
+                                            <div className="grid grid-cols-[80px_1fr]">
+                                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Lot Size</span>
+                                                <span className="font-medium">{formData.sources.regrid.lotSize || "-"}</span>
+                                            </div>
+                                            <div className="grid grid-cols-[80px_1fr]">
+                                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Land Use</span>
+                                                <span className="font-medium truncate" title={formData.sources.regrid.landUse}>{formData.sources.regrid.landUse || "-"}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* ASCE Card */}
+                                {formData.sources?.asce && (
+                                    <div className="border rounded-md bg-card/50 p-3 shadow-sm group hover:border-primary/20 transition-all animate-in zoom-in-95 fill-mode-both">
+                                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
+                                            <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/20 text-[10px] uppercase font-bold tracking-wider">ASCE 7-22</Badge>
+                                            <span className="text-[10px] text-muted-foreground ml-auto uppercase font-medium tracking-tighter">Loads</span>
+                                        </div>
+                                        <div className="space-y-2 text-sm">
+                                            <div className="grid grid-cols-[80px_1fr]">
+                                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Wind</span>
+                                                <span className="font-medium">{formData.sources.asce.windSpeed ? `${formData.sources.asce.windSpeed}` : "-"}</span>
+                                            </div>
+                                            <div className="grid grid-cols-[80px_1fr]">
+                                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Snow</span>
+                                                <span className="font-medium">{formData.sources.asce.snowLoad ? `${formData.sources.asce.snowLoad}` : "-"}</span>
+                                            </div>
+                                            <div className="pt-2 text-[10px] text-muted-foreground italic">
+                                                Structural safety constants.
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Zillow Card */}
+                                {formData.sources?.zillow && (
+                                    <div className="border rounded-md bg-card/50 p-3 shadow-sm group hover:border-primary/20 transition-all animate-in zoom-in-95 fill-mode-both">
+                                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
+                                            <Badge variant="outline" className="bg-indigo-500/10 text-indigo-500 border-indigo-500/20 text-[10px] uppercase font-bold tracking-wider">Zillow</Badge>
+                                        </div>
+                                        <div className="space-y-2 text-sm">
+                                            <div className="grid grid-cols-[80px_1fr]">
+                                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Parcel</span>
+                                                <span className="font-medium truncate">{formData.sources.zillow.parcelNumber || "-"}</span>
+                                            </div>
+                                            <div className="grid grid-cols-[80px_1fr]">
+                                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Lot Size</span>
+                                                <span className="font-medium">{formData.sources.zillow.lotSize || "-"}</span>
+                                            </div>
+                                            {formData.sources.zillow.interiorArea && (
+                                                <div className="grid grid-cols-[80px_1fr]">
+                                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Interior</span>
+                                                    <span className="font-medium truncate">{formData.sources.zillow.interiorArea}</span>
+                                                </div>
+                                            )}
+                                            {formData.sources.zillow.structureArea && (
+                                                <div className="grid grid-cols-[80px_1fr]">
+                                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Structure</span>
+                                                    <span className="font-medium truncate">{formData.sources.zillow.structureArea}</span>
+                                                </div>
+                                            )}
+                                            {formData.sources.zillow.yearBuilt && (
+                                                <div className="grid grid-cols-[80px_1fr]">
+                                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Built</span>
+                                                    <span className="font-medium">{formData.sources.zillow.yearBuilt}</span>
+                                                </div>
+                                            )}
+                                            {formData.sources.zillow.newConstruction !== null && formData.sources.zillow.newConstruction !== undefined && (
+                                                <div className="grid grid-cols-[80px_1fr]">
+                                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">New Const</span>
+                                                    <span className="font-medium">{formData.sources.zillow.newConstruction ? "Yes" : "No"}</span>
+                                                </div>
+                                            )}
+                                            <div className="pt-2 text-[10px] text-muted-foreground italic">
+                                                Secondary cross-verification.
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Weather Stations Grid (Show as soon as any stations exist) */}
+                            {weatherStations.length > 0 && (
+                                <div className="space-y-3 pt-4 animate-in fade-in slide-in-from-top-2 duration-700">
+                                    <h5 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
+                                        <CloudSun className="h-3 w-3" />
+                                        Nearby Observatories (NWS)
+                                    </h5>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {weatherStations.map((station) => (
+                                            <div key={station.id} className="border rounded-md bg-card/30 p-2.5 shadow-sm group hover:border-primary/20 transition-all hover:bg-muted/50 animate-in zoom-in-95 fill-mode-both">
+                                                <div className="flex items-center justify-between mb-1.5">
+                                                    <span className="text-[10px] font-bold text-primary">{station.id}</span>
+                                                    <span className="text-[10px] text-muted-foreground font-medium">
+                                                        {(station.distance / 1609.34).toFixed(1)}mi
+                                                    </span>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <div className="font-medium text-[11px] leading-tight line-clamp-1 text-foreground/90" title={station.name}>
+                                                        {station.name}
+                                                    </div>
+                                                    <div className="text-[9px] text-muted-foreground flex items-center justify-between italic">
+                                                        <span>{station.timeZone.split('/').pop()?.replace('_', ' ')}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                            {/* Fallback Merged View (Hidden if sources present, keeps backward compat if needed temporarily) */}
+                            {!formData.sources && (formData.lotSize || formData.parcelNumber) && (
+                                <div className="mt-4 p-4 border rounded-md bg-muted/30 animate-in fade-in-50">
+                                    <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                                        Property Data (Merged)
+                                    </h4>
+                                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-3">
+                                        <div className="space-y-1">
+                                            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Owner</Label>
+                                            <div className="font-medium text-sm truncate">{formData.owner || "-"}</div>
+                                        </div>
+                                        {/* ... other fields ... */}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
 

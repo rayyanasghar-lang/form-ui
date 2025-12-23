@@ -14,15 +14,11 @@ export default function FormsPage() {
   }, [])
 
   return (
-    <main className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-background">
-      {/* Dynamic Background Gradient */}
-      <div className="absolute inset-0 -z-10 bg-background">
-        <div className="absolute bottom-0 left-0 right-0 h-2/3 bg-gradient-to-t from-primary/40 via-secondary/20 to-transparent" />
-        <div className="absolute -bottom-64 -left-64 w-[800px] h-[800px] bg-secondary/20 rounded-full blur-[160px] animate-pulse" />
-        <div className="absolute -bottom-64 -right-64 w-[800px] h-[800px] bg-primary/20 rounded-full blur-[160px] animate-pulse" style={{ animationDelay: '2s' }} />
-      </div>
+    <main className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Dynamic Background Gradient - Option 4: Vertical Fade (Subtle) */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-[#FAA93E]/5 via-[#EBE5DA] to-[#E76549]/10" />
 
-      <div className="max-w-4xl mx-auto relative">
+      <div className="max-w-6xl mx-auto relative">
         {/* Header with Logo */}
         <div className="mb-8 flex items-start justify-between">
           <div className="flex items-center gap-4">
@@ -46,12 +42,29 @@ export default function FormsPage() {
           <ThemeToggle />
         </div>
 
+        {/* Illustrations on sides (visible only on very large screens) */}
+        {/* <div className="hidden 2xl:block absolute -left-110 top-30 pointer-events-none animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+          <Image
+            src="/images/new2.png"
+            alt="Solar Illustration Left"
+            width={450}
+            height={450}
+            className="opacity-80 drop-shadow-2xl grayscale-[20%] hover:grayscale-0 transition-all duration-700 hover:scale-105"
+          />
+        </div>
+        <div className="hidden 2xl:block absolute -right-120 bottom-30 pointer-events-none animate-fade-in-up" style={{ animationDelay: '1s' }}>
+          <Image
+            src="/images/left-illustration.png"
+            alt="Solar Illustration Right"
+            width={500}
+            height={500}
+            className="opacity-80 drop-shadow-2xl grayscale-[20%] hover:grayscale-0 transition-all duration-700 hover:scale-105"
+          />
+        </div> */}
+
         {/* Form */}
         <PermitPlansetForm />
       </div>
-
-      {/* Gradient overlay from bottom */}
-      <div className="gradient-overlay" />
     </main>
   )
 }

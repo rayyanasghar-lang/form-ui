@@ -193,14 +193,44 @@ body {
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
 }
-/* Custom gradient fade overlay from bottom */
+/* Custom gradient fade overlay from bottom
 .gradient-overlay {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   height: 250px;
-  background: linear-gradient(to top, oklch(0% 0 0 / 0.103), transparent);
+  background: linear-gradient(to top, oklch(0% 0 0 / 0), transparent);
   pointer-events: none;
   z-index: 50;
+} */
+
+@keyframes gradient {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes progress-fast {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-progress-fast {
+  animation: progress-fast 1s ease-in-out infinite;
+}
+
+.animate-gradient {
+  animation: gradient 15s ease infinite;
 }
