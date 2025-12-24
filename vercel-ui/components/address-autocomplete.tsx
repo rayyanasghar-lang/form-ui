@@ -96,7 +96,7 @@ function PlacesAutocomplete({ value, onChange, disabled, className }: AddressAut
         // Dispatch event to notify listeners that scraping has started
         window.dispatchEvent(new CustomEvent("property-data-scraping-started"));
         
-        const { scrapeZillowAction, scrapeASCEAction, scrapeRegridAction } = await import("@/app/actions/scrape-service");
+        const { scrapeZillowAction, scrapeASCE716Action, scrapeASCE722Action, scrapeRegridAction } = await import("@/app/actions/scrape-service");
         const { savePropertyData, updatePropertyData } = await import("@/lib/property-store");
 
         // Initial empty save to establish the address and timestamp
@@ -135,7 +135,21 @@ function PlacesAutocomplete({ value, onChange, disabled, className }: AddressAut
                     });
                 }
             }),
-            scrapeASCEAction(address).then(res => {
+            scrapeASCE716Action(address).then(res => {
+                if (res.success && res.data) {
+                    updatePropertyData({
+                        windSpeed716: res.data.windSpeed || null,
+                        snowLoad716: res.data.snowLoad || null,
+                        sources: {
+                            asce716: {
+                                windSpeed: res.data.windSpeed || null,
+                                snowLoad: res.data.snowLoad || null
+                            }
+                        }
+                    });
+                }
+            }),
+            scrapeASCE722Action(address).then(res => {
                 if (res.success && res.data) {
                     updatePropertyData({
                         windSpeed: res.data.windSpeed || null,

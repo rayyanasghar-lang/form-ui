@@ -25,6 +25,10 @@ export interface SourceData {
     windSpeed: string | null;
     snowLoad: string | null;
   };
+  asce716?: {
+    windSpeed: string | null;
+    snowLoad: string | null;
+  };
 }
 
 export interface PropertyData {
@@ -35,6 +39,8 @@ export interface PropertyData {
   landUse?: string | null;
   windSpeed: string | null;
   snowLoad: string | null;
+  windSpeed716?: string | null;
+  snowLoad716?: string | null;
   interiorArea?: string | null;
   structureArea?: string | null;
   newConstruction?: boolean | null;

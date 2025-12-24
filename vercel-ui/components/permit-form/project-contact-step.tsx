@@ -197,7 +197,8 @@ export default function ProjectContactStep({
                                     <div className="pl-5 flex flex-col gap-1.5">
                                         {[
                                             { name: "Regrid", key: "regrid" },
-                                            { name: "ASCE Hazard", key: "asce" },
+                                            { name: "ASCE 7-16", key: "asce716" },
+                                            { name: "ASCE 7-22", key: "asce" },
                                             { name: "Zillow Data", key: "zillow" }
                                         ].map(source => {
                                             const isLoaded = !!formData.sources?.[source.key];
@@ -266,11 +267,34 @@ export default function ProjectContactStep({
                                     </div>
                                 )}
 
-                                {/* ASCE Card */}
+                                {/* ASCE 7-16 Card */}
+                                {formData.sources?.asce716 && (
+                                    <div className="border rounded-md bg-card/50 p-3 shadow-sm group hover:border-primary/20 transition-all animate-in zoom-in-95 fill-mode-both">
+                                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
+                                            <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/20 text-[10px] uppercase font-bold tracking-wider">ASCE 7-16</Badge>
+                                            <span className="text-[10px] text-muted-foreground ml-auto uppercase font-medium tracking-tighter">Loads</span>
+                                        </div>
+                                        <div className="space-y-2 text-sm">
+                                            <div className="grid grid-cols-[80px_1fr]">
+                                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Wind</span>
+                                                <span className="font-medium">{formData.sources.asce716.windSpeed ? `${formData.sources.asce716.windSpeed}` : "-"}</span>
+                                            </div>
+                                            <div className="grid grid-cols-[80px_1fr]">
+                                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Snow</span>
+                                                <span className="font-medium">{formData.sources.asce716.snowLoad ? `${formData.sources.asce716.snowLoad}` : "-"}</span>
+                                            </div>
+                                            <div className="pt-2 text-[10px] text-muted-foreground italic">
+                                                Legacy structural constants.
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* ASCE 7-22 Card */}
                                 {formData.sources?.asce && (
                                     <div className="border rounded-md bg-card/50 p-3 shadow-sm group hover:border-primary/20 transition-all animate-in zoom-in-95 fill-mode-both">
                                         <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
-                                            <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/20 text-[10px] uppercase font-bold tracking-wider">ASCE 7-22</Badge>
+                                            <Badge variant="outline" className="bg-orange-600/10 text-orange-600 border-orange-600/20 text-[10px] uppercase font-bold tracking-wider">ASCE 7-22</Badge>
                                             <span className="text-[10px] text-muted-foreground ml-auto uppercase font-medium tracking-tighter">Loads</span>
                                         </div>
                                         <div className="space-y-2 text-sm">
@@ -283,7 +307,7 @@ export default function ProjectContactStep({
                                                 <span className="font-medium">{formData.sources.asce.snowLoad ? `${formData.sources.asce.snowLoad}` : "-"}</span>
                                             </div>
                                             <div className="pt-2 text-[10px] text-muted-foreground italic">
-                                                Structural safety constants.
+                                                Modern structural standards.
                                             </div>
                                         </div>
                                     </div>

@@ -251,7 +251,7 @@ export async function scrapeZillowAction(address: string) {
   }
 }
 
-export async function scrapeASCEAction(address: string) {
+export async function scrapeASCE722Action(address: string) {
   console.log(`[Scraper] Starting ASCE scrape for: ${address}`);
   let browser;
   try {
@@ -660,6 +660,227 @@ export async function scrapeRegridAction(address: string) {
     }
 }
 
+
+export async function scrapeASCE716Action(address: string){
+    console.log(`[Scraper] Starting ASCE scrape for: ${address}`);
+  let browser;
+  try {
+    browser = await getBrowser();
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1280, height: 800 });
+    await preparePage(page);
+
+    console.log(`[Scraper] Navigating to ASCE Hazard Tool...`);
+    await page.goto("https://ascehazardtool.org/", { waitUntil: "networkidle2", timeout: 60000 });
+
+    // Handle Splash Screen
+    console.log(`[Scraper] Checking for splash screen...`);
+    const closeSelectors = [
+      "#welcomePopup .details-popup-close-icon",
+      ".details-popup-close-icon",
+      ".splash-container .close",
+      ".jimu-btn-close",
+      "div[title='Close']"
+    ];
+
+    for (const selector of closeSelectors) {
+      try {
+        const btn = await page.$(selector);
+        if (btn) {
+          await btn.click();
+          console.log(`[Scraper] Closed splash with ${selector}`);
+          await sleep(1000);
+          break;
+        }
+      } catch (e) {}
+    }
+
+    // Search Address
+    console.log(`[Scraper] Searching address: ${address}`);
+    await page.waitForSelector("#geocoder_input", { timeout: 10000 });
+    await page.type("#geocoder_input", address, { delay: 50 });
+    await page.keyboard.press("Enter");
+    await sleep(5000); // Wait for map zoom and standard/risk selectors to populate
+
+    // Configure Parameters
+    console.log(`[Scraper] Configuring Standard and Risk (7-16 and II)...`);
+    
+    // Select Standard 7-22
+    await page.evaluate(() => {
+        const standardSelect = document.getElementById("standards-selector") as HTMLSelectElement;
+        if (standardSelect) {
+            standardSelect.value = "7-16"; 
+            standardSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    });
+    await sleep(2000); 
+
+    // Select Risk Category II
+    await page.evaluate(() => {
+        const riskSelect = document.getElementById("risk-level-selector") as HTMLSelectElement;
+        if (riskSelect) {
+            // Find option with text 'II' or value corresponding to it
+            for(let i=0; i<riskSelect.options.length; i++) {
+                if(riskSelect.options[i].text.includes("II") || riskSelect.options[i].value === "2") {
+                    riskSelect.selectedIndex = i;
+                    break;
+                }
+            }
+            riskSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    });
+    await sleep(2000);
+
+    // Select All Data Types to ensure Wind and Snow are present
+    // Select Data Types (Wind & Snow)
+    console.log(`[Scraper] Selecting Data Types (Wind/Snow)...`);
+    await page.evaluate(() => {
+        // Python script clicks labels: //label[contains(text(), 'Wind')]
+        const labels = Array.from(document.querySelectorAll('label'));
+        
+        const windLabel = labels.find(l => l.textContent && l.textContent.includes('Wind'));
+        if (windLabel) {
+            windLabel.click();
+        } else {
+            console.warn("Wind label not found");
+        }
+
+        const snowLabel = labels.find(l => l.textContent && l.textContent.includes('Snow'));
+        if (snowLabel) {
+            snowLabel.click();
+        } else {
+            console.warn("Snow label not found");
+        }
+    });
+    await sleep(1000);
+
+    // Click View Results
+    console.log(`[Scraper] Clicking View Results...`);
+    // Python script searches for //a[contains(text(), 'View Results')]
+    const viewResultsClicked = await page.evaluate(() => {
+        const anchors = Array.from(document.querySelectorAll('a'));
+        const btn = anchors.find(a => a.textContent && a.textContent.includes('View Results'));
+        if (btn) {
+            btn.click();
+            return true;
+        }
+        return false;
+    });
+
+    if (!viewResultsClicked) {
+        // Retry with broader search just in case
+        console.log("[Scraper] View Results <a> not found, trying general search...");
+        const clickedAny = await page.evaluate(() => {
+             const elems = Array.from(document.querySelectorAll('a, button, div, span'));
+             const target = elems.find(e => e.textContent && e.textContent.trim().toLowerCase() === 'view results');
+             if (target) {
+                 (target as HTMLElement).click();
+                 return true;
+             }
+             return false;
+        });
+        if (!clickedAny) {
+            throw new Error("Could not find 'View Results' button (checked <a> and other elements)");
+        }
+    }
+
+    // Wait for Report
+    console.log(`[Scraper] Waiting for #report container...`);
+    try {
+        await page.waitForSelector('#report', { timeout: 30000 });
+        // Python script waits for report text length > 10
+        await page.waitForFunction(() => {
+            const report = document.getElementById('report');
+            return report && report.innerText.trim().length > 10;
+        }, { timeout: 30000 });
+    } catch (e) {
+        console.error("[Scraper] Timed out waiting for #report or proper content.");
+    }
+    
+    // Wait for Results - Wait for "Retrieving Data..." to disappear and actual numbers to appear
+    console.log(`[Scraper] Waiting for results to load (waiting for 'Retrieving Data...' to clear)...`);
+    try {
+        await page.waitForFunction(
+            () => {
+                const body = document.body.innerText;
+                // Wait until we don't see "Retrieving Data..." OR we explicitly see the units
+                const ready = !body.includes("Retrieving Data...") && (body.includes("Vmph") || body.includes("lb/ft"));
+                return ready;
+            },
+            { timeout: 30000 }
+        );
+    } catch (e) {
+        console.log("[Scraper] Timed out waiting for data to load.");
+    }
+    
+    await sleep(2000); // Buffer for rendering
+
+    // Extract Data using precise selectors from user-provided DOM
+    console.log(`[Scraper] Extracting data from .loads-container...`);
+    const reportData = await page.evaluate(() => {
+      const result: { windSpeed: string | null; snowLoad: string | null, debugText?: string } = {
+        windSpeed: null,
+        snowLoad: null,
+        debugText: ""
+      };
+
+      const containers = Array.from(document.querySelectorAll('.loads-container'));
+      if (containers.length === 0) {
+          result.debugText = "No .loads-container elements found";
+          // Fallback to text capture
+          const bodyText = document.body.innerText;
+          result.debugText += "\nBody start: " + bodyText.substring(0, 500);
+      }
+
+      containers.forEach(container => {
+          const labelEl = container.querySelector('.loads-container__label');
+          const valueEl = container.querySelector('.loads-container__main-details');
+
+          if (labelEl && valueEl) {
+              const label = (labelEl as HTMLElement).innerText.trim();
+              const value = (valueEl as HTMLElement).innerText.trim(); // "113 Vmph" or "54 lb/ft2"
+
+              if (label.includes("Wind")) {
+                  result.windSpeed = value;
+              } else if (label.includes("Snow") || label.includes("Ground Snow")) {
+                  result.snowLoad = value;
+              }
+          }
+      });
+
+      // Fallback regex if container parse failed but text is present
+      if (!result.windSpeed || !result.snowLoad) {
+          const bodyText = document.body.innerText;
+          if (!result.windSpeed) {
+             const wMatch = bodyText.match(/Wind[\s\S]*?(\d+)\s*Vmph/i);
+             if (wMatch) result.windSpeed = `${wMatch[1]} Vmph`;
+          }
+          if (!result.snowLoad) {
+             const sMatch = bodyText.match(/(Ground Snow Load|Snow)[\s\S]*?(\d+(\.\d+)?)\s*lb\/ft/i);
+             if (sMatch) result.snowLoad = `${sMatch[2]} lb/ft²`;
+          }
+      }
+
+      return result;
+    });
+
+    if (!reportData.windSpeed && !reportData.snowLoad) {
+        console.log("[Scraper] Extraction failed. Debug info:", reportData.debugText);
+    }
+
+    // Clean up units if needed (sanitize)
+    if (reportData.windSpeed) reportData.windSpeed = reportData.windSpeed.replace(/\n/g, " ").trim();
+    if (reportData.snowLoad) reportData.snowLoad = reportData.snowLoad.replace(/\n/g, " ").trim();
+
+    console.log(`[Scraper] ASCE result:`, reportData);
+    return { success: reportData.windSpeed !== null || reportData.snowLoad !== null, data: reportData };
+  } catch (error: any) {
+    console.error(`[Scraper] ASCE error:`, error);
+    return { success: false, error: error.message };
+  } finally {
+    if (browser) await browser.close();
+  }
+}
 /**
  * Run all THREE scrapers concurrently
  */
@@ -667,9 +888,10 @@ export async function scrapeAllAction(address: string) {
     console.log(`[Scraper] Starting concurrent scrape for: ${address}`);
 
     try {
-        const [zillowResult, asceResult, regridResult] = await Promise.all([
+        const [zillowResult, asce716Result, asce722Result, regridResult] = await Promise.all([
             scrapeZillowAction(address),
-            scrapeASCEAction(address),
+            scrapeASCE716Action(address),
+            scrapeASCE722Action(address),
             scrapeRegridAction(address),
         ]);
 
@@ -679,7 +901,8 @@ export async function scrapeAllAction(address: string) {
             success: true,
             data: {
                 zillow: zillowResult,
-                asce: asceResult,
+                asce716: asce716Result,
+                asce722: asce722Result,
                 regrid: regridResult,
             }
         };

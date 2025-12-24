@@ -16,7 +16,7 @@ export default function FormsPage() {
   return (
     <main className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Dynamic Background Gradient - Option 4: Vertical Fade (Subtle) */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-[#FAA93E]/5 via-[#EBE5DA] to-[#E76549]/10" />
+      <div className="absolute inset-0 -z-10 bg-linear-to-b from-[#FAA93E]/5 via-[#EBE5DA] to-[#E76549]/10" />
 
       <div className="max-w-6xl mx-auto relative">
         {/* Header with Logo */}
