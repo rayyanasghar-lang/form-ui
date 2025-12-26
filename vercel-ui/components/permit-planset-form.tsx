@@ -46,12 +46,6 @@ export default function PermitPlansetForm() {
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const [formData, setFormData] = useState({
-    // Company Profile (auto-filled simulation)
-    companyName: "Solar Solutions Inc.",
-    contactName: "John Doe",
-    email: "john.doe@solarsolutions.com",
-    phone: "+1 (555) 123-4567",
-
     // Project Information
     projectName: "",
     projectAddress: "",
@@ -440,10 +434,10 @@ export default function PermitPlansetForm() {
     // Construct payload to match API expectations
     const payload = {
       user_profile: {
-        company_name: formData.companyName,
-        contact_name: formData.contactName,
-        email: formData.email,
-        phone: formData.phone,
+        company_name: "Solar Solutions Inc.", // This would ideally come from a global state/context
+        contact_name: "John Doe",
+        email: "john.doe@solarsolutions.com",
+        phone: "+1 (555) 123-4567",
       },
       project: {
         name: formData.projectName,

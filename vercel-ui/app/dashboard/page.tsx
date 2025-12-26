@@ -1,18 +1,15 @@
 "use client"
-
 import { motion } from "framer-motion"
-import Image from "next/image"
 import Link from "next/link"
 import { 
   PlusCircle, 
   LayoutDashboard, 
   UserCircle2, 
   ChevronRight,
-  LogOut,
-  Bell
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Navbar } from "@/components/layout/navbar"
 
 export default function DashboardPage() {
   const container = {
@@ -37,7 +34,8 @@ export default function DashboardPage() {
       icon: PlusCircle,
       href: "/forms",
       primary: true,
-      color: "oklch(0.75 0.14 35)"
+      color: "oklch(0.75 0.14 35)",
+      blobClass: "top-0 right-0 rounded-bl-full -mr-8 -mt-8"
     },
     {
       title: "View Projects",
@@ -45,7 +43,8 @@ export default function DashboardPage() {
       icon: LayoutDashboard,
       href: "#",
       primary: false,
-      color: "oklch(0.65 0.15 184.7)"
+      color: "oklch(0.65 0.15 184.7)",
+      blobClass: "bottom-0 left-0 rounded-tr-full -ml-8 -mb-8"
     },
     {
       title: "User Profile",
@@ -53,37 +52,14 @@ export default function DashboardPage() {
       icon: UserCircle2,
       href: "/profile",
       primary: false,
-      color: "oklch(0.55 0.1 227.4)"
+      color: "oklch(0.55 0.1 227.4)",
+      blobClass: "top-0 left-0 rounded-br-full -ml-8 -mt-8"
     }
   ]
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-[#FAA93E]/5 via-[#EBE5DA] to-[#E76549]/10 relative overflow-hidden selection:bg-primary/20">
-      {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/40 border-b border-white/40">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <Link href="/dashboard" className="transition-transform hover:scale-105 active:scale-95">
-            <Image src="/logo.png" alt="SunPermit" width={140} height={50} className="h-10 w-auto" />
-          </Link>
-
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="rounded-full bg-white/20 hover:bg-white/40 relative">
-              <Bell className="h-5 w-5 opacity-70" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full" />
-            </Button>
-            
-            <div className="flex items-center gap-3 pl-2 border-l border-white/40">
-              <div className="hidden sm:block text-right">
-                <p className="text-sm font-bold leading-tight">Solar Solutions Inc.</p>
-                <p className="text-xs font-medium text-muted-foreground">Admin Account</p>
-              </div>
-              <Button size="icon" className="rounded-full h-10 w-10 border-2 border-white shadow-lg overflow-hidden p-0">
-                <div className="w-full h-full bg-primary flex items-center justify-center text-white font-bold">JD</div>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-linear-to-b from-[#FAA93E]/5 via-[#EBE5DA] to-[#E76549]/10 relative selection:bg-primary/20">
+      <Navbar title="Dashboard" />
 
       <main className="max-w-7xl mx-auto px-6 py-12 md:py-20 relative">
         {/* Background Decorative Element */}
@@ -114,13 +90,14 @@ export default function DashboardPage() {
             <motion.div key={i} variants={item}>
               <Link href={option.href} className="group block h-full">
                 <Card className={`h-full relative overflow-hidden backdrop-blur-xl bg-white/40 border-white/60 shadow-xl transition-all duration-500 hover:shadow-2xl hover:-translate-y-3 rounded-[2.5rem] group ${option.primary ? 'border-primary/20' : ''}`}>
-                  {option.primary && (
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-bl-full -mr-8 -mt-8 transition-all duration-500 group-hover:scale-150 group-hover:bg-primary/20" />
-                  )}
+                  <div 
+                    className={`absolute w-32 h-32 opacity-10 transition-all duration-500 group-hover:scale-150 group-hover:opacity-20 ${option.blobClass}`}
+                    style={{ backgroundColor: option.color }}
+                  />
                   
                   <CardHeader className="pt-10 pb-4">
                     <div 
-                      className="w-16 h-16 rounded-[1.5rem] flex items-center justify-center mb-6 shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3"
+                      className="w-16 h-16 rounded-3xl flex items-center justify-center mb-6 shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3"
                       style={{ backgroundColor: `${option.color}15`, color: option.color }}
                     >
                       <option.icon className="w-8 h-8" />
@@ -128,7 +105,7 @@ export default function DashboardPage() {
                     <CardTitle className="text-2xl font-bold tracking-tight mb-2 group-hover:text-primary transition-colors">
                       {option.title}
                     </CardTitle>
-                    <CardDescription className="text-base font-medium leading-relaxed min-h-[4rem]">
+                    <CardDescription className="text-base font-medium leading-relaxed min-h-16">
                       {option.description}
                     </CardDescription>
                   </CardHeader>

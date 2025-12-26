@@ -44,69 +44,6 @@ export default function ProjectContactStep({
     return (
         <FormCard title="Project & Contact Information">
             <div className="space-y-6">
-                {/* Company Profile */}
-                <div>
-                    <h3 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-                        {/* <Building2 className="w-5 h-5 text-primary" /> */}
-                        Company Profile
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="companyName" className="flex items-center gap-2">
-                                <Building2 className="w-4 h-4 text-muted-foreground" />
-                                Company Name
-                            </Label>
-                            <Input
-                                id="companyName"
-                                value={formData.companyName}
-                                onChange={(e) => updateField("companyName", e.target.value)}
-                                className="bg-muted/50"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="contactName" className="flex items-center gap-2">
-                                <User className="w-4 h-4 text-muted-foreground" />
-                                Contact Name
-                            </Label>
-                            <Input
-                                id="contactName"
-                                value={formData.contactName}
-                                onChange={(e) => updateField("contactName", e.target.value)}
-                                className="bg-muted/50"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="email" className="flex items-center gap-2">
-                                <Mail className="w-4 h-4 text-muted-foreground" />
-                                Email
-                            </Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                value={formData.email}
-                                onChange={(e) => updateField("email", e.target.value)}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="phone" className="flex items-center gap-2">
-                                <Phone className="w-4 h-4 text-muted-foreground" />
-                                Phone
-                            </Label>
-                            <Input
-                                id="phone"
-                                type="tel"
-                                value={formData.phone}
-                                onChange={(e) => updateField("phone", e.target.value)}
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                <Separator />
-
                 {/* Project Information */}
                 <div>
                     <h3 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
