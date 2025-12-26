@@ -95,8 +95,8 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-[#FAA93E]/5 via-[#EBE5DA] to-[#E76549]/10 flex items-center justify-center p-4 selection:bg-primary/20">
-      <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-12 items-center">
+    <div className="min-h-screen relative flex items-center justify-center p-4 selection:bg-primary/20">
+      <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-12 items-center relative z-10">
         {/* Left Side - Branding */}
         <div className="hidden lg:flex flex-col space-y-8 animate-fade-in-up">
           <div className="flex justify-start">
@@ -110,7 +110,7 @@ export default function LandingPage() {
             />
           </div>
           <div className="space-y-4">
-            <h1 className="text-5xl lg:text-6xl font-extrabold tracking-tight text-balance leading-[1.1]" style={{ color: "oklch(0.75 0.14 35)" }}>
+            <h1 className="text-5xl lg:text-6xl font-extrabold tracking-tight text-balance leading-[1.1]" style={{ color: "oklch(68.351% 0.19585 34.956)" }}>
               Streamline Your <span className="text-foreground">Solar Permits</span>
             </h1>
             <p className="text-xl text-muted-foreground/80 font-medium max-w-md">
@@ -126,10 +126,10 @@ export default function LandingPage() {
             ].map((stat, i) => (
               <div 
                 key={i} 
-                className="bg-white/40 backdrop-blur-md rounded-2xl p-5 border border-white/40 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1"
+                className="bg-[#F5F0E8] rounded-2xl p-5 border border-[#E8E0D5] shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1"
                 style={{ animationDelay: stat.delay }}
               >
-                <div className="text-2xl font-bold mb-1" style={{ color: "oklch(0.75 0.14 35)" }}>
+                <div className="text-2xl font-bold mb-1" style={{ color: "oklch(68.351% 0.19585 34.956)" }}>
                   {stat.value}
                 </div>
                 <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">{stat.label}</div>
@@ -149,7 +149,7 @@ export default function LandingPage() {
           <div className="absolute -top-20 -right-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl -z-10 animate-pulse" />
           <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-secondary/10 rounded-full blur-3xl -z-10 animate-pulse" style={{ animationDelay: '1s' }} />
 
-          <Card className="backdrop-blur-xl bg-card/70 shadow-[0_20px_50px_rgba(0,0,0,0.1)] border-white/40 overflow-hidden rounded-3xl">
+          <Card className="bg-[#F5F0E8] shadow-[0_20px_50px_rgba(0,0,0,0.08)] border-[#E8E0D5] overflow-hidden rounded-3xl">
             <div className="lg:hidden p-6 pb-0 flex justify-center">
               <Image src="/logo.png" alt="Logo" width={140} height={50} className="h-10 w-auto" />
             </div>
@@ -184,7 +184,7 @@ export default function LandingPage() {
                         <Label htmlFor="login-password">Password</Label>
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button variant="link" className="px-0 h-auto text-sm font-semibold hover:no-underline" style={{ color: "oklch(0.75 0.14 35)" }}>
+                            <Button variant="link" className="px-0 h-auto text-sm font-semibold hover:no-underline" style={{ color: "oklch(68.351% 0.19585 34.956)" }}>
                               Forgot password?
                             </Button>
                           </DialogTrigger>
@@ -200,7 +200,7 @@ export default function LandingPage() {
                                 <Label htmlFor="reset-email">Email Address</Label>
                                 <Input id="reset-email" type="email" placeholder="you@company.com" className="h-11 rounded-xl" />
                               </div>
-                              <Button className="w-full h-11 rounded-xl font-bold shadow-lg shadow-primary/20" style={{ backgroundColor: "oklch(0.75 0.14 35)" }}>
+                              <Button className="w-full h-11 rounded-xl font-bold shadow-lg shadow-primary/20" style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}>
                                 Send Reset Link
                               </Button>
                             </div>
@@ -214,7 +214,7 @@ export default function LandingPage() {
                         className="h-11 rounded-xl bg-white/50 border-white/50 focus:bg-white transition-all focus:ring-4 focus:ring-primary/10"
                       />
                     </div>
-                    <Button type="submit" className="w-full h-12 rounded-xl text-md font-bold shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200" style={{ backgroundColor: "oklch(0.75 0.14 35)" }}>
+                    <Button type="submit" className="w-full h-12 rounded-xl text-md font-bold shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200" style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}>
                       Sign In
                     </Button>
                   </form>
@@ -273,7 +273,7 @@ export default function LandingPage() {
                             type="button"
                             onClick={handleNextStep}
                             className="w-full h-12 rounded-xl text-md font-bold shadow-lg shadow-primary/20 mt-4"
-                            style={{ backgroundColor: "oklch(0.75 0.14 35)" }}
+                            style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
                           >
                             Continue
                           </Button>
@@ -344,7 +344,7 @@ export default function LandingPage() {
                               type="button"
                               onClick={handleNextStep}
                               className="flex-1 h-12 rounded-xl font-bold shadow-lg shadow-primary/20"
-                              style={{ backgroundColor: "oklch(0.75 0.14 35)" }}
+                              style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
                             >
                               Continue
                             </Button>
@@ -444,7 +444,7 @@ export default function LandingPage() {
                             >
                               Back
                             </Button>
-                            <Button type="submit" className="flex-1 h-12 rounded-xl font-bold shadow-xl shadow-primary/30" style={{ backgroundColor: "oklch(0.75 0.14 35)" }}>
+                            <Button type="submit" className="flex-1 h-12 rounded-xl font-bold shadow-xl shadow-primary/30" style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}>
                               Create Account
                             </Button>
                           </div>

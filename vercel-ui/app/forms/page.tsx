@@ -19,7 +19,7 @@ export default function FormsPage() {
   if (!mounted) return null
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-[#FAA93E]/5 via-[#EBE5DA] to-[#E76549]/10 relative selection:bg-primary/20">
+    <div className="min-h-screen relative selection:bg-primary/20">
       <Navbar title="Forms" backLink={{ label: "Dashboard", href: "/dashboard" }} />
 
       <main className="py-12 px-4 sm:px-6 lg:px-8 relative">

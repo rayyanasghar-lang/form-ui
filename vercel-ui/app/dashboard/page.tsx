@@ -34,14 +34,14 @@ export default function DashboardPage() {
       icon: PlusCircle,
       href: "/forms",
       primary: true,
-      color: "oklch(0.75 0.14 35)",
+      color: "oklch(68.351% 0.19585 34.956)",
       blobClass: "top-0 right-0 rounded-bl-full -mr-8 -mt-8"
     },
     {
       title: "View Projects",
       description: "Track progress, download approved plans, and manage active submissions.",
       icon: LayoutDashboard,
-      href: "#",
+      href: "/projects",
       primary: false,
       color: "oklch(0.65 0.15 184.7)",
       blobClass: "bottom-0 left-0 rounded-tr-full -ml-8 -mb-8"
@@ -58,7 +58,7 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-[#FAA93E]/5 via-[#EBE5DA] to-[#E76549]/10 relative selection:bg-primary/20">
+    <div className="min-h-screen relative selection:bg-primary/20">
       <Navbar title="Dashboard" />
 
       <main className="max-w-7xl mx-auto px-6 py-12 md:py-20 relative">
@@ -72,7 +72,7 @@ export default function DashboardPage() {
             transition={{ duration: 0.5 }}
           >
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
-              Welcome back, <span style={{ color: "oklch(0.75 0.14 35)" }}>John</span>!
+              Welcome back, <span style={{ color: "oklch(68.351% 0.19585 34.956)" }}>John</span>!
             </h1>
             <p className="text-xl text-muted-foreground/80 font-medium leading-relaxed">
               What would you like to do today? Select an option below to manage your solar permit workflow.
@@ -89,7 +89,7 @@ export default function DashboardPage() {
           {navOptions.map((option, i) => (
             <motion.div key={i} variants={item}>
               <Link href={option.href} className="group block h-full">
-                <Card className={`h-full relative overflow-hidden backdrop-blur-xl bg-white/40 border-white/60 shadow-xl transition-all duration-500 hover:shadow-2xl hover:-translate-y-3 rounded-[2.5rem] group ${option.primary ? 'border-primary/20' : ''}`}>
+                <Card className={`h-full relative overflow-hidden bg-[#F5F0E8] border-[#E8E0D5] shadow-lg transition-all duration-500 hover:shadow-xl hover:-translate-y-3 rounded-[2.5rem] group ${option.primary ? 'border-primary/20' : ''}`}>
                   <div 
                     className={`absolute w-32 h-32 opacity-10 transition-all duration-500 group-hover:scale-150 group-hover:opacity-20 ${option.blobClass}`}
                     style={{ backgroundColor: option.color }}
@@ -113,7 +113,7 @@ export default function DashboardPage() {
                   <CardContent className="pb-10 pt-4 flex items-center text-sm font-bold tracking-wide uppercase">
                     <span 
                       className="inline-flex items-center gap-1 transition-all duration-300 group-hover:gap-3"
-                      style={{ color: "oklch(0.75 0.14 35)" }}
+                      style={{ color: "oklch(68.351% 0.19585 34.956)" }}
                     >
                       Browse Option <ChevronRight className="w-4 h-4" />
                     </span>
@@ -129,7 +129,7 @@ export default function DashboardPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="mt-20 p-8 rounded-[2.5rem] border border-white/40 bg-white/20 backdrop-blur-md"
+          className="mt-20 p-8 rounded-[2.5rem] border border-[#E8E0D5] bg-[#F5F0E8] shadow-lg"
         >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold">Recent Updates</h2>
@@ -137,7 +137,7 @@ export default function DashboardPage() {
           </div>
           <div className="space-y-4">
             {[1, 2].map((_, i) => (
-              <div key={i} className="flex items-center gap-6 p-4 rounded-[1.25rem] bg-white/30 border border-white/30 hover:bg-white/50 transition-colors">
+              <div key={i} className="flex items-center gap-6 p-4 rounded-[1.25rem] bg-[#EDE8E0] border border-[#E0D9CF] hover:bg-[#E5DFD5] transition-colors">
                 <div className="h-12 w-12 rounded-xl bg-green-500/10 flex items-center justify-center text-green-600">
                   <LayoutDashboard className="w-6 h-6" />
                 </div>

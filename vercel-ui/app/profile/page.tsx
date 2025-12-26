@@ -33,6 +33,8 @@ import {
   FileCheck,
   Download,
   Monitor,
+  PanelLeftClose,
+  PanelLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +47,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("account");
   const [isSaving, setIsSaving] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Mock Licenses State
   const [licenses, setLicenses] = useState([
@@ -111,9 +114,18 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="flex h-screen bg-linear-to-b from-[#FAA93E]/5 via-[#EBE5DA] to-[#E76549]/10 overflow-hidden font-poppins selection:bg-primary/20">
+    <div className="flex h-screen overflow-hidden font-poppins selection:bg-primary/20">
       {/* --- SIDEBAR --- */}
-      <aside className="w-72 flex flex-col border-r border-black/5 bg-white/40 backdrop-blur-xl z-40 relative">
+      <aside className={`flex flex-col border-r border-[#E8E0D5] bg-[#F5F0E8] z-40 relative transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'w-0 overflow-hidden opacity-0' : 'w-72'}`}>
+        {/* Toggle Button - visible when NOT collapsed */}
+        <button
+          onClick={() => setSidebarCollapsed(true)}
+          className="absolute top-4 right-4 z-50 p-2 rounded-lg hover:bg-black/5 transition-colors text-zinc-500 hover:text-zinc-900"
+          title="Hide sidebar"
+        >
+          <PanelLeftClose className="h-4 w-4" />
+        </button>
+        
         {/* Header */}
         <div className="px-4 h-16 flex items-center border-b border-black/5 bg-transparent">
           <Link href="/dashboard" className="flex items-center gap-3">
@@ -205,6 +217,16 @@ export default function ProfilePage() {
         {/* Content Header */}
         <header className="h-16 px-6 border-b border-zinc-200/60 bg-white/10 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
+            {/* Sidebar Toggle - visible when sidebar is collapsed */}
+            {sidebarCollapsed && (
+              <button
+                onClick={() => setSidebarCollapsed(false)}
+                className="p-2 rounded-lg hover:bg-black/5 transition-colors text-zinc-500 hover:text-zinc-900 -ml-2"
+                title="Show sidebar"
+              >
+                <PanelLeft className="h-5 w-5" />
+              </button>
+            )}
             <h2 className="text-xl font-bold text-zinc-900">
               {
                 navSections
@@ -267,7 +289,7 @@ export default function ProfilePage() {
                   {/* MAIN COLUMN - STACKED SECTIONS */}
                   <div className="col-span-12 lg:col-span-8 space-y-6">
                     {/* Section 1: Personal Branding */}
-                    <div className="bg-white/40 backdrop-blur-xl border border-white/40 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden group">
+                    <div className="bg-[#F5F0E8] border border-[#E8E0D5] rounded-[2.5rem] p-8 shadow-lg relative overflow-hidden group">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-bl-full -mr-8 -mt-8 transition-all duration-500 group-hover:scale-110" />
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-black/5">
                         <div className="flex items-center gap-3">
@@ -306,7 +328,7 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Section 2: Communication */}
-                    <div className="bg-white/40 backdrop-blur-xl border border-white/40 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden group">
+                    <div className="bg-[#F5F0E8] border border-[#E8E0D5] rounded-[2.5rem] p-8 shadow-lg relative overflow-hidden group">
                       <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/10 rounded-tr-full -ml-8 -mb-8 transition-all duration-500 group-hover:scale-110" />
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-black/5">
                         <div className="flex items-center gap-3">
@@ -338,7 +360,7 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Section 3: Localization */}
-                    <div className="bg-white/40 backdrop-blur-xl border border-white/40 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden group">
+                    <div className="bg-[#F5F0E8] border border-[#E8E0D5] rounded-[2.5rem] p-8 shadow-lg relative overflow-hidden group">
                       <div className="absolute top-0 left-0 w-32 h-32 bg-orange-500/10 rounded-br-full -ml-8 -mt-8 transition-all duration-500 group-hover:scale-110" />
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-black/5">
                         <div className="flex items-center gap-3">
@@ -375,7 +397,7 @@ export default function ProfilePage() {
                   {/* RIGHT CONTEXT PANEL */}
                   <div className="col-span-12 lg:col-span-4 space-y-6 sticky top-0">
                     {/* Status Widget */}
-                    <div className="bg-white/40 backdrop-blur-xl border border-white/40 rounded-[2.5rem] p-8 shadow-xl">
+                    <div className="bg-[#F5F0E8] border border-[#E8E0D5] rounded-[2.5rem] p-8 shadow-lg">
                       <div className="flex items-center gap-4 mb-6">
                         <div className="h-12 w-12 bg-green-500/10 rounded-[1.25rem] flex items-center justify-center">
                           <CheckCircle2 className="h-6 w-6 text-green-600" />
@@ -398,7 +420,7 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Guidance Widget */}
-                    <div className="bg-white/40 backdrop-blur-xl border border-white/40 rounded-[2.5rem] p-8 shadow-xl">
+                    <div className="bg-[#F5F0E8] border border-[#E8E0D5] rounded-[2.5rem] p-8 shadow-lg">
                       <div className="flex items-center gap-4 mb-6">
                         <div className="h-12 w-12 bg-amber-500/10 rounded-[1.25rem] flex items-center justify-center">
                           <Zap className="h-6 w-6 text-amber-600" />
@@ -426,7 +448,7 @@ export default function ProfilePage() {
                   {/* MAIN COLUMN - STACKED SECTIONS */}
                   <div className="col-span-12 lg:col-span-8 space-y-6">
                     {/* Section 1: Core Branding */}
-                    <div className="bg-white/40 backdrop-blur-xl border border-white/40 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden group">
+                    <div className="bg-[#F5F0E8] border border-[#E8E0D5] rounded-[2.5rem] p-8 shadow-lg relative overflow-hidden group">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-bl-full -mr-8 -mt-8 transition-all duration-500 group-hover:scale-110" />
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-black/5">
                         <div className="flex items-center gap-3">
@@ -462,7 +484,7 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Section 2: Physical Presence */}
-                    <div className="bg-white/40 backdrop-blur-xl border border-white/40 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden group">
+                    <div className="bg-[#F5F0E8] border border-[#E8E0D5] rounded-[2.5rem] p-8 shadow-lg relative overflow-hidden group">
                       <div className="absolute bottom-0 left-0 w-32 h-32 bg-rose-500/10 rounded-tr-full -ml-8 -mb-8 transition-all duration-500 group-hover:scale-110" />
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-black/5">
                         <div className="flex items-center gap-3">
@@ -512,7 +534,7 @@ export default function ProfilePage() {
                   {/* MAIN COLUMN - STACKED SECTIONS */}
                   <div className="col-span-12 lg:col-span-8 space-y-6">
                     {/* Section 1: Verified Credentials */}
-                    <div className="bg-white/40 backdrop-blur-xl border border-white/40 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden group">
+                    <div className="bg-[#F5F0E8] border border-[#E8E0D5] rounded-[2.5rem] p-8 shadow-lg relative overflow-hidden group">
                       <div className="absolute top-0 left-0 w-32 h-32 bg-primary/10 rounded-br-full -ml-8 -mt-8 transition-all duration-500 group-hover:scale-110" />
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-black/5">
                         <div className="flex items-center gap-3">
@@ -569,7 +591,7 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Section 2: Document Vault */}
-                    <div className="bg-white/40 backdrop-blur-xl border border-white/40 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden group">
+                    <div className="bg-[#F5F0E8] border border-[#E8E0D5] rounded-[2.5rem] p-8 shadow-lg relative overflow-hidden group">
                       <div className="absolute bottom-0 right-0 w-32 h-32 bg-blue-500/10 rounded-tl-full -mr-8 -mb-8 transition-all duration-500 group-hover:scale-110" />
                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-black/5">
                         <div className="flex items-center gap-3">
@@ -608,7 +630,7 @@ export default function ProfilePage() {
                   {/* MAIN COLUMN - STACKED SECTIONS */}
                   <div className="col-span-12 lg:col-span-8 space-y-6">
                     {/* Section 1: Authentication */}
-                    <div className="bg-white/40 backdrop-blur-xl border border-white/40 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden group">
+                    <div className="bg-[#F5F0E8] border border-[#E8E0D5] rounded-[2.5rem] p-8 shadow-lg relative overflow-hidden group">
                       <div className="absolute top-0 left-0 w-32 h-32 bg-green-500/10 rounded-br-full -ml-8 -mt-8 transition-all duration-500 group-hover:scale-110" />
                        <div className="flex items-center justify-between mb-8 pb-4 border-b border-black/5">
                         <div className="flex items-center gap-3">
@@ -654,7 +676,7 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Section 2: Session Activity */}
-                    <div className="bg-white/40 backdrop-blur-xl border border-white/40 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden group">
+                    <div className="bg-[#F5F0E8] border border-[#E8E0D5] rounded-[2.5rem] p-8 shadow-lg relative overflow-hidden group">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-bl-full -mr-8 -mt-8 transition-all duration-500 group-hover:scale-110" />
                        <div className="flex items-center justify-between mb-8 pb-4 border-b border-black/5">
                         <div className="flex items-center gap-3">
