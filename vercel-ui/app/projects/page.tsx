@@ -9,24 +9,20 @@ import {
   XAxis, 
   YAxis, 
   CartesianGrid, 
-  ResponsiveContainer 
 } from "recharts"
 import { 
-  FolderOpen, 
   Clock, 
   CheckCircle2, 
   Zap,
   TrendingUp,
-  TrendingDown,
   MoreHorizontal,
   Eye,
   Edit,
   Trash2,
   ExternalLink,
-  FileText,
-  Users,
+  Activity,
   DollarSign,
-  Activity
+  FolderOpen
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -47,12 +43,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Navbar } from "@/components/layout/navbar"
+import Sidebar from "@/components/projects/sidebar"
 import { StatusBadge } from "@/components/projects/status-badge"
 import { 
   mockProjects, 
   getProjectStats, 
-  getSubmissionChartData 
 } from "@/lib/mock-projects"
 import type { ProjectStatus } from "@/types/project"
 
@@ -131,352 +126,309 @@ export default function ProjectsPage() {
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1
+        staggerChildren: 0.08
       }
     }
   }
 
   const item = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 15 },
     show: { opacity: 1, y: 0 }
   }
 
   return (
-    <div className="min-h-screen relative selection:bg-primary/20">
-      <Navbar 
-        title="My Projects" 
-        backLink={{ label: "Dashboard", href: "/dashboard" }}
-      />
+    <div className="flex h-screen bg-background">
+      {/* Sidebar */}
+      <Sidebar />
 
-      <main className="max-w-7xl mx-auto px-6 py-8 md:py-12 relative">
-        {/* Background Decorative Element */}
-        <div className="absolute top-1/4 -right-1/4 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] -z-10" />
-
-        {/* Page Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mb-8"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900">
-                Project Dashboard
-              </h1>
-              <p className="text-muted-foreground mt-2 text-lg">
-                Manage and track all your solar permit submissions
-              </p>
-            </div>
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto">
+        {/* Top Header Bar */}
+        <div className="border-b border-[#E8E0D5] bg-[#F5F0E8] sticky top-0 z-10">
+          <div className="flex items-center justify-between px-6 py-4">
+            <h1 className="text-2xl font-bold text-zinc-900">Project Dashboard</h1>
             <Link href="/forms">
               <Button 
-                size="lg"
-                className="font-bold shadow-lg hover:shadow-xl transition-all text-white"
+                className="font-bold shadow-md hover:shadow-lg transition-all text-white"
                 style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
               >
                 ⚡ Quick Create
               </Button>
             </Link>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Metric Cards */}
-        <motion.div
-          variants={container}
-          initial="hidden"
-          animate="show"
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
-        >
-          {/* Total Revenue */}
-          <motion.div variants={item}>
-            <Card className="relative overflow-hidden bg-[#F5F0E8] border-[#E8E0D5] shadow-lg hover:shadow-xl transition-all duration-300 group">
-              <div 
-                className="absolute top-0 right-0 w-24 h-24 rounded-bl-full -mr-6 -mt-6 opacity-10 transition-all duration-500 group-hover:scale-125 group-hover:opacity-15"
-                style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
-              />
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between uppercase tracking-wider">
-                  Total Revenue
-                  <TrendingUp className="w-4 h-4 text-green-600" />
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-zinc-900">$12,450.00</div>
-                <div className="mt-3 flex items-center gap-2">
-                  <span className="text-green-600 font-semibold text-sm flex items-center gap-1">
-                    <TrendingUp className="h-4 w-4" />
-                    +12.5%
-                  </span>
-                  <span className="text-xs text-muted-foreground">vs last month</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">Trending up this month</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Pending Reviews */}
-          <motion.div variants={item}>
-            <Card className="relative overflow-hidden bg-[#F5F0E8] border-[#E8E0D5] shadow-lg hover:shadow-xl transition-all duration-300 group">
-              <div 
-                className="absolute top-0 right-0 w-24 h-24 rounded-bl-full -mr-6 -mt-6 opacity-10 transition-all duration-500 group-hover:scale-125 group-hover:opacity-15"
-                style={{ backgroundColor: "oklch(0.65 0.15 65)" }}
-              />
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between uppercase tracking-wider">
-                  Pending Reviews
-                  <Clock className="w-4 h-4" style={{ color: "oklch(0.65 0.15 65)" }} />
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-zinc-900">{stats.pending + stats.inReview}</div>
-                <div className="mt-3 flex items-center gap-2">
-                  <span className="text-amber-600 font-semibold text-sm flex items-center gap-1">
-                    <Activity className="h-4 w-4" />
-                    {stats.inReview} in review
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">Awaiting approval</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Approved Projects */}
-          <motion.div variants={item}>
-            <Card className="relative overflow-hidden bg-[#F5F0E8] border-[#E8E0D5] shadow-lg hover:shadow-xl transition-all duration-300 group">
-              <div 
-                className="absolute top-0 right-0 w-24 h-24 rounded-bl-full -mr-6 -mt-6 opacity-10 transition-all duration-500 group-hover:scale-125 group-hover:opacity-15"
-                style={{ backgroundColor: "oklch(0.65 0.15 145)" }}
-              />
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between uppercase tracking-wider">
-                  Approved Projects
-                  <CheckCircle2 className="w-4 h-4 text-green-600" />
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-zinc-900">{stats.approved}</div>
-                <div className="mt-3 flex items-center gap-2">
-                  <span className="text-green-600 font-semibold text-sm flex items-center gap-1">
-                    <TrendingUp className="h-4 w-4" />
-                    +{stats.approvedTrend}%
-                  </span>
-                  <span className="text-xs text-muted-foreground">this month</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">Strong approval rate</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Total Capacity */}
-          <motion.div variants={item}>
-            <Card className="relative overflow-hidden bg-[#F5F0E8] border-[#E8E0D5] shadow-lg hover:shadow-xl transition-all duration-300 group">
-              <div 
-                className="absolute top-0 right-0 w-24 h-24 rounded-bl-full -mr-6 -mt-6 opacity-10 transition-all duration-500 group-hover:scale-125 group-hover:opacity-15"
-                style={{ backgroundColor: "oklch(0.55 0.15 260)" }}
-              />
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between uppercase tracking-wider">
-                  Total Capacity
-                  <Zap className="w-4 h-4" style={{ color: "oklch(0.55 0.15 260)" }} />
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-zinc-900">{stats.totalCapacityKW} kW</div>
-                <div className="mt-3 flex items-center gap-2">
-                  <span className="text-green-600 font-semibold text-sm flex items-center gap-1">
-                    <TrendingUp className="h-4 w-4" />
-                    +{stats.capacityTrend}%
-                  </span>
-                  <span className="text-xs text-muted-foreground">vs last month</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">Meets growth projections</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </motion.div>
-
-        {/* Chart Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="mb-8"
-        >
-          <Card className="bg-[#F5F0E8] border-[#E8E0D5] shadow-lg">
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <CardTitle className="text-xl font-bold text-zinc-900">Project Submissions</CardTitle>
-                  <CardDescription className="text-muted-foreground">
-                    Total for the last {timePeriod === "3months" ? "3 months" : timePeriod === "30days" ? "30 days" : "7 days"}
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-1 bg-[#EDE8E0] rounded-lg p-1">
-                  <Button
-                    variant={timePeriod === "3months" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setTimePeriod("3months")}
-                    className={`h-8 px-3 text-xs font-medium ${
-                      timePeriod === "3months" 
-                        ? "bg-white shadow-sm text-zinc-900" 
-                        : "text-zinc-600 hover:text-zinc-900 hover:bg-white/50"
-                    }`}
-                  >
-                    Last 3 months
-                  </Button>
-                  <Button
-                    variant={timePeriod === "30days" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setTimePeriod("30days")}
-                    className={`h-8 px-3 text-xs font-medium ${
-                      timePeriod === "30days" 
-                        ? "bg-white shadow-sm text-zinc-900" 
-                        : "text-zinc-600 hover:text-zinc-900 hover:bg-white/50"
-                    }`}
-                  >
-                    Last 30 days
-                  </Button>
-                  <Button
-                    variant={timePeriod === "7days" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setTimePeriod("7days")}
-                    className={`h-8 px-3 text-xs font-medium ${
-                      timePeriod === "7days" 
-                        ? "bg-white shadow-sm text-zinc-900" 
-                        : "text-zinc-600 hover:text-zinc-900 hover:bg-white/50"
-                    }`}
-                  >
-                    Last 7 days
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <ChartContainer config={chartConfig} className="h-[300px] w-full">
-                <AreaChart data={visitorChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="submissionsGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="oklch(68.351% 0.19585 34.956)" stopOpacity={0.4} />
-                      <stop offset="100%" stopColor="oklch(68.351% 0.19585 34.956)" stopOpacity={0.05} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E8E0D5" vertical={false} />
-                  <XAxis 
-                    dataKey="date" 
-                    tickLine={false} 
-                    axisLine={false} 
-                    tickMargin={10}
-                    tick={{ fill: "#71717a", fontSize: 12 }}
-                  />
-                  <YAxis 
-                    tickLine={false} 
-                    axisLine={false} 
-                    tickMargin={10}
-                    tick={{ fill: "#71717a", fontSize: 12 }}
-                  />
-                  <ChartTooltip
-                    content={
-                      <ChartTooltipContent
-                        className="bg-[#F5F0E8] border-[#E8E0D5]"
-                        indicator="dot"
-                      />
-                    }
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="submissions" 
-                    stroke="oklch(68.351% 0.19585 34.956)" 
-                    strokeWidth={2}
-                    fill="url(#submissionsGradient)" 
-                  />
-                </AreaChart>
-              </ChartContainer>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Projects Table with Tabs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-        >
-          <Card className="bg-[#F5F0E8] border-[#E8E0D5] shadow-lg">
-            <CardHeader>
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl font-bold text-zinc-900">
-                    Projects
+        <div className="p-6 space-y-6">
+          {/* Metric Cards - Corporate Style */}
+          <motion.div
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
+          >
+            {/* Total Revenue */}
+            <motion.div variants={item}>
+              <Card className="bg-white border-[#E8E0D5] shadow-sm hover:shadow-md transition-shadow">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-zinc-500 flex items-center justify-between">
+                    Total Revenue
+                    <div 
+                      className="h-8 w-8 rounded-lg flex items-center justify-center"
+                      style={{ backgroundColor: "oklch(68.351% 0.19585 34.956 / 0.1)" }}
+                    >
+                      <DollarSign className="w-4 h-4" style={{ color: "oklch(68.351% 0.19585 34.956)" }} />
+                    </div>
                   </CardTitle>
-                  <Link href="/forms">
-                    <Button 
-                      size="sm" 
-                      className="font-semibold text-white"
-                      style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-zinc-900 tracking-tight">$12,450</div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-green-600 font-semibold text-sm flex items-center gap-1">
+                      <TrendingUp className="h-3.5 w-3.5" />
+                      +12.5%
+                    </span>
+                    <span className="text-xs text-zinc-500">vs last month</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Pending Reviews */}
+            <motion.div variants={item}>
+              <Card className="bg-white border-[#E8E0D5] shadow-sm hover:shadow-md transition-shadow">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-zinc-500 flex items-center justify-between">
+                    Pending Reviews
+                    <div 
+                      className="h-8 w-8 rounded-lg flex items-center justify-center"
+                      style={{ backgroundColor: "oklch(0.75 0.12 75 / 0.15)" }}
                     >
-                      + Add Project
-                    </Button>
-                  </Link>
+                      <Clock className="w-4 h-4" style={{ color: "oklch(0.55 0.12 75)" }} />
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-zinc-900 tracking-tight">{stats.pending + stats.inReview}</div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-amber-600 font-semibold text-sm flex items-center gap-1">
+                      <Activity className="h-3.5 w-3.5" />
+                      {stats.inReview} in review
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Approved Projects */}
+            <motion.div variants={item}>
+              <Card className="bg-white border-[#E8E0D5] shadow-sm hover:shadow-md transition-shadow">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-zinc-500 flex items-center justify-between">
+                    Approved
+                    <div 
+                      className="h-8 w-8 rounded-lg flex items-center justify-center"
+                      style={{ backgroundColor: "oklch(0.65 0.15 145 / 0.15)" }}
+                    >
+                      <CheckCircle2 className="w-4 h-4" style={{ color: "oklch(0.55 0.15 145)" }} />
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-zinc-900 tracking-tight">{stats.approved}</div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-green-600 font-semibold text-sm flex items-center gap-1">
+                      <TrendingUp className="h-3.5 w-3.5" />
+                      +{stats.approvedTrend}%
+                    </span>
+                    <span className="text-xs text-zinc-500">this month</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Total Capacity */}
+            <motion.div variants={item}>
+              <Card className="bg-white border-[#E8E0D5] shadow-sm hover:shadow-md transition-shadow">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-zinc-500 flex items-center justify-between">
+                    Total Capacity
+                    <div 
+                      className="h-8 w-8 rounded-lg flex items-center justify-center"
+                      style={{ backgroundColor: "oklch(0.55 0.15 260 / 0.15)" }}
+                    >
+                      <Zap className="w-4 h-4" style={{ color: "oklch(0.45 0.15 260)" }} />
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-zinc-900 tracking-tight">{stats.totalCapacityKW} kW</div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-green-600 font-semibold text-sm flex items-center gap-1">
+                      <TrendingUp className="h-3.5 w-3.5" />
+                      +{stats.capacityTrend}%
+                    </span>
+                    <span className="text-xs text-zinc-500">vs last month</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </motion.div>
+
+          {/* Chart Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25, duration: 0.4 }}
+          >
+            <Card className="bg-white border-[#E8E0D5] shadow-sm">
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <CardTitle className="text-lg font-bold text-zinc-900">Project Submissions</CardTitle>
+                    <CardDescription className="text-zinc-500">
+                      Overview for the last {timePeriod === "3months" ? "3 months" : timePeriod === "30days" ? "30 days" : "7 days"}
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-1 bg-zinc-100 rounded-lg p-1">
+                    {(["3months", "30days", "7days"] as const).map((range) => (
+                      <Button
+                        key={range}
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setTimePeriod(range)}
+                        className={`h-8 px-3 text-xs font-medium rounded-md ${
+                          timePeriod === range 
+                            ? "bg-white shadow-sm text-zinc-900" 
+                            : "text-zinc-600 hover:text-zinc-900 hover:bg-white/50"
+                        }`}
+                      >
+                        {range === "3months" ? "3 months" : range === "30days" ? "30 days" : "7 days"}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chartConfig} className="h-[280px] w-full">
+                  <AreaChart data={visitorChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="submissionsGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="oklch(68.351% 0.19585 34.956)" stopOpacity={0.3} />
+                        <stop offset="100%" stopColor="oklch(68.351% 0.19585 34.956)" stopOpacity={0.02} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                    <XAxis 
+                      dataKey="date" 
+                      tickLine={false} 
+                      axisLine={false} 
+                      tickMargin={10}
+                      tick={{ fill: "#71717a", fontSize: 12 }}
+                    />
+                    <YAxis 
+                      tickLine={false} 
+                      axisLine={false} 
+                      tickMargin={10}
+                      tick={{ fill: "#71717a", fontSize: 12 }}
+                    />
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          className="bg-white border-zinc-200"
+                          indicator="dot"
+                        />
+                      }
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="submissions" 
+                      stroke="oklch(68.351% 0.19585 34.956)" 
+                      strokeWidth={2}
+                      fill="url(#submissionsGradient)" 
+                    />
+                  </AreaChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </motion.div>
 
+          {/* Projects Table with Tabs */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35, duration: 0.4 }}
+          >
+            <Card className="bg-white border-[#E8E0D5] shadow-sm">
+              <CardHeader className="pb-0">
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabFilter)} className="w-full">
-                  <TabsList className="bg-transparent border-b border-[#E8E0D5] rounded-none p-0 h-auto justify-start gap-6 w-full">
-                    <TabsTrigger
-                      value="all"
-                      className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:bg-transparent px-0 py-2 text-sm font-medium"
-                    >
-                      All Projects
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="pending"
-                      className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:bg-transparent px-0 py-2 text-sm font-medium"
-                    >
-                      Pending{" "}
-                      <Badge variant="secondary" className="ml-2 bg-[#EDE8E0] text-xs">
-                        {stats.pending}
-                      </Badge>
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="in_review"
-                      className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:bg-transparent px-0 py-2 text-sm font-medium"
-                    >
-                      In Review{" "}
-                      <Badge variant="secondary" className="ml-2 bg-[#EDE8E0] text-xs">
-                        {stats.inReview}
-                      </Badge>
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="approved"
-                      className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:bg-transparent px-0 py-2 text-sm font-medium"
-                    >
-                      Approved
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="rejected"
-                      className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:bg-transparent px-0 py-2 text-sm font-medium"
-                    >
-                      Rejected
-                    </TabsTrigger>
-                  </TabsList>
+                  <div className="flex items-center justify-between mb-4">
+                    <TabsList className="bg-transparent border-b border-zinc-200 rounded-none p-0 h-auto justify-start gap-6">
+                      <TabsTrigger
+                        value="all"
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:bg-transparent px-0 py-2.5 text-sm font-medium data-[state=active]:shadow-none"
+                      >
+                        All Projects
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="pending"
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:bg-transparent px-0 py-2.5 text-sm font-medium data-[state=active]:shadow-none"
+                      >
+                        Pending
+                        <Badge variant="secondary" className="ml-2 bg-zinc-100 text-zinc-600 text-xs font-medium">
+                          {stats.pending}
+                        </Badge>
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="in_review"
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:bg-transparent px-0 py-2.5 text-sm font-medium data-[state=active]:shadow-none"
+                      >
+                        In Review
+                        <Badge variant="secondary" className="ml-2 bg-zinc-100 text-zinc-600 text-xs font-medium">
+                          {stats.inReview}
+                        </Badge>
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="approved"
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:bg-transparent px-0 py-2.5 text-sm font-medium data-[state=active]:shadow-none"
+                      >
+                        Approved
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="rejected"
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:bg-transparent px-0 py-2.5 text-sm font-medium data-[state=active]:shadow-none"
+                      >
+                        Rejected
+                      </TabsTrigger>
+                    </TabsList>
 
-                  <div className="flex items-center justify-end gap-2 mt-4">
-                    <Button variant="outline" size="sm" className="text-xs bg-white/50 hover:bg-white">
-                      ⚙️ Customize Columns
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" className="text-xs h-8 bg-white border-zinc-200">
+                        ⚙️ Columns
+                      </Button>
+                      <Link href="/forms">
+                        <Button 
+                          size="sm" 
+                          className="text-xs h-8 font-semibold text-white"
+                          style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
+                        >
+                          + Add Project
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
 
-                  <TabsContent value={activeTab} className="mt-4">
-                    <div className="rounded-xl border border-[#E0D9CF] overflow-hidden bg-white/50">
+                  <TabsContent value={activeTab} className="mt-0">
+                    <div className="rounded-lg border border-zinc-200 overflow-hidden">
                       <Table>
                         <TableHeader>
-                          <TableRow className="bg-[#EDE8E0]/50 hover:bg-[#EDE8E0]/50">
+                          <TableRow className="bg-zinc-50 hover:bg-zinc-50">
                             <TableHead className="w-12">
                               <Checkbox
                                 checked={selectedIds.size === filteredProjects.length && filteredProjects.length > 0}
                                 onCheckedChange={toggleAll}
                               />
                             </TableHead>
-                            <TableHead className="font-semibold text-zinc-700">Project Name</TableHead>
+                            <TableHead className="font-semibold text-zinc-700">Project</TableHead>
                             <TableHead className="font-semibold text-zinc-700">Address</TableHead>
                             <TableHead className="font-semibold text-zinc-700">Status</TableHead>
                             <TableHead className="font-semibold text-zinc-700">System Size</TableHead>
@@ -488,7 +440,7 @@ export default function ProjectsPage() {
                         <TableBody>
                           {filteredProjects.length === 0 ? (
                             <TableRow>
-                              <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
+                              <TableCell colSpan={8} className="text-center py-12 text-zinc-500">
                                 No projects found
                               </TableCell>
                             </TableRow>
@@ -496,7 +448,7 @@ export default function ProjectsPage() {
                             filteredProjects.map((project) => (
                               <TableRow 
                                 key={project.id} 
-                                className="hover:bg-[#F5F0E8]/50 transition-colors"
+                                className="hover:bg-zinc-50/50 transition-colors"
                               >
                                 <TableCell>
                                   <Checkbox
@@ -507,7 +459,7 @@ export default function ProjectsPage() {
                                 <TableCell className="font-medium text-zinc-900">
                                   {project.name}
                                 </TableCell>
-                                <TableCell className="text-zinc-600 max-w-[200px] truncate">
+                                <TableCell className="text-zinc-600 max-w-[200px] truncate text-sm">
                                   {project.address}
                                 </TableCell>
                                 <TableCell>
@@ -516,10 +468,13 @@ export default function ProjectsPage() {
                                 <TableCell className="font-medium text-zinc-900">
                                   {project.systemSize}
                                 </TableCell>
-                                <TableCell className="text-zinc-600">
+                                <TableCell className="text-zinc-600 text-sm">
                                   {formatDate(project.createdAt)}
                                 </TableCell>
-                                <TableCell className="text-sm" style={{ color: "oklch(68.351% 0.19585 34.956)" }}>
+                                <TableCell 
+                                  className="text-sm font-medium"
+                                  style={{ color: "oklch(68.351% 0.19585 34.956)" }}
+                                >
                                   {project.ownerName || "Assign reviewer"}
                                 </TableCell>
                                 <TableCell>
@@ -558,28 +513,28 @@ export default function ProjectsPage() {
                     </div>
                     
                     {/* Pagination */}
-                    <div className="flex items-center justify-between mt-4 px-2">
-                      <p className="text-sm text-muted-foreground">
+                    <div className="flex items-center justify-between mt-4 px-1">
+                      <p className="text-sm text-zinc-500">
                         Showing {filteredProjects.length} of {mockProjects.length} projects
                       </p>
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" disabled className="h-8 bg-white/50">
+                      <div className="flex items-center gap-1">
+                        <Button variant="outline" size="sm" disabled className="h-8 text-xs">
                           Previous
                         </Button>
-                        <Button variant="outline" size="sm" className="h-8 bg-white font-semibold">
+                        <Button variant="outline" size="sm" className="h-8 text-xs bg-zinc-900 text-white hover:bg-zinc-800">
                           1
                         </Button>
-                        <Button variant="outline" size="sm" disabled className="h-8 bg-white/50">
+                        <Button variant="outline" size="sm" disabled className="h-8 text-xs">
                           Next
                         </Button>
                       </div>
                     </div>
                   </TabsContent>
                 </Tabs>
-              </div>
-            </CardHeader>
-          </Card>
-        </motion.div>
+              </CardHeader>
+            </Card>
+          </motion.div>
+        </div>
       </main>
     </div>
   )
