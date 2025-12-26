@@ -42,6 +42,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import Sidebar from "@/components/layout/sidebar";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -83,135 +84,18 @@ export default function ProfilePage() {
   const removeLicense = (id: number) => {
     setLicenses(licenses.filter((l) => l.id !== id));
   };
-
-  const navSections = [
-    {
-      title: "Main",
-      items: [
-        {
-          id: "dashboard",
-          label: "Dashboard",
-          icon: LayoutDashboard,
-          href: "/dashboard",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      items: [
-        { id: "account", label: "Account Info", icon: User },
-        { id: "business", label: "Business Details", icon: Building2 },
-        { id: "licenses", label: "Licenses", icon: FileBadge },
-        { id: "security", label: "Security", icon: ShieldCheck },
-      ],
-    },
-    {
-      title: "Organization",
-      items: [
-        { id: "billing", label: "Billing", icon: CreditCard },
-      ],
-    },
-  ];
+  
 
   return (
     <div className="flex h-screen overflow-hidden font-poppins selection:bg-primary/20">
       {/* --- SIDEBAR --- */}
-      <aside className={`flex flex-col border-r border-[#E8E0D5] bg-[#F5F0E8] z-40 relative transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'w-0 overflow-hidden opacity-0' : 'w-72'}`}>
-        {/* Toggle Button - visible when NOT collapsed */}
-        <button
-          onClick={() => setSidebarCollapsed(true)}
-          className="absolute top-4 right-4 z-50 p-2 rounded-lg hover:bg-black/5 transition-colors text-zinc-500 hover:text-zinc-900"
-          title="Hide sidebar"
-        >
-          <PanelLeftClose className="h-4 w-4" />
-        </button>
-        
-        {/* Header */}
-        <div className="px-4 h-16 flex items-center border-b border-black/5 bg-transparent">
-          <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="bg-primary h-8 w-8 rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
-              <Settings className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-lg font-bold tracking-tight text-zinc-900">
-              Portal
-            </span>
-          </Link>
-        </div>
-
-        {/* Scrollable Nav Area */}
-        <div className="flex-1 overflow-y-auto py-6 px-4 space-y-8">
-              {navSections.map((section) => (
-                <div key={section.title} className="space-y-1">
-                  <h3 className="px-4 text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-400 mb-2">
-                    {section.title}
-                  </h3>
-                  {section.items.map((item: any) =>
-                    item.href ? (
-                      <Link
-                        key={item.id}
-                        href={item.href}
-                    className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-zinc-600 hover:bg-zinc-50 transition-all group"
-                  >
-                    <item.icon className="h-4 w-4 text-zinc-400 group-hover:text-primary transition-colors" />
-                    {item.label}
-                  </Link>
-                ) : (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all group ${
-                      activeTab === item.id
-                        ? "bg-primary/5 text-primary"
-                        : "text-zinc-600 hover:bg-zinc-50"
-                    }`}
-                  >
-                    <item.icon
-                      className={`h-4 w-4 transition-colors ${
-                        activeTab === item.id
-                          ? "text-primary"
-                          : "text-zinc-400 group-hover:text-primary"
-                      }`}
-                    />
-                    {item.label}
-                    {activeTab === item.id && (
-                      <motion.div
-                        layoutId="active-nav-indicator"
-                        className="ml-auto w-1 h-4 bg-primary rounded-full"
-                      />
-                    )}
-                  </button>
-                )
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Footer */}
-        <div className="p-4 border-t border-black/5">
-          <div className="mb-4 bg-white/10 backdrop-blur-md p-3 rounded-xl border border-white/20 flex items-center gap-3 group hover:bg-white/20 transition-all">
-            <div className="h-9 w-9 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold shadow-sm border border-black/5 shrink-0">
-              JD
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-zinc-900 truncate">
-                Solar Solutions Inc.
-              </p>
-              <p className="text-[10px] font-medium text-zinc-500 truncate uppercase tracking-wider">
-                Admin
-              </p>
-            </div>
-            <button className="text-zinc-400 hover:text-destructive transition-colors p-1.5 rounded-lg hover:bg-destructive/5">
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="px-2 flex items-center justify-between text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
-            <span>v1.2.0</span>
-            <span className="h-1 w-1 bg-primary/20 rounded-full" />
-            <span>Stable</span>
-          </div>
-        </div>
-      </aside>
-
+      <Sidebar 
+        variant="settings"
+        activeSettingsTab={activeTab}
+        onSettingsTabChange={setActiveTab}
+        collapsed={sidebarCollapsed}
+        onCollapsedChange={setSidebarCollapsed}
+      />
       {/* --- MAIN CONTENT --- */}
       <main className="flex-1 flex flex-col overflow-hidden relative">
         {/* Content Header */}
@@ -228,11 +112,11 @@ export default function ProfilePage() {
               </button>
             )}
             <h2 className="text-xl font-bold text-zinc-900">
-              {
-                navSections
-                  .flatMap((s) => s.items)
-                  .find((n) => n.id === activeTab)?.label
-              }
+              {activeTab === "account" && "Account Info"}
+              {activeTab === "business" && "Business Details"}
+              {activeTab === "licenses" && "Licenses"}
+              {activeTab === "security" && "Security"}
+              {activeTab === "billing" && "Billing"}
             </h2>
             <Separator orientation="vertical" className="h-4 bg-black/10" />
             <p className="text-sm font-medium text-zinc-400">

@@ -22,7 +22,8 @@ import {
   ExternalLink,
   Activity,
   DollarSign,
-  FolderOpen
+  FolderOpen,
+  PanelLeft
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -43,7 +44,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import Sidebar from "@/components/projects/sidebar"
+import Sidebar from "@/components/layout/sidebar"
 import { StatusBadge } from "@/components/projects/status-badge"
 import { 
   mockProjects, 
@@ -88,6 +89,7 @@ export default function ProjectsPage() {
   const [timePeriod, setTimePeriod] = useState<TimeRange>("3months")
   const [activeTab, setActiveTab] = useState<TabFilter>("all")
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   
   const stats = getProjectStats()
 
@@ -139,20 +141,35 @@ export default function ProjectsPage() {
   return (
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
-      <Sidebar />
+      <Sidebar 
+        variant="dashboard"
+        collapsed={sidebarCollapsed}
+        onCollapsedChange={setSidebarCollapsed}
+      />
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
         {/* Top Header Bar */}
         <div className="border-b border-[#E8E0D5] bg-[#F5F0E8] sticky top-0 z-10">
           <div className="flex items-center justify-between px-6 py-4">
-            <h1 className="text-2xl font-bold text-zinc-900">Project Dashboard</h1>
+            <div className="flex items-center gap-4">
+              {sidebarCollapsed && (
+                <button
+                  onClick={() => setSidebarCollapsed(false)}
+                  className="p-2 rounded-lg hover:bg-black/5 transition-colors text-zinc-500 hover:text-zinc-900 -ml-2"
+                  title="Show sidebar"
+                >
+                  <PanelLeft className="h-5 w-5" />
+                </button>
+              )}
+              <h1 className="text-2xl font-bold text-zinc-900">Project Dashboard</h1>
+            </div>
             <Link href="/forms">
               <Button 
                 className="font-bold shadow-md hover:shadow-lg transition-all text-white"
                 style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
               >
-                ⚡ Quick Create
+                Quick Create
               </Button>
             </Link>
           </div>
@@ -365,37 +382,37 @@ export default function ProjectsPage() {
                     <TabsList className="bg-transparent border-b border-zinc-200 rounded-none p-0 h-auto justify-start gap-6">
                       <TabsTrigger
                         value="all"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:bg-transparent px-0 py-2.5 text-sm font-medium data-[state=active]:shadow-none"
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-2.5 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
                       >
                         All Projects
                       </TabsTrigger>
                       <TabsTrigger
                         value="pending"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:bg-transparent px-0 py-2.5 text-sm font-medium data-[state=active]:shadow-none"
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-2.5 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
                       >
                         Pending
-                        <Badge variant="secondary" className="ml-2 bg-zinc-100 text-zinc-600 text-xs font-medium">
+                        <Badge variant="secondary" className="ml-2 bg-zinc-200 text-zinc-700 text-xs font-medium">
                           {stats.pending}
                         </Badge>
                       </TabsTrigger>
                       <TabsTrigger
                         value="in_review"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:bg-transparent px-0 py-2.5 text-sm font-medium data-[state=active]:shadow-none"
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-2.5 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
                       >
                         In Review
-                        <Badge variant="secondary" className="ml-2 bg-zinc-100 text-zinc-600 text-xs font-medium">
+                        <Badge variant="secondary" className="ml-2 bg-zinc-200 text-zinc-700 text-xs font-medium">
                           {stats.inReview}
                         </Badge>
                       </TabsTrigger>
                       <TabsTrigger
                         value="approved"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:bg-transparent px-0 py-2.5 text-sm font-medium data-[state=active]:shadow-none"
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-2.5 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
                       >
                         Approved
                       </TabsTrigger>
                       <TabsTrigger
                         value="rejected"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:bg-transparent px-0 py-2.5 text-sm font-medium data-[state=active]:shadow-none"
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-2.5 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
                       >
                         Rejected
                       </TabsTrigger>
