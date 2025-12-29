@@ -46,6 +46,29 @@ export default function ProjectContactStep({
     return (
         <FormCard title="Project & Contact Information">
             <div className="space-y-6">
+                
+                {/* Submission Type */}
+                <div>
+                    <h3 className="text-xl font-bold text-foreground mb-4">Submission Type</h3>
+                    <Tabs value={submissionMode} onValueChange={(v) => setSubmissionMode(v as "quick" | "provide details")} className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="quick"><Zap className="mr-2 h-4 w-4" />Quick Upload (Recommended)</TabsTrigger>
+                            <TabsTrigger value="provide details"><NotebookIcon className="mr-2 h-4 w-4" /> Provide Full Details</TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="quick" className="mt-4">
+                            <p className="text-sm text-muted-foreground">
+                                Upload your files and we'll handle the rest. Perfect for most projects.
+                            </p>
+                        </TabsContent>
+
+                        <TabsContent value="provide details" className="mt-4">
+                            <p className="text-sm text-muted-foreground">
+                                Provide comprehensive project details for complex installations.
+                            </p>
+                        </TabsContent>
+                    </Tabs>
+                </div>
                 {/* Project Information */}
                 <div>
                     <h3 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
@@ -403,7 +426,7 @@ export default function ProjectContactStep({
                                     key={service.id}
                                     variant={formData.services.includes(service.name) ? "selected" : "selectable"}
                                     onClick={() => toggleService(service.name)}
-                                    className="px-4 py-2 text-sm"
+                                    className="px-4 py-2 text-sm border border-orange-500"
                                 >
                                     {service.name}
                                 </Badge>
@@ -413,30 +436,6 @@ export default function ProjectContactStep({
                     {errors.services && <p className="text-sm text-destructive mt-2">{errors.services}</p>}
                 </div>
 
-                <Separator />
-
-                {/* Submission Type */}
-                <div>
-                    <h3 className="text-xl font-bold text-foreground mb-4">Submission Type</h3>
-                    <Tabs value={submissionMode} onValueChange={(v) => setSubmissionMode(v as "quick" | "provide details")} className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="quick"><Zap className="mr-2 h-4 w-4" />Quick Upload (Recommended)</TabsTrigger>
-                            <TabsTrigger value="provide details"><NotebookIcon className="mr-2 h-4 w-4" /> Provide Full Details</TabsTrigger>
-                        </TabsList>
-
-                        <TabsContent value="quick" className="mt-4">
-                            <p className="text-sm text-muted-foreground">
-                                Upload your files and we'll handle the rest. Perfect for most projects.
-                            </p>
-                        </TabsContent>
-
-                        <TabsContent value="provide details" className="mt-4">
-                            <p className="text-sm text-muted-foreground">
-                                Provide comprehensive project details for complex installations.
-                            </p>
-                        </TabsContent>
-                    </Tabs>
-                </div>
             </div>
         </FormCard>
     )

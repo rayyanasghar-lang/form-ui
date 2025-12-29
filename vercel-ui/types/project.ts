@@ -7,8 +7,8 @@ export interface Project {
   name: string;
   address: string;
   status: ProjectStatus;
-  systemSize: string | number;      // e.g., "12.5 kW" or 12.0
-  systemType: string;      // e.g., "Roof Mount", "Ground Mount"
+  systemSize: string | number;
+  systemType: string;
   pvModules: string | number;
   inverters: string | number;
   batteryBackup: boolean;
@@ -16,7 +16,65 @@ export interface Project {
   updatedAt: Date;
   submittedAt?: Date;
   approvedAt?: Date;
-  // Owner info
+  
+  // Nested Details
+  user_profile?: {
+    company_name: string;
+    contact_name: string;
+    email: string;
+    phone: string;
+  };
+  system_summary?: {
+    battery_info?: {
+      qty: number;
+      model: string;
+      image: string[];
+    };
+  };
+  site_details?: {
+    roof_material: string;
+    roof_pitch: string;
+    number_of_arrays: number;
+    utility_provider: string;
+    jurisdiction: string;
+  };
+  electrical_details?: {
+    main_panel_size: string;
+    bus_rating: string;
+    main_breaker: string;
+    pv_breaker_location: string;
+    one_line_diagram: string[];
+  };
+  advanced_electrical_details?: {
+    meter_location: string;
+    service_entrance_type: string;
+    subpanel_details: string;
+  };
+  optional_extra_details?: {
+    miracle_watt_required: boolean;
+    der_rlc_required: boolean;
+    der_rlc_notes: string;
+    setback_constraints: boolean;
+    site_access_restrictions: boolean;
+    inspection_notes: boolean;
+    inspection_notes_text: string;
+    battery_sld_requested: boolean;
+  };
+  system_components?: Array<{
+    type: string;
+    make_model: string;
+    qty: number;
+    attachment: string[];
+    notes: string;
+  }>;
+  uploads?: Array<{
+    url: string;
+    name: string;
+    category: string;
+  }>;
+  general_notes?: string;
+
+  // Owner info (for backward compatibility if needed)
   ownerName?: string;
   ownerEmail?: string;
   ownerPhone?: string;

@@ -59,6 +59,7 @@ import {
 import { ProjectStatus, Project } from "@/types/project"
 import { fetchProjectsAction } from "@/app/actions/project-service"
 import { Loader2 } from "lucide-react"
+import { ProjectDetailsModal } from "@/components/projects/project-details-modal"
 
 // Extended chart data for the visitors-style chart
 const visitorChartData = [
@@ -101,6 +102,10 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null)
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false)
+  const itemsPerPage = 10
   
   const stats = getProjectStats(projects)
 
@@ -121,6 +126,17 @@ export default function ProjectsPage() {
   const filteredProjects = activeTab === "all" 
     ? projects 
     : projects.filter(p => p.status === activeTab)
+
+  const totalPages = Math.ceil(filteredProjects.length / itemsPerPage)
+  const paginatedProjects = filteredProjects.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
+  // Reset to first page when tab changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [activeTab])
 
   const toggleSelect = (id: string) => {
     const newSet = new Set(selectedIds)
@@ -178,6 +194,11 @@ export default function ProjectsPage() {
       default:
         return { status: "draft", label: status }
     }
+  }
+
+  const handleViewDetails = (project: Project) => {
+    setSelectedProject(project)
+    setIsDetailsOpen(true)
   }
 
   return (
@@ -511,8 +532,16 @@ export default function ProjectsPage() {
                           <TableRow className="bg-zinc-50 hover:bg-zinc-50">
                             <TableHead className="w-12">
                               <Checkbox
-                                checked={selectedIds.size === filteredProjects.length && filteredProjects.length > 0}
-                                onCheckedChange={toggleAll}
+                                checked={paginatedProjects.length > 0 && paginatedProjects.every(p => selectedIds.has(p.id))}
+                                onCheckedChange={(checked) => {
+                                  const newSet = new Set(selectedIds)
+                                  if (checked) {
+                                    paginatedProjects.forEach(p => newSet.add(p.id))
+                                  } else {
+                                    paginatedProjects.forEach(p => newSet.delete(p.id))
+                                  }
+                                  setSelectedIds(newSet)
+                                }}
                               />
                             </TableHead>
                             <TableHead className="font-semibold text-zinc-700">Project</TableHead>
@@ -547,7 +576,7 @@ export default function ProjectsPage() {
                               </TableCell>
                             </TableRow>
                           ) : (
-                            filteredProjects.map((project) => (
+                            paginatedProjects.map((project) => (
                               <TableRow 
                                 key={project.id} 
                                 className="hover:bg-zinc-100 transition-colors"
@@ -586,23 +615,13 @@ export default function ProjectsPage() {
                                         <MoreHorizontal className="h-4 w-4" />
                                       </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-48">
-                                      <DropdownMenuItem className="cursor-pointer">
-                                        <Eye className="h-4 w-4 mr-2" />
+                                    <DropdownMenuContent align="end" className="w-48 bg-white border-[#E8E0D5] rounded-xl shadow-xl">
+                                      <DropdownMenuItem 
+                                        className="cursor-pointer font-bold py-3 px-4 hover:bg-primary/5 text-zinc-900 group"
+                                        onClick={() => handleViewDetails(project)}
+                                      >
+                                        <Eye className="h-4 w-4 mr-2 group-hover:text-primary transition-colors" />
                                         View Details
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem className="cursor-pointer">
-                                        <Edit className="h-4 w-4 mr-2" />
-                                        Edit Project
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem className="cursor-pointer">
-                                        <ExternalLink className="h-4 w-4 mr-2" />
-                                        Download Plans
-                                      </DropdownMenuItem>
-                                      <DropdownMenuSeparator />
-                                      <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600">
-                                        <Trash2 className="h-4 w-4 mr-2" />
-                                        Delete
                                       </DropdownMenuItem>
                                     </DropdownMenuContent>
                                   </DropdownMenu>
@@ -617,16 +636,40 @@ export default function ProjectsPage() {
                     {/* Pagination */}
                     <div className="flex items-center justify-between mt-4 px-1">
                       <p className="text-sm text-zinc-500">
-                        Showing {filteredProjects.length} of {projects.length} projects
+                        Showing {Math.min(filteredProjects.length, (currentPage - 1) * itemsPerPage + 1)}-{Math.min(filteredProjects.length, currentPage * itemsPerPage)} of {filteredProjects.length} projects
                       </p>
                       <div className="flex items-center gap-1">
-                        <Button variant="outline" size="sm" disabled className="h-8 text-xs">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          disabled={currentPage === 1} 
+                          className="h-8 text-xs"
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        >
                           Previous
                         </Button>
-                        <Button variant="outline" size="sm" className="h-8 text-xs bg-zinc-900 text-white hover:bg-zinc-800">
-                          1
-                        </Button>
-                        <Button variant="outline" size="sm" disabled className="h-8 text-xs">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                          <Button 
+                            key={page}
+                            variant="outline" 
+                            size="sm" 
+                            className={`h-8 w-8 text-xs ${
+                              currentPage === page 
+                                ? "bg-zinc-900 text-white hover:bg-zinc-800" 
+                                : "bg-white text-zinc-600 hover:bg-zinc-50"
+                            }`}
+                            onClick={() => setCurrentPage(page)}
+                          >
+                            {page}
+                          </Button>
+                        ))}
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          disabled={currentPage === totalPages || totalPages === 0} 
+                          className="h-8 text-xs"
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        >
                           Next
                         </Button>
                       </div>
@@ -638,6 +681,13 @@ export default function ProjectsPage() {
           </motion.div>
         </div>
       </main>
+
+      {/* Project Details Modal */}
+      <ProjectDetailsModal 
+        project={selectedProject}
+        isOpen={isDetailsOpen}
+        onClose={() => setIsDetailsOpen(false)}
+      />
     </div>
   )
 }
