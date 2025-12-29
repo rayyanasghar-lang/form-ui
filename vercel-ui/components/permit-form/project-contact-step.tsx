@@ -24,6 +24,7 @@ interface ProjectContactStepProps {
     availableServices: Service[]
     servicesLoading: boolean
     scrapingStatus?: "idle" | "scraping" | "completed" | "error"
+    onStartScraping: () => void
     weatherStations?: any[]
     weatherLoading?: boolean
 }
@@ -38,6 +39,7 @@ export default function ProjectContactStep({
     availableServices,
     servicesLoading,
     scrapingStatus = "idle",
+    onStartScraping,
     weatherStations = [],
     weatherLoading = false,
 }: ProjectContactStepProps) {
@@ -77,6 +79,18 @@ export default function ProjectContactStep({
                             />
                             {errors.projectAddress && <p className="text-sm text-destructive">{errors.projectAddress}</p>}
                             
+                            {/* Manual Scraper Trigger */}
+                            {formData.projectAddress && scrapingStatus === "idle" && (
+                                <button
+                                    type="button"
+                                    onClick={onStartScraping}
+                                    className="mt-2 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-all border border-primary/20 font-medium text-sm group"
+                                >
+                                    <Search className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                    Fetch Property Intelligence
+                                </button>
+                            )}
+
                             {/* Scraped Data display */}
                             {/* Scraped Data display (Separate Boxes) */}
                 <Separator />

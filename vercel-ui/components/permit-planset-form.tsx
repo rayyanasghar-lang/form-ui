@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { toast } from "sonner"
+import axios from "axios"
 import Stepper from "./stepper"
 import FormCard from "./form-card"
 import FormButtons from "./form-buttons"
@@ -232,29 +233,140 @@ export default function PermitPlansetForm() {
     };
   }, []);
 
-  // Fetch weather stations when address changes
-  useEffect(() => {
-    if (!formData.projectAddress || formData.projectAddress.length < 5) return;
+  const startScraping = async () => {
+    if (!formData.projectAddress) {
+      toast.error("Please enter an address first");
+      return;
+    }
 
-    const timer = setTimeout(async () => {
-      setWeatherLoading(true);
-      try {
-        const geoResult = await geocodeAddress(formData.projectAddress);
-        if (geoResult.success && geoResult.lat && geoResult.lng) {
-          const stationsResult = await fetchNearbyStations(geoResult.lat, geoResult.lng);
-          if (stationsResult.success && stationsResult.data) {
-            setWeatherStations(stationsResult.data);
-          }
+    setScrapingStatus("scraping");
+    setWeatherLoading(true);
+    window.dispatchEvent(new CustomEvent("property-data-scraping-started"));
+
+    try {
+      // 1. Geocode & Fetch Weather (formerly automatic)
+      const { geocodeAddress, fetchNearbyStations } = await import("@/app/actions/weather-service");
+      const geoResult = await geocodeAddress(formData.projectAddress);
+      
+      if (geoResult.success && geoResult.lat && geoResult.lng) {
+        const stationsResult = await fetchNearbyStations(geoResult.lat, geoResult.lng);
+        if (stationsResult.success && stationsResult.data) {
+          setWeatherStations(stationsResult.data);
         }
-      } catch (err) {
-        console.error("Error fetching weather stations:", err);
-      } finally {
-        setWeatherLoading(false);
-      }
-    }, 2000); // 2 second debounce
 
-    return () => clearTimeout(timer);
-  }, [formData.projectAddress]);
+        // 2. Fetch Solar Data (formerly in address-autocomplete)
+        try {
+          const { data: solarData } = await axios.get('/api/solar', { params: { address: formData.projectAddress } });
+          const { saveSolarData } = await import("@/lib/solar-store");
+          saveSolarData({
+            address: solarData.address || formData.projectAddress,
+            lat: solarData.lat,
+            lng: solarData.lng,
+            solar: solarData.solar,
+            layers: solarData.layers,
+          });
+        } catch (err) {
+          console.error("Solar Analysis Error (Manual Trigger):", err);
+        }
+      }
+
+      // 3. Property Scrapers
+      const { scrapeZillowAction, scrapeASCE716Action, scrapeASCE722Action, scrapeRegridAction } = await import("@/app/actions/scrape-service");
+      const { savePropertyData, updatePropertyData } = await import("@/lib/property-store");
+
+      // Initial empty save to establish the address and timestamp
+      savePropertyData({
+        address: formData.projectAddress,
+        lotSize: null,
+        parcelNumber: null,
+        owner: null,
+        landUse: null,
+        windSpeed: null,
+        snowLoad: null,
+        sources: {}
+      });
+
+      // Run all scrapers in parallel, but update independently
+      Promise.allSettled([
+        scrapeZillowAction(formData.projectAddress).then(res => {
+          if (res.success && res.data) {
+            updatePropertyData({
+              lotSize: res.data.lot_size,
+              parcelNumber: res.data.parcel_number,
+              interiorArea: res.data.interior_area,
+              structureArea: res.data.structure_area,
+              newConstruction: res.data.new_construction,
+              yearBuilt: res.data.year_built,
+              sources: {
+                zillow: {
+                  parcelNumber: res.data.parcel_number || null,
+                  lotSize: res.data.lot_size || null,
+                  interiorArea: res.data.interior_area || null,
+                  structureArea: res.data.structure_area || null,
+                  newConstruction: res.data.new_construction ?? null,
+                  yearBuilt: res.data.year_built || null,
+                }
+              }
+            });
+          }
+        }),
+        scrapeASCE716Action(formData.projectAddress).then(res => {
+          if (res.success && res.data) {
+            updatePropertyData({
+              windSpeed716: res.data.windSpeed || null,
+              snowLoad716: res.data.snowLoad || null,
+              sources: {
+                asce716: {
+                  windSpeed: res.data.windSpeed || null,
+                  snowLoad: res.data.snowLoad || null
+                }
+              }
+            });
+          }
+        }),
+        scrapeASCE722Action(formData.projectAddress).then(res => {
+          if (res.success && res.data) {
+            updatePropertyData({
+              windSpeed: res.data.windSpeed || null,
+              snowLoad: res.data.snowLoad || null,
+              sources: {
+                asce: {
+                  windSpeed: res.data.windSpeed || null,
+                  snowLoad: res.data.snowLoad || null
+                }
+              }
+            });
+          }
+        }),
+        scrapeRegridAction(formData.projectAddress).then(res => {
+          if (res.success && res.data) {
+            updatePropertyData({
+              lotSize: res.data.lot_size,
+              parcelNumber: res.data.parcel_number,
+              owner: res.data.owner,
+              landUse: res.data.land_use,
+              sources: {
+                regrid: {
+                  parcelNumber: res.data.parcel_number || null,
+                  owner: res.data.owner || null,
+                  lotSize: res.data.lot_size || null,
+                  landUse: res.data.land_use || null
+                }
+              }
+            });
+          }
+        })
+      ]).finally(() => {
+        setScrapingStatus("completed");
+        setWeatherLoading(false);
+        window.dispatchEvent(new CustomEvent("property-data-scraping-completed"));
+      });
+    } catch (err) {
+      console.error("Scraping trigger error:", err);
+      setScrapingStatus("error");
+      setWeatherLoading(false);
+    }
+  };
 
   // Debounced auto-save to local storage
   const saveDraft = useCallback(() => {
@@ -518,10 +630,80 @@ export default function PermitPlansetForm() {
       if (result.success) {
         console.log("Form submitted successfully:", result.data)
         localStorage.removeItem("permit-planset-draft")
+        localStorage.removeItem("permit planset data")
         toast.success("Success!", {
           description: "Project created successfully!",
         })
-        // Reset form or redirect
+        // Reset form to first step
+        setCurrentStep(0)
+        // Optionally reset formData if desired, but user only asked to move to first step
+        // Given they want to clear local storage, a reset is likely expected.
+        setFormData({
+          projectName: "",
+          projectAddress: "",
+          projectType: "",
+          services: [],
+          systemSize: "",
+          systemType: "",
+          pvModules: "",
+          inverters: "",
+          batteryBackup: false,
+          batteryQty: "",
+          batteryModel: "",
+          batteryImage: [],
+          projectFiles: [],
+          generalNotes: "",
+          roofMaterial: "",
+          roofPitch: "",
+          numberOfArrays: "",
+          arrayLayout: [],
+          useRoofImages: false,
+          groundMountType: "",
+          rowCount: "",
+          moduleCountPerRow: "",
+          foundationType: "",
+          structuralNotes: "",
+          structuralSketch: [],
+          mainPanelSize: "",
+          busRating: "",
+          mainBreaker: "",
+          pvBreakerLocation: "",
+          oneLineDiagram: [],
+          designForMe: false,
+          meterLocation: "",
+          serviceEntranceType: "",
+          subpanelDetails: "",
+          utilityProvider: "",
+          jurisdiction: "",
+          useLastProjectValues: false,
+          miracleWattRequired: false,
+          miracleWattNotes: "",
+          derRlcRequired: false,
+          derRlcNotes: "",
+          setbackConstraints: false,
+          setbackNotes: "",
+          siteAccessRestrictions: false,
+          siteAccessNotes: "",
+          inspectionNotes: false,
+          inspectionNotesText: "",
+          batterySldRequested: false,
+          batterySldNotes: "",
+          lotSize: "",
+          parcelNumber: "",
+          owner: "",
+          landUse: "",
+          windSpeed: "",
+          snowLoad: "",
+          windSpeed716: "",
+          snowLoad716: "",
+          interiorArea: "",
+          structureArea: "",
+          newConstruction: null,
+          yearBuilt: "",
+          sources: {},
+        })
+        setComponents([])
+        setFilesToUpload([])
       } else {
         console.error("Submission failed:", result)
         toast.error("Submission Failed", {
@@ -575,6 +757,7 @@ export default function PermitPlansetForm() {
           availableServices={availableServices}
           servicesLoading={servicesLoading}
           scrapingStatus={scrapingStatus}
+          onStartScraping={startScraping}
           weatherStations={weatherStations}
           weatherLoading={weatherLoading}
         />

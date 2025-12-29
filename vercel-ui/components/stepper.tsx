@@ -51,7 +51,7 @@ export default function Stepper({ steps, currentStep }: StepperProps) {
       </div>
 
       {/* Progress bar track */}
-      <div className="relative w-full h-3 bg-primary/10 border border-primary/20 rounded-full overflow-hidden shadow-inner backdrop-blur-sm">
+      <div className="relative w-full h-3 bg-zinc-200 border border-zinc-300 rounded-full overflow-hidden shadow-inner">
         {/* Animated progress fill */}
         <div
           className="absolute inset-y-0 left-0 bg-gradient-to-r from-secondary to-primary rounded-full transition-all duration-500 ease-out shadow-lg shadow-primary/20"

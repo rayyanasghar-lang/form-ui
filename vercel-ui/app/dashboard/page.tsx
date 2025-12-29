@@ -155,7 +155,7 @@ export default function DashboardPage() {
       </main>
 
       {/* Modern Footer Nav for Mobile */}
-      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md h-16 bg-black/80 backdrop-blur-2xl rounded-2xl flex items-center justify-around px-2 border border-white/10 shadow-2xl z-50 md:hidden">
+      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md h-16 bg-zinc-900 rounded-2xl flex items-center justify-around px-2 border border-white/10 shadow-2xl z-50 md:hidden">
         <Button variant="ghost" size="icon" className="text-white/60 hover:text-white transition-colors">
           <LayoutDashboard className="h-6 w-6" />
         </Button>

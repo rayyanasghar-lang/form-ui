@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { 
@@ -23,13 +23,19 @@ import {
   Activity,
   DollarSign,
   FolderOpen,
-  PanelLeft
+  PanelLeft,
+  ArrowUpRight,
+  ArrowDownRight
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { TabsContent } from "@/components/ui/tabs"
+import { 
+  TabsWithBadge as Tabs, 
+  TabsWithBadgeList as TabsList, 
+  TabsWithBadgeTrigger as TabsTrigger 
+} from "@/components/ui/tabs-with-badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   ChartContainer,
@@ -50,7 +56,9 @@ import {
   mockProjects, 
   getProjectStats, 
 } from "@/lib/mock-projects"
-import type { ProjectStatus } from "@/types/project"
+import { ProjectStatus, Project } from "@/types/project"
+import { fetchProjectsAction } from "@/app/actions/project-service"
+import { Loader2 } from "lucide-react"
 
 // Extended chart data for the visitors-style chart
 const visitorChartData = [
@@ -90,12 +98,29 @@ export default function ProjectsPage() {
   const [activeTab, setActiveTab] = useState<TabFilter>("all")
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [projects, setProjects] = useState<Project[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   
-  const stats = getProjectStats()
+  const stats = getProjectStats(projects)
+
+  useEffect(() => {
+    async function loadProjects() {
+      setIsLoading(true)
+      const result = await fetchProjectsAction()
+      if ("error" in result) {
+        setError(result.error)
+      } else {
+        setProjects(result.data)
+      }
+      setIsLoading(false)
+    }
+    loadProjects()
+  }, [])
 
   const filteredProjects = activeTab === "all" 
-    ? mockProjects 
-    : mockProjects.filter(p => p.status === activeTab)
+    ? projects 
+    : projects.filter(p => p.status === activeTab)
 
   const toggleSelect = (id: string) => {
     const newSet = new Set(selectedIds)
@@ -136,6 +161,23 @@ export default function ProjectsPage() {
   const item = {
     hidden: { opacity: 0, y: 15 },
     show: { opacity: 1, y: 0 }
+  }
+
+  const getStatusBadgeConfig = (status: ProjectStatus): { status: "done" | "in-process" | "rejected" | "draft"; label: string } => {
+    switch (status) {
+      case "approved":
+        return { status: "done", label: "Approved" }
+      case "rejected":
+        return { status: "rejected", label: "Rejected" }
+      case "draft":
+        return { status: "draft", label: "Draft" }
+      case "pending":
+        return { status: "in-process", label: "Pending" }
+      case "in_review":
+        return { status: "in-process", label: "In Review" }
+      default:
+        return { status: "draft", label: status }
+    }
   }
 
   return (
@@ -187,24 +229,34 @@ export default function ProjectsPage() {
             <motion.div variants={item}>
               <Card className="bg-white border-[#E8E0D5] shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-zinc-500 flex items-center justify-between">
-                    Total Revenue
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-zinc-500">Total Revenue</span>
                     <div 
-                      className="h-8 w-8 rounded-lg flex items-center justify-center"
-                      style={{ backgroundColor: "oklch(68.351% 0.19585 34.956 / 0.1)" }}
+                      className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border"
+                      style={{ 
+                        backgroundColor: "oklch(68.351% 0.19585 34.956 / 0.1)", 
+                        color: "oklch(68.351% 0.19585 34.956)",
+                        borderColor: "oklch(68.351% 0.19585 34.956 / 0.2)"
+                      }}
                     >
-                      <DollarSign className="w-4 h-4" style={{ color: "oklch(68.351% 0.19585 34.956)" }} />
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-zinc-900 tracking-tight">$12,450</div>
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="text-green-600 font-semibold text-sm flex items-center gap-1">
-                      <TrendingUp className="h-3.5 w-3.5" />
+                      <ArrowUpRight className="h-3 w-3" />
                       +12.5%
-                    </span>
-                    <span className="text-xs text-zinc-500">vs last month</span>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="text-3xl font-bold text-zinc-900 tracking-tight">$12,450.00</div>
+                  <div className="mt-4 space-y-1">
+                    <div 
+                      className="flex items-center gap-1.5 text-[13px] font-bold"
+                      style={{ color: "oklch(68.351% 0.19585 34.956)" }}
+                    >
+                      Trending up this month
+                      <ArrowUpRight className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="text-[12px] text-zinc-500 font-medium">
+                      Visitors for the last 6 months
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -214,23 +266,30 @@ export default function ProjectsPage() {
             <motion.div variants={item}>
               <Card className="bg-white border-[#E8E0D5] shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-zinc-500 flex items-center justify-between">
-                    Pending Reviews
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-zinc-500">Pending Reviews</span>
                     <div 
-                      className="h-8 w-8 rounded-lg flex items-center justify-center"
-                      style={{ backgroundColor: "oklch(0.75 0.12 75 / 0.15)" }}
+                      className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border border-zinc-200"
+                      style={{ 
+                        backgroundColor: "oklch(0.55 0.12 75 / 0.1)", 
+                        color: "oklch(0.55 0.12 75)"
+                      }}
                     >
-                      <Clock className="w-4 h-4" style={{ color: "oklch(0.55 0.12 75)" }} />
+                      <ArrowDownRight className="h-3 w-3" />
+                      -8.3%
                     </div>
-                  </CardTitle>
+                  </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-0">
                   <div className="text-3xl font-bold text-zinc-900 tracking-tight">{stats.pending + stats.inReview}</div>
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="text-amber-600 font-semibold text-sm flex items-center gap-1">
-                      <Activity className="h-3.5 w-3.5" />
-                      {stats.inReview} in review
-                    </span>
+                  <div className="mt-4 space-y-1">
+                    <div className="flex items-center gap-1.5 text-[13px] font-bold text-amber-600 whitespace-nowrap">
+                      Down {stats.inReview} this period
+                      <ArrowDownRight className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="text-[12px] text-zinc-500 font-medium">
+                      Acquisition needs attention
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -240,24 +299,30 @@ export default function ProjectsPage() {
             <motion.div variants={item}>
               <Card className="bg-white border-[#E8E0D5] shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-zinc-500 flex items-center justify-between">
-                    Approved
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-zinc-500">Approved Projects</span>
                     <div 
-                      className="h-8 w-8 rounded-lg flex items-center justify-center"
-                      style={{ backgroundColor: "oklch(0.65 0.15 145 / 0.15)" }}
+                      className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border border-zinc-200"
+                      style={{ 
+                        backgroundColor: "oklch(0.65 0.15 145 / 0.1)", 
+                        color: "oklch(0.55 0.15 145)"
+                      }}
                     >
-                      <CheckCircle2 className="w-4 h-4" style={{ color: "oklch(0.55 0.15 145)" }} />
+                      <ArrowUpRight className="h-3 w-3" />
+                      +12.5%
                     </div>
-                  </CardTitle>
+                  </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-0">
                   <div className="text-3xl font-bold text-zinc-900 tracking-tight">{stats.approved}</div>
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="text-green-600 font-semibold text-sm flex items-center gap-1">
-                      <TrendingUp className="h-3.5 w-3.5" />
-                      +{stats.approvedTrend}%
-                    </span>
-                    <span className="text-xs text-zinc-500">this month</span>
+                  <div className="mt-4 space-y-1">
+                    <div className="flex items-center gap-1.5 text-[13px] font-bold text-green-600">
+                      Strong user retention
+                      <ArrowUpRight className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="text-[12px] text-zinc-500 font-medium">
+                      Engagement exceed targets
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -267,24 +332,31 @@ export default function ProjectsPage() {
             <motion.div variants={item}>
               <Card className="bg-white border-[#E8E0D5] shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-zinc-500 flex items-center justify-between">
-                    Total Capacity
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-zinc-500">Total Capacity</span>
                     <div 
-                      className="h-8 w-8 rounded-lg flex items-center justify-center"
-                      style={{ backgroundColor: "oklch(0.55 0.15 260 / 0.15)" }}
+                      className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border"
+                      style={{ 
+                        backgroundColor: "oklch(68.351% 0.19585 34.956 / 0.1)", 
+                        color: "oklch(68.351% 0.19585 34.956)",
+                        borderColor: "oklch(68.351% 0.19585 34.956 / 0.2)"
+                      }}
                     >
-                      <Zap className="w-4 h-4" style={{ color: "oklch(0.45 0.15 260)" }} />
+                      <ArrowUpRight className="h-3 w-3" />
+                      +4.5%
                     </div>
-                  </CardTitle>
+                  </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-0">
                   <div className="text-3xl font-bold text-zinc-900 tracking-tight">{stats.totalCapacityKW} kW</div>
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="text-green-600 font-semibold text-sm flex items-center gap-1">
-                      <TrendingUp className="h-3.5 w-3.5" />
-                      +{stats.capacityTrend}%
-                    </span>
-                    <span className="text-xs text-zinc-500">vs last month</span>
+                  <div className="mt-4 space-y-1">
+                    <div className="flex items-center gap-1.5 text-[13px] font-bold text-zinc-900">
+                      Steady performance increase
+                      <ArrowUpRight className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="text-[12px] text-zinc-500 font-medium whitespace-nowrap">
+                      Meets growth projections
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -379,40 +451,38 @@ export default function ProjectsPage() {
               <CardHeader className="pb-0">
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabFilter)} className="w-full">
                   <div className="flex items-center justify-between mb-4">
-                    <TabsList className="bg-transparent border-b border-zinc-200 rounded-none p-0 h-auto justify-start gap-6">
+                    <TabsList className="bg-transparent border-b border-zinc-200 rounded-none p-0 h-auto justify-start gap-4">
                       <TabsTrigger
                         value="all"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-2.5 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-3 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
                       >
                         All Projects
                       </TabsTrigger>
                       <TabsTrigger
                         value="pending"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-2.5 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
+                        badge={stats.pending}
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-3 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
                       >
                         Pending
-                        <Badge variant="secondary" className="ml-2 bg-zinc-200 text-zinc-700 text-xs font-medium">
-                          {stats.pending}
-                        </Badge>
                       </TabsTrigger>
                       <TabsTrigger
                         value="in_review"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-2.5 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
+                        badge={stats.inReview}
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-3 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
                       >
                         In Review
-                        <Badge variant="secondary" className="ml-2 bg-zinc-200 text-zinc-700 text-xs font-medium">
-                          {stats.inReview}
-                        </Badge>
                       </TabsTrigger>
                       <TabsTrigger
                         value="approved"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-2.5 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
+                        badge={stats.approved}
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-3 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
                       >
                         Approved
                       </TabsTrigger>
                       <TabsTrigger
                         value="rejected"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-2.5 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
+                        badge={stats.rejected}
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-3 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
                       >
                         Rejected
                       </TabsTrigger>
@@ -455,7 +525,22 @@ export default function ProjectsPage() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {filteredProjects.length === 0 ? (
+                          {isLoading ? (
+                            <TableRow>
+                              <TableCell colSpan={8} className="text-center py-24">
+                                <div className="flex flex-col items-center justify-center gap-3">
+                                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                  <p className="text-sm font-medium text-zinc-500">Loading projects...</p>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ) : error ? (
+                            <TableRow>
+                              <TableCell colSpan={8} className="text-center py-12 text-red-500 font-medium">
+                                {error}
+                              </TableCell>
+                            </TableRow>
+                          ) : filteredProjects.length === 0 ? (
                             <TableRow>
                               <TableCell colSpan={8} className="text-center py-12 text-zinc-500">
                                 No projects found
@@ -465,7 +550,7 @@ export default function ProjectsPage() {
                             filteredProjects.map((project) => (
                               <TableRow 
                                 key={project.id} 
-                                className="hover:bg-zinc-50/50 transition-colors"
+                                className="hover:bg-zinc-100 transition-colors"
                               >
                                 <TableCell>
                                   <Checkbox
@@ -480,7 +565,7 @@ export default function ProjectsPage() {
                                   {project.address}
                                 </TableCell>
                                 <TableCell>
-                                  <StatusBadge status={project.status} />
+                                  <StatusBadge {...getStatusBadgeConfig(project.status)} />
                                 </TableCell>
                                 <TableCell className="font-medium text-zinc-900">
                                   {project.systemSize}
@@ -532,7 +617,7 @@ export default function ProjectsPage() {
                     {/* Pagination */}
                     <div className="flex items-center justify-between mt-4 px-1">
                       <p className="text-sm text-zinc-500">
-                        Showing {filteredProjects.length} of {mockProjects.length} projects
+                        Showing {filteredProjects.length} of {projects.length} projects
                       </p>
                       <div className="flex items-center gap-1">
                         <Button variant="outline" size="sm" disabled className="h-8 text-xs">

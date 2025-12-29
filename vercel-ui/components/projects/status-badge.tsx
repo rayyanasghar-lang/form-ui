@@ -1,48 +1,49 @@
-import type { ProjectStatus } from "@/types/project"
-import { Badge } from "@/components/ui/badge"
+import * as React from "react"
+import { cn } from "@/lib/utils"
+import { Check, Loader2, X, FileText , Loader} from "lucide-react"
 
-interface StatusBadgeProps {
-  status: ProjectStatus
-  className?: string
+export interface StatusBadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+  status: "done" | "in-process" | "rejected" | "draft"
+  label: string
 }
 
-const statusConfig: Record<ProjectStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; className: string }> = {
-  draft: {
-    label: "Draft",
-    variant: "secondary",
-    className: "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
-  },
-  pending: {
-    label: "Pending",
-    variant: "outline",
-    className: "border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
-  },
-  in_review: {
-    label: "In Review",
-    variant: "outline",
-    className: "border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
-  },
-  approved: {
-    label: "Approved",
-    variant: "default",
-    className: "bg-green-100 text-green-700 hover:bg-green-200 border-green-200"
-  },
-  rejected: {
-    label: "Rejected",
-    variant: "destructive",
-    className: "bg-red-100 text-red-700 hover:bg-red-200 border-red-200"
-  }
-}
+const StatusBadge = React.forwardRef<HTMLDivElement, StatusBadgeProps>(
+  ({ status, label, className, ...props }, ref) => {
+    const getIconColor = () => {
+      switch (status) {
+        case "done":
+          return "text-white"
+        case "rejected":
+          return "text-white"
+        case "in-process":
+          return "text-[oklch(68.351%_0.19585_34.956)]"
+        case "draft":
+          return "text-yellow-500"
+        default:
+          return "text-gray-400"
+      }
+    }
 
-export function StatusBadge({ status, className = "" }: StatusBadgeProps) {
-  const config = statusConfig[status]
-  
-  return (
-    <Badge 
-      variant={config.variant}
-      className={`${config.className} font-medium ${className}`}
-    >
-      {config.label}
-    </Badge>
-  )
-}
+    const iconColor = getIconColor()
+
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          "inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800",
+          className,
+        )}
+        {...props}
+      >
+        {status === "done" && <Check className={cn("h-4 w-4 border border-white bg-green-500 rounded-full", iconColor)} strokeWidth={3} />}
+        {status === "in-process" && <Loader className={cn("h-4 w-4 ", iconColor)} />}
+        {status === "rejected" && <X className={cn("h-4 w-4 border border-white bg-red-500 rounded-full", iconColor)} strokeWidth={3} />}
+        {status === "draft" && <FileText className={cn("h-4 w-4 ", iconColor)} />}
+        <span className="text-sm  text-gray-600 dark:text-gray-400 font-medium">{label}</span>
+      </div>
+    )
+  },
+)
+StatusBadge.displayName = "StatusBadge"
+
+export { StatusBadge }

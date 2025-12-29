@@ -176,9 +176,8 @@ export default function Sidebar({
         ))}
       </div>
 
-      {/* Footer with User Info */}
       <div className="p-4 border-t border-[#E8E0D5]">
-        <div className="mb-4 bg-white/30 backdrop-blur-md p-3 rounded-xl border border-white/20 flex items-center gap-3 group hover:bg-white/50 transition-all">
+        <div className="mb-4 bg-white p-3 rounded-xl border border-[#E8E0D5] flex items-center gap-3 group hover:bg-[#F5F0E8] transition-all">
           <div 
             className="h-9 w-9 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm border border-black/5 shrink-0"
             style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
@@ -196,11 +195,6 @@ export default function Sidebar({
           <button className="text-zinc-400 hover:text-destructive transition-colors p-1.5 rounded-lg hover:bg-destructive/5">
             <LogOut className="h-4 w-4" />
           </button>
-        </div>
-        <div className="px-2 flex items-center justify-between text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
-          <span>v1.2.0</span>
-          <span className="h-1 w-1 bg-primary/20 rounded-full" />
-          <span>Stable</span>
         </div>
       </div>
     </aside>

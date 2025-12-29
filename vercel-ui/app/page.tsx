@@ -159,7 +159,7 @@ export default function LandingPage() {
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 p-1 bg-muted/50 rounded-xl mb-8">
+                <TabsList className="grid w-full grid-cols-2 p-1 bg-zinc-100 rounded-xl mb-8">
                   <TabsTrigger value="login" className="rounded-lg data-[state=active]:shadow-sm" onClick={() => setSignupStep(1)}>
                     Login
                   </TabsTrigger>
@@ -176,7 +176,7 @@ export default function LandingPage() {
                         type="email"
                         placeholder="you@company.com"
                         required
-                        className="h-11 rounded-xl bg-white/50 border-white/50 focus:bg-white transition-all focus:ring-4 focus:ring-primary/10"
+                        className="h-11 rounded-xl bg-white border-zinc-200 focus:bg-white transition-all focus:ring-4 focus:ring-primary/10"
                       />
                     </div>
                     <div className="space-y-2">
@@ -211,7 +211,7 @@ export default function LandingPage() {
                         id="login-password"
                         type="password"
                         required
-                        className="h-11 rounded-xl bg-white/50 border-white/50 focus:bg-white transition-all focus:ring-4 focus:ring-primary/10"
+                        className="h-11 rounded-xl bg-white border-zinc-200 focus:bg-white transition-all focus:ring-4 focus:ring-primary/10"
                       />
                     </div>
                     <Button type="submit" className="w-full h-12 rounded-xl text-md font-bold shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200" style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}>
@@ -244,29 +244,29 @@ export default function LandingPage() {
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                               <Label htmlFor="fullname">Full Name *</Label>
-                              <Input id="fullname" placeholder="John Doe" required className="h-11 rounded-xl bg-white/50" />
+                              <Input id="fullname" placeholder="John Doe" required className="h-11 rounded-xl bg-white" />
                             </div>
                             <div className="space-y-2">
                               <Label htmlFor="company">Company *</Label>
-                              <Input id="company" placeholder="Solar Solutions Inc." required className="h-11 rounded-xl bg-white/50" />
+                              <Input id="company" placeholder="Solar Solutions Inc." required className="h-11 rounded-xl bg-white" />
                             </div>
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="email">Email Address *</Label>
-                            <Input id="email" type="email" placeholder="you@company.com" required className="h-11 rounded-xl bg-white/50" />
+                            <Input id="email" type="email" placeholder="you@company.com" required className="h-11 rounded-xl bg-white" />
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="phone">Phone Number *</Label>
-                            <Input id="phone" type="tel" placeholder="(555) 123-4567" required className="h-11 rounded-xl bg-white/50" />
+                            <Input id="phone" type="tel" placeholder="(555) 123-4567" required className="h-11 rounded-xl bg-white" />
                           </div>
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                               <Label htmlFor="password">Password *</Label>
-                              <Input id="password" type="password" required className="h-11 rounded-xl bg-white/50" />
+                              <Input id="password" type="password" required className="h-11 rounded-xl bg-white" />
                             </div>
                             <div className="space-y-2">
                               <Label htmlFor="confirm-password">Confirm *</Label>
-                              <Input id="confirm-password" type="password" required className="h-11 rounded-xl bg-white/50" />
+                              <Input id="confirm-password" type="password" required className="h-11 rounded-xl bg-white" />
                             </div>
                           </div>
                           <Button
@@ -303,7 +303,7 @@ export default function LandingPage() {
                               id="address"
                               placeholder="123 Main St&#10;Suite 100&#10;City, State 12345"
                               rows={4}
-                              className="rounded-xl bg-white/50 resize-none pt-3"
+                              className="rounded-xl bg-white resize-none pt-3"
                             />
                           </div>
                           <div className="space-y-2">
@@ -311,7 +311,7 @@ export default function LandingPage() {
                             <div
                               onDrop={handleDrop}
                               onDragOver={(e) => e.preventDefault()}
-                              className="group relative border-2 border-dashed border-white/60 bg-white/30 rounded-2xl p-8 text-center transition-all hover:border-primary/50 hover:bg-white/50 cursor-pointer overflow-hidden"
+                              className="group relative border-2 border-dashed border-zinc-200 bg-white rounded-2xl p-8 text-center transition-all hover:border-primary/50 hover:bg-zinc-50 cursor-pointer overflow-hidden"
                             >
                               <Upload className="mx-auto h-10 w-10 text-muted-foreground group-hover:text-primary group-hover:scale-110 transition-all duration-300" />
                               <p className="mt-3 text-sm font-medium text-muted-foreground">
@@ -336,7 +336,7 @@ export default function LandingPage() {
                               type="button"
                               variant="outline"
                               onClick={handlePreviousStep}
-                              className="flex-1 h-12 rounded-xl font-bold bg-white/20 border-white/40"
+                              className="flex-1 h-12 rounded-xl font-bold bg-white border-zinc-200"
                             >
                               Back
                             </Button>
@@ -371,7 +371,7 @@ export default function LandingPage() {
                           
                           <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 scrollbar-none">
                             {licenses.map((license, index) => (
-                              <div key={license.id} className="p-5 border border-white/50 rounded-2xl space-y-4 bg-white/40 shadow-sm relative group">
+                              <div key={license.id} className="p-5 border border-zinc-200 rounded-2xl space-y-4 bg-white shadow-sm relative group">
                                 <div className="flex items-center justify-between">
                                   <span className="text-sm font-bold opacity-60">License {index + 1}</span>
                                   {licenses.length > 1 && (
@@ -388,13 +388,13 @@ export default function LandingPage() {
                                 </div>
                                 <div className="space-y-2">
                                   <Label htmlFor={`license-number-${license.id}`}>License Number</Label>
-                                  <Input id={`license-number-${license.id}`} placeholder="ABC123456" required className="h-10 rounded-lg bg-white/70" />
+                                  <Input id={`license-number-${license.id}`} placeholder="ABC123456" required className="h-10 rounded-lg bg-white" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                   <div className="space-y-2">
                                     <Label htmlFor={`license-type-${license.id}`}>Type</Label>
                                     <Select required>
-                                      <SelectTrigger id={`license-type-${license.id}`} className="h-10 rounded-lg bg-white/70">
+                                      <SelectTrigger id={`license-type-${license.id}`} className="h-10 rounded-lg bg-white">
                                         <SelectValue placeholder="Select" />
                                       </SelectTrigger>
                                       <SelectContent className="rounded-xl border-white/40">
@@ -408,7 +408,7 @@ export default function LandingPage() {
                                   <div className="space-y-2">
                                     <Label htmlFor={`license-state-${license.id}`}>State</Label>
                                     <Select required>
-                                      <SelectTrigger id={`license-state-${license.id}`} className="h-10 rounded-lg bg-white/70">
+                                      <SelectTrigger id={`license-state-${license.id}`} className="h-10 rounded-lg bg-white">
                                         <SelectValue placeholder="State" />
                                       </SelectTrigger>
                                       <SelectContent className="rounded-xl border-white/40">

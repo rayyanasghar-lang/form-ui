@@ -22,19 +22,6 @@ export async function uploadWithRcloneAction(formData: FormData) {
   const tempFilePath = join(process.cwd(), tempFileName)
 
   try {
-    // 0. Debug Environment
-    console.log("--- DEBUG START ---")
-    try {
-        const { stdout: versionOut } = await execAsync("rclone --version")
-        console.log("Rclone Version:", versionOut.trim())
-        
-        const { stdout: remotesOut } = await execAsync("rclone listremotes")
-        console.log("Rclone Remotes:", remotesOut.trim())
-    } catch (e: any) {
-        console.error("Rclone Environment Check Failed:", e.message)
-        return { error: "Rclone not found or not working in server environment" }
-    }
-
     // 1. Save file temporarily
     await writeFile(tempFilePath, buffer)
     console.log(`Saved temp file to: ${tempFilePath}`)
@@ -42,11 +29,10 @@ export async function uploadWithRcloneAction(formData: FormData) {
     // 2. Construct rclone command
     // Remote: odoo-test
     // Target: odoo-test:ProjectName/FileName
-    // We use "copy" to copy the file to the remote
     const remoteName = "odoo-test"
     const targetPath = `${remoteName}:${projectName}`
     
-    // Escape paths for Windows/Shell safety is tricky, but basic quoting helps
+    // Use copyto to specify the final filename directly or copy for folder
     const command = `rclone copy "${tempFilePath}" "${targetPath}"`
     
     console.log(`Executing: ${command}`)
@@ -60,11 +46,6 @@ export async function uploadWithRcloneAction(formData: FormData) {
     console.log("Rclone stdout:", stdout)
 
     // 4. Verify upload and get file ID using lsjson
-    // This is more reliable than 'rclone link' which requires public sharing permissions
-    
-    // Wait 2 seconds to ensure Drive consistency
-    await new Promise(resolve => setTimeout(resolve, 2000))
-
     let webViewLink = ""
     try {
         // List the FOLDER contents, not the file directly

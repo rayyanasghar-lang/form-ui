@@ -142,17 +142,18 @@ export const mockProjects: Project[] = [
   },
 ];
 
-// Calculate stats from mock projects
-export function getProjectStats(): ProjectStats {
-  const total = mockProjects.length;
-  const pending = mockProjects.filter(p => p.status === 'pending').length;
-  const inReview = mockProjects.filter(p => p.status === 'in_review').length;
-  const approved = mockProjects.filter(p => p.status === 'approved').length;
-  const rejected = mockProjects.filter(p => p.status === 'rejected').length;
-  const draft = mockProjects.filter(p => p.status === 'draft').length;
+// Calculate stats from projects
+export function getProjectStats(projectsArray: Project[] = mockProjects): ProjectStats {
+  const total = projectsArray.length;
+  const pending = projectsArray.filter(p => p.status === 'pending').length;
+  const inReview = projectsArray.filter(p => p.status === 'in_review').length;
+  const approved = projectsArray.filter(p => p.status === 'approved').length;
+  const rejected = projectsArray.filter(p => p.status === 'rejected').length;
+  const draft = projectsArray.filter(p => p.status === 'draft').length;
   
-  const totalCapacityKW = mockProjects.reduce((sum, p) => {
-    const size = parseFloat(p.systemSize.replace(' kW', ''));
+  const totalCapacityKW = projectsArray.reduce((sum, p) => {
+    const sizeStr = typeof p.systemSize === 'string' ? p.systemSize : '0';
+    const size = parseFloat(sizeStr.replace(' kW', ''));
     return sum + (isNaN(size) ? 0 : size);
   }, 0);
 

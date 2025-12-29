@@ -6,7 +6,11 @@ import { MoreHorizontal, Eye, Edit, Trash2, ExternalLink } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { 
+  TabsWithBadge as Tabs, 
+  TabsWithBadgeList as TabsList, 
+  TabsWithBadgeTrigger as TabsTrigger 
+} from "@/components/ui/tabs-with-badge"
 import {
   Table,
   TableBody,
@@ -66,6 +70,23 @@ export function ProjectsTable({ projects, className }: ProjectsTableProps) {
     }).format(date)
   }
 
+  const getStatusBadgeConfig = (status: ProjectStatus): { status: "done" | "in-process" | "rejected" | "draft"; label: string } => {
+    switch (status) {
+      case "approved":
+        return { status: "done", label: "Approved" }
+      case "rejected":
+        return { status: "rejected", label: "Rejected" }
+      case "draft":
+        return { status: "draft", label: "Draft" }
+      case "pending":
+        return { status: "in-process", label: "Pending" }
+      case "in_review":
+        return { status: "in-process", label: "In Review" }
+      default:
+        return { status: "draft", label: status }
+    }
+  }
+
   return (
     <Card className={`bg-[#F5F0E8] border-[#E8E0D5] shadow-lg ${className}`}>
       <CardHeader className="pb-4">
@@ -84,30 +105,42 @@ export function ProjectsTable({ projects, className }: ProjectsTableProps) {
           </Link>
         </div>
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabFilter)} className="mt-4">
-          <TabsList className="bg-[#EDE8E0] p-1">
-            <TabsTrigger value="all" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+          <TabsList>
+            <TabsTrigger value="all">
               All
             </TabsTrigger>
-            <TabsTrigger value="pending" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <TabsTrigger 
+              value="pending" 
+              badge={projects.filter(p => p.status === 'pending').length}
+            >
               Pending
             </TabsTrigger>
-            <TabsTrigger value="in_review" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <TabsTrigger 
+              value="in_review" 
+              badge={projects.filter(p => p.status === 'in_review').length}
+            >
               In Review
             </TabsTrigger>
-            <TabsTrigger value="approved" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <TabsTrigger 
+              value="approved" 
+              badge={projects.filter(p => p.status === 'approved').length}
+            >
               Approved
             </TabsTrigger>
-            <TabsTrigger value="rejected" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <TabsTrigger 
+              value="rejected" 
+              badge={projects.filter(p => p.status === 'rejected').length}
+            >
               Rejected
             </TabsTrigger>
           </TabsList>
         </Tabs>
       </CardHeader>
       <CardContent>
-        <div className="rounded-xl border border-[#E0D9CF] overflow-hidden bg-white/50">
+        <div className="rounded-xl border border-[#E0D9CF] overflow-hidden bg-white">
           <Table>
             <TableHeader>
-              <TableRow className="bg-[#EDE8E0]/50 hover:bg-[#EDE8E0]/50">
+              <TableRow className="bg-[#EDE8E0] hover:bg-[#EDE8E0]">
                 <TableHead className="w-12">
                   <Checkbox
                     checked={selectedIds.size === filteredProjects.length && filteredProjects.length > 0}
@@ -133,7 +166,7 @@ export function ProjectsTable({ projects, className }: ProjectsTableProps) {
                 filteredProjects.map((project) => (
                   <TableRow 
                     key={project.id} 
-                    className="hover:bg-[#F5F0E8]/50 transition-colors"
+                    className="hover:bg-[#F5F0E8] transition-colors"
                   >
                     <TableCell>
                       <Checkbox
@@ -148,7 +181,7 @@ export function ProjectsTable({ projects, className }: ProjectsTableProps) {
                       {project.address}
                     </TableCell>
                     <TableCell>
-                      <StatusBadge status={project.status} />
+                      <StatusBadge {...getStatusBadgeConfig(project.status)} />
                     </TableCell>
                     <TableCell className="font-medium">
                       {project.systemSize}

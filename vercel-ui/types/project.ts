@@ -7,10 +7,10 @@ export interface Project {
   name: string;
   address: string;
   status: ProjectStatus;
-  systemSize: string;      // e.g., "12.5 kW"
+  systemSize: string | number;      // e.g., "12.5 kW" or 12.0
   systemType: string;      // e.g., "Roof Mount", "Ground Mount"
-  pvModules: string;
-  inverters: string;
+  pvModules: string | number;
+  inverters: string | number;
   batteryBackup: boolean;
   createdAt: Date;
   updatedAt: Date;
