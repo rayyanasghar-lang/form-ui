@@ -227,14 +227,7 @@ export default function ProjectsPage() {
               )}
               <h1 className="text-2xl font-bold text-zinc-900">Project Dashboard</h1>
             </div>
-            <Link href="/forms">
-              <Button 
-                className="font-bold shadow-md hover:shadow-lg transition-all text-white"
-                style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
-              >
-                Quick Create
-              </Button>
-            </Link>
+            
           </div>
         </div>
 
@@ -510,9 +503,7 @@ export default function ProjectsPage() {
                     </TabsList>
 
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" className="text-xs h-8 bg-white border-zinc-200">
-                        ⚙️ Columns
-                      </Button>
+                      
                       <Link href="/forms">
                         <Button 
                           size="sm" 

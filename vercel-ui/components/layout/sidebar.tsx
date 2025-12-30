@@ -19,7 +19,9 @@ import {
   Building2,
   FileBadge,
   ShieldCheck,
-  CreditCard
+  CreditCard,
+  User2Icon,
+  Plus
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -51,7 +53,7 @@ export default function Sidebar({
     {
       title: "Main",
       items: [
-        { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+        { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/projects" },
       ],
     },
     {
@@ -59,7 +61,7 @@ export default function Sidebar({
       items: [
         { id: "projects", label: "My Projects", icon: FolderKanban, href: "/projects" },
         { id: "new-permit", label: "New Permit", icon: Zap, href: "/forms" },
-        { id: "analytics", label: "Analytics", icon: BarChart3, href: "#" },
+        { id: "user-profile", label: "User Profile", icon: User2Icon, href: "/profile" },
         { id: "team", label: "Team", icon: Users, href: "#" },
       ],
     },
@@ -78,7 +80,7 @@ export default function Sidebar({
     {
       title: "Main",
       items: [
-        { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
+        { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/projects" },
       ],
     },
     {
@@ -124,6 +126,19 @@ export default function Sidebar({
 
       {/* Scrollable Nav Area */}
       <div className="flex-1 overflow-y-auto py-6 px-4 space-y-6">
+        {/* Create Project Button */}
+        <div className="px-3 mb-6">
+          <Link href="/forms">
+            <button 
+              className="w-full h-11 flex items-center justify-center gap-2 rounded-xl text-white font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+              style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
+            >
+              <Plus className="h-5 w-5" />
+              Create Project
+            </button>
+          </Link>
+        </div>
+
         {sections.map((section) => (
           <div key={section.title} className="space-y-1">
             <h3 className="px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-400 mb-2">

@@ -60,7 +60,7 @@ export default function LandingPage() {
       description: "Redirecting to your dashboard...",
     })
     setTimeout(() => {
-      router.push("/dashboard")
+      router.push("/projects")
     }, 1500)
   }
 
@@ -82,7 +82,7 @@ export default function LandingPage() {
       description: "Welcome to Solar Permit Portal. Redirecting...",
     })
     setTimeout(() => {
-      router.push("/dashboard")
+      router.push("/projects")
     }, 1500)
   }
 
