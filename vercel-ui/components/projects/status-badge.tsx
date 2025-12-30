@@ -30,7 +30,7 @@ const StatusBadge = React.forwardRef<HTMLDivElement, StatusBadgeProps>(
       <div
         ref={ref}
         className={cn(
-          "inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800",
+          "inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-gray-200",
           className,
         )}
         {...props}
@@ -39,7 +39,7 @@ const StatusBadge = React.forwardRef<HTMLDivElement, StatusBadgeProps>(
         {status === "in-process" && <Loader className={cn("h-4 w-4 ", iconColor)} />}
         {status === "rejected" && <X className={cn("h-4 w-4 border border-white bg-red-500 rounded-full", iconColor)} strokeWidth={3} />}
         {status === "draft" && <FileText className={cn("h-4 w-4 ", iconColor)} />}
-        <span className="text-sm  text-gray-600 dark:text-gray-400 font-medium">{label}</span>
+        <span className="text-sm  text-gray-600 font-medium">{label}</span>
       </div>
     )
   },

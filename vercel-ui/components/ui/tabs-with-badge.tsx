@@ -13,7 +13,7 @@ function TabsWithBadgeList({ className, ...props }: React.ComponentProps<typeof 
     <TabsPrimitive.List
       data-slot="tabs-with-badge-list"
       className={cn(
-        "inline-flex h-auto w-fit items-center border-b border-gray-200 dark:border-gray-800 bg-transparent gap-0",
+        "inline-flex h-auto w-fit items-center border-b border-gray-200 bg-transparent gap-0",
         className,
       )}
       {...props}
@@ -30,7 +30,7 @@ function TabsWithBadgeTrigger({ className, badge, children, ...props }: TabsWith
     <TabsPrimitive.Trigger
       data-slot="tabs-with-badge-trigger"
       className={cn(
-        "text-gray-500 dark:text-gray-400 data-[state=active]:text-zinc-900 dark:data-[state=active]:text-gray-50 data-[state=active]:border-b-2 data-[state=active]:border-[oklch(68.351%_0.19585_34.956)] px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-400 dark:focus-visible:ring-gray-600 disabled:pointer-events-none disabled:opacity-50 group",
+        "text-gray-500 data-[state=active]:text-zinc-900 data-[state=active]:border-b-2 data-[state=active]:border-[oklch(68.351%_0.19585_34.956)] px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-400 disabled:pointer-events-none disabled:opacity-50 group",
         className,
       )}
       {...props}

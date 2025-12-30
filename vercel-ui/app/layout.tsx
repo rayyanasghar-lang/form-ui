@@ -3,7 +3,6 @@ import type { Metadata } from "next"
 import { Poppins } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "@/components/ui/sonner"
-import { ThemeProvider } from "next-themes"
 import { BackgroundGradient } from "@/components/layout/background-gradient"
 
 const poppins = Poppins({
@@ -43,11 +42,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${poppins.variable}`} suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <BackgroundGradient />
-          {children}
-          <Toaster position="top-right" richColors />
-        </ThemeProvider>
+        <BackgroundGradient />
+        {children}
+        <Toaster position="top-right" richColors />
       </body>
     </html>
   )

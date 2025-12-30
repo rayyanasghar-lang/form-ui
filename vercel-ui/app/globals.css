@@ -1,9 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+
 
 :root {
+  color-scheme: light;
   --background: oklch(93.496% 0.00734 80.578);
   --foreground: oklch(0.25 0.04 45);
   --card: oklch(0.96 0.01 75);
@@ -37,6 +38,7 @@
 
 
 @theme inline {
+  --variant-dark: null;
   --font-sans: var(--font-poppins), "Poppins", ui-sans-serif, system-ui,
     sans-serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback";
