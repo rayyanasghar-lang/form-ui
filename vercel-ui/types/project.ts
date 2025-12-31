@@ -25,6 +25,10 @@ export interface Project {
     phone: string;
   };
   system_summary?: {
+    system_size?: number | string;
+    system_type?: string;
+    pv_modules?: number | string;
+    inverters?: number | string;
     battery_info?: {
       qty: number;
       model: string;

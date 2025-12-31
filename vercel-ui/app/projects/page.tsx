@@ -61,6 +61,8 @@ import { fetchProjectsAction } from "@/app/actions/project-service"
 import { Loader2 } from "lucide-react"
 import { ProjectDetailsModal } from "@/components/projects/project-details-modal"
 
+import { useRouter } from "next/navigation"
+
 // Extended chart data for the visitors-style chart
 const visitorChartData = [
   { date: "Apr 5", submissions: 4, approvals: 3 },
@@ -99,6 +101,7 @@ export default function ProjectsPage() {
   const [activeTab, setActiveTab] = useState<TabFilter>("all")
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const router = useRouter()
   const [projects, setProjects] = useState<Project[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -197,8 +200,7 @@ export default function ProjectsPage() {
   }
 
   const handleViewDetails = (project: Project) => {
-    setSelectedProject(project)
-    setIsDetailsOpen(true)
+    router.push(`/projects/${project.id}`)
   }
 
   return (

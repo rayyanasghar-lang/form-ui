@@ -13,6 +13,7 @@ interface FormButtonsProps {
   isLoading?: boolean
   saveStatus?: "saving" | "saved" | "idle"
   lastSaved?: Date | null
+  onSaveDraft?: () => void
 }
 
 function getRelativeTime(date: Date): string {
@@ -38,6 +39,7 @@ export default function FormButtons({
   isLoading = false,
   saveStatus = "idle",
   lastSaved = null,
+  onSaveDraft,
 }: FormButtonsProps) {
   const displayLabel = nextLabel ?? (isLastStep ? "Submit" : "Next")
 
@@ -73,6 +75,18 @@ export default function FormButtons({
             </>
           )}
         </div>
+        
+        {onSaveDraft && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onSaveDraft}
+            disabled={isLoading}
+            className="px-8 border-primary text-primary hover:bg-primary/5 min-w-[140px]"
+          >
+            Save Draft
+          </Button>
+        )}
 
         {/* Submit/Next button */}
         <Button

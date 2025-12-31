@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { toast } from "sonner"
 import axios from "axios"
+import { useRouter } from "next/navigation"
 import Stepper from "./stepper"
 import FormCard from "./form-card"
 import FormButtons from "./form-buttons"
@@ -32,6 +33,7 @@ const DETAILED_STEPS = [
 import { Component } from "./system-components-table"
 
 export default function PermitPlansetForm() {
+  const router = useRouter()
   const [currentStep, setCurrentStep] = useState(0)
   const [submissionMode, setSubmissionMode] = useState<"quick" | "provide details">("quick")
   const [components, setComponents] = useState<Component[]>([])
@@ -557,6 +559,7 @@ export default function PermitPlansetForm() {
         type: formData.projectType,
         submission_type_name: submissionMode, // Changed from submission_type_id to submission_type_name
         general_notes: formData.generalNotes,
+        status: "draft", // Enforce draft status for all new projects
       },
       services: serviceNames, // Changed from serviceIds to serviceNames array
       system_summary: {
@@ -720,6 +723,65 @@ export default function PermitPlansetForm() {
     }
   }
 
+  const handleSaveDraft = async () => {
+    // Validate required fields for draft
+    const newErrors: Record<string, string> = {}
+    if (!formData.projectName) newErrors.projectName = "Project name is required"
+    if (!formData.projectAddress) newErrors.projectAddress = "Project address is required"
+    if (!formData.projectType) newErrors.projectType = "Project type is required"
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      toast.error("Required Fields Missing", {
+        description: "Please fill in Name, Address, and Type to save a draft.",
+      })
+      setCurrentStep(0)
+      return
+    }
+
+    setIsSubmitting(true)
+    
+    // Construct minimal payload for draft
+    const payload = {
+      user_profile: {
+        company_name: "Solar Solutions Inc.",
+        contact_name: "John Doe",
+        email: "john.doe@solarsolutions.com",
+        phone: "+1 (555) 123-4567",
+      },
+      project: {
+        name: formData.projectName,
+        address: formData.projectAddress,
+        type: formData.projectType,
+        submission_type_id: "draft", // Explicitly marking as draft ID as per user requirement or mapping
+        submission_type_name: "Draft",
+      },
+      status: "draft"
+    }
+
+    try {
+      const result = await submitProjectAction(payload)
+      if (result.success) {
+        toast.success("Draft Saved!", {
+          description: "Project draft has been created successfully.",
+        })
+        localStorage.removeItem("permit-planset-draft")
+        router.push("/projects")
+      } else {
+        toast.error("Failed to Save Draft", {
+          description: result.error?.message || "Check console for details.",
+        })
+      }
+    } catch (error) {
+      console.error("Error saving draft:", error)
+      toast.error("Error", {
+        description: "An unexpected error occurred.",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   const handleNext = () => {
     if (validateStep(currentStep)) {
       if (currentStep < STEPS.length - 1) {
@@ -845,6 +907,7 @@ export default function PermitPlansetForm() {
         isLoading={isSubmitting}
         saveStatus={saveStatus}
         lastSaved={lastSaved}
+        onSaveDraft={currentStep === 0 ? handleSaveDraft : undefined}
       />
     </form>
   )
