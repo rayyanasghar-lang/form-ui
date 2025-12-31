@@ -40,8 +40,9 @@ export default function Sidebar({
   activeSettingsTab = "account",
   onSettingsTabChange,
   collapsed = false,
-  onCollapsedChange
-}: SidebarProps) {
+  onCollapsedChange,
+  className
+}: SidebarProps & { className?: string }) {
   const pathname = usePathname()
   const [internalCollapsed, setInternalCollapsed] = useState(false)
   
@@ -106,7 +107,7 @@ export default function Sidebar({
     <aside 
       className={`flex flex-col border-r border-[#E8E0D5] bg-[#F5F0E8] z-40 transition-all duration-300 ease-in-out h-screen sticky top-0 ${
         isCollapsed ? 'w-0 overflow-hidden opacity-0' : 'w-64'
-      }`}
+      } ${className}`}
     >
       {/* Toggle Button */}
       <button

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { 
   AreaChart, 
@@ -25,7 +25,9 @@ import {
   FolderOpen,
   PanelLeft,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Menu,
+  X
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -101,6 +103,7 @@ export default function ProjectsPage() {
   const [activeTab, setActiveTab] = useState<TabFilter>("all")
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const router = useRouter()
   const [projects, setProjects] = useState<Project[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -159,12 +162,13 @@ export default function ProjectsPage() {
     }
   }
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: Date | string) => {
+    const d = typeof date === 'string' ? new Date(date) : date
     return new Intl.DateTimeFormat("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
-    }).format(date)
+    }).format(d)
   }
 
   const container = {
@@ -205,19 +209,58 @@ export default function ProjectsPage() {
 
   return (
     <div className="flex h-screen bg-background">
-      {/* Sidebar */}
-      <Sidebar 
-        variant="dashboard"
-        collapsed={sidebarCollapsed}
-        onCollapsedChange={setSidebarCollapsed}
-      />
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileMenuOpen(false)}
+              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm lg:hidden"
+            />
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+              className="fixed inset-y-0 left-0 z-50 w-64 bg-[#F5F0E8] shadow-xl lg:hidden"
+            >
+              <div className="absolute top-4 right-4 z-50">
+                 <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)}>
+                   <X className="h-5 w-5 text-zinc-500" />
+                 </Button>
+              </div>
+              <Sidebar className="h-full border-none" />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:flex h-screen sticky top-0 z-40">
+        <Sidebar 
+          variant="dashboard"
+          collapsed={sidebarCollapsed}
+          onCollapsedChange={setSidebarCollapsed}
+        />
+      </div>
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
         {/* Top Header Bar */}
-        <div className="border-b border-[#E8E0D5] bg-[#F5F0E8] sticky top-0 z-10">
-          <div className="flex items-center justify-between px-6 py-4">
-            <div className="flex items-center gap-4">
+        <div className="border-b border-[#E8E0D5] bg-[#F5F0E8] sticky top-0 z-30">
+          <div className="flex items-center justify-between px-4 py-3 lg:px-6 lg:py-4">
+            <div className="flex items-center gap-3 lg:gap-4">
+              {/* Mobile Menu Trigger */}
+              <button
+                onClick={() => setMobileMenuOpen(true)}
+                className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-black/5 text-zinc-600"
+              >
+                <Menu className="h-6 w-6" />
+              </button>
+
               {sidebarCollapsed && (
                 <button
                   onClick={() => setSidebarCollapsed(false)}
@@ -227,13 +270,13 @@ export default function ProjectsPage() {
                   <PanelLeft className="h-5 w-5" />
                 </button>
               )}
-              <h1 className="text-2xl font-bold text-zinc-900">Project Dashboard</h1>
+              <h1 className="text-xl lg:text-2xl font-bold text-zinc-900">Project Dashboard</h1>
             </div>
             
           </div>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-4 lg:p-6 space-y-5 lg:space-y-6">
           {/* Metric Cards - Corporate Style */}
           <motion.div
             variants={container}
@@ -466,57 +509,59 @@ export default function ProjectsPage() {
             <Card className="bg-white border-[#E8E0D5] shadow-sm">
               <CardHeader className="pb-0">
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabFilter)} className="w-full">
-                  <div className="flex items-center justify-between mb-4">
-                    <TabsList className="bg-transparent border-b border-zinc-200 rounded-none p-0 h-auto justify-start gap-4">
-                      <TabsTrigger
-                        value="all"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-3 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-                      >
-                        All Projects
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="draft"
-                        badge={stats.draft}
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-3 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-                      >
-                        Drafts
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="pending"
-                        badge={stats.pending}
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-3 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-                      >
-                        Pending
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="in_review"
-                        badge={stats.inReview}
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-3 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-                      >
-                        In Review
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="approved"
-                        badge={stats.approved}
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-3 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-                      >
-                        Approved
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="rejected"
-                        badge={stats.rejected}
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-3 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-                      >
-                        Rejected
-                      </TabsTrigger>
-                    </TabsList>
+                  <div className="flex flex-col items-start justify-between mb-4 gap-4 sm:flex-row sm:items-center">
+                    <div className="w-full overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0 hide-scrollbar">
+                      <TabsList className="bg-transparent border-b border-zinc-200 rounded-none p-0 h-auto justify-start gap-6 w-max sm:w-auto">
+                        <TabsTrigger
+                          value="all"
+                          className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-3 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
+                        >
+                          All Projects
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="draft"
+                          badge={stats.draft}
+                          className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-3 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
+                        >
+                          Drafts
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="pending"
+                          badge={stats.pending}
+                          className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-3 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
+                        >
+                          Pending
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="in_review"
+                          badge={stats.inReview}
+                          className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-3 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
+                        >
+                          In Review
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="approved"
+                          badge={stats.approved}
+                          className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-3 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
+                        >
+                          Approved
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="rejected"
+                          badge={stats.rejected}
+                          className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-3 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
+                        >
+                          Rejected
+                        </TabsTrigger>
+                      </TabsList>
+                    </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
                       
-                      <Link href="/forms">
+                      <Link href="/forms" className="w-full sm:w-auto">
                         <Button 
                           size="sm" 
-                          className="text-xs h-8 font-semibold text-white"
+                          className="text-xs h-8 font-semibold text-white w-full sm:w-auto"
                           style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
                         >
                           + Add Project
@@ -526,7 +571,7 @@ export default function ProjectsPage() {
                   </div>
 
                   <TabsContent value={activeTab} className="mt-0">
-                    <div className="rounded-lg border border-zinc-200 overflow-hidden">
+                  <div className="rounded-xl border border-zinc-200 overflow-hidden hidden md:block">
                       <Table>
                         <TableHeader>
                           <TableRow className="bg-zinc-50 hover:bg-zinc-50">
@@ -631,6 +676,79 @@ export default function ProjectsPage() {
                           )}
                         </TableBody>
                       </Table>
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="grid grid-cols-1 gap-4 md:hidden max-w-[92%] mx-auto w-full pb-20">
+                      {isLoading ? (
+                        <div className="text-center py-12">
+                          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
+                          <p className="text-sm font-medium text-zinc-500">Loading projects...</p>
+                        </div>
+                      ) : error ? (
+                         <div className="text-center py-12 text-red-500 font-medium">
+                           {error}
+                         </div>
+                      ) : paginatedProjects.length === 0 ? (
+                        <div className="text-center py-12 text-zinc-500 bg-white rounded-xl border border-zinc-200">
+                          No projects found
+                        </div>
+                      ) : (
+                        paginatedProjects.map((project) => (
+                          <div key={project.id} className="bg-white rounded-xl border border-zinc-200 p-4 shadow-sm space-y-3">
+                            {/* Project Name Row */}
+                            <div className="flex items-start justify-between">
+                              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 mt-1">Project</span>
+                              <div className="flex flex-col items-end gap-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-zinc-900 text-right">{project.name}</span>
+                                  <StatusBadge {...getStatusBadgeConfig(project.status)} />
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Address Row */}
+                            <div className="flex items-start justify-between">
+                              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 mt-0.5">Address</span>
+                              <span className="text-sm text-zinc-900 text-right max-w-[60%] font-medium">{project.address}</span>
+                            </div>
+
+                            {/* System Size Row */}
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">System Size</span>
+                              <span className="text-sm font-medium text-zinc-900">{project.systemSize}</span>
+                            </div>
+
+                            {/* Created Date Row */}
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Created</span>
+                              <span className="text-sm font-medium text-zinc-900">{formatDate(project.createdAt)}</span>
+                            </div>
+
+                            {/* Reviewer Row */}
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Reviewer</span>
+                              <span 
+                                className="text-sm font-bold"
+                                style={{ color: "oklch(68.351% 0.19585 34.956)" }}
+                              >
+                                {project.ownerName || "Unassigned"}
+                              </span>
+                            </div>
+
+                            {/* Action Button */}
+                            <div className="pt-2 mt-2">
+                              <Button 
+                                onClick={() => handleViewDetails(project)}
+                                className="w-full font-bold shadow-md shadow-primary/10 h-10 tracking-wide uppercase text-xs"
+                                style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
+                              >
+                                View Details
+                              </Button>
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
                     
                     {/* Pagination */}

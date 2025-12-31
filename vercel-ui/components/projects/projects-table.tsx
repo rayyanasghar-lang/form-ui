@@ -137,7 +137,7 @@ export function ProjectsTable({ projects, className }: ProjectsTableProps) {
         </Tabs>
       </CardHeader>
       <CardContent>
-        <div className="rounded-xl border border-[#E0D9CF] overflow-hidden bg-white">
+        <div className="rounded-xl border border-[#E0D9CF] overflow-hidden bg-white hidden md:block">
           <Table>
             <TableHeader>
               <TableRow className="bg-[#EDE8E0] hover:bg-[#EDE8E0]">
@@ -222,6 +222,62 @@ export function ProjectsTable({ projects, className }: ProjectsTableProps) {
               )}
             </TableBody>
           </Table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="grid grid-cols-1 gap-4 md:hidden">
+            {filteredProjects.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground bg-white rounded-xl border border-[#E0D9CF]">
+                    No projects found
+                </div>
+            ) : (
+                filteredProjects.map((project) => (
+                    <div key={project.id} className="bg-white rounded-xl border border-[#E0D9CF] p-4 shadow-sm space-y-3">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <h3 className="font-bold text-zinc-900">{project.name}</h3>
+                                <p className="text-sm text-zinc-600">{project.address}</p>
+                            </div>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuItem className="cursor-pointer">
+                                        <Eye className="h-4 w-4 mr-2" />
+                                        View Details
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="cursor-pointer">
+                                        <Edit className="h-4 w-4 mr-2" />
+                                        Edit Project
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="cursor-pointer">
+                                        <ExternalLink className="h-4 w-4 mr-2" />
+                                        Download Plans
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600">
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        Delete
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                             <StatusBadge {...getStatusBadgeConfig(project.status)} />
+                             <span className="text-xs font-medium text-zinc-500">{formatDate(project.createdAt)}</span>
+                        </div>
+                        
+                        <div className="pt-2 border-t border-zinc-100 flex items-center justify-between text-sm">
+                            <span className="text-zinc-500">System Size:</span>
+                            <span className="font-medium text-zinc-900">{project.systemSize}</span>
+                        </div>
+                    </div>
+                ))
+            )}
         </div>
         
         {/* Pagination placeholder */}
