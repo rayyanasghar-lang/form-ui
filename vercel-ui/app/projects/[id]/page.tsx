@@ -18,6 +18,7 @@ import {
   Briefcase,
   Building2,
   Mail,
+  MessageSquare,
   Phone,
   ExternalLink
 } from "lucide-react"
@@ -30,6 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { StatusBadge } from "@/components/projects/status-badge"
+import { ProjectChat } from "@/components/projects/project-chat"
 import { Project, ProjectStatus } from "@/types/project"
 import { fetchProjectByIdAction, updateProjectAction } from "@/app/actions/project-service"
 import { toast } from "sonner"
@@ -44,6 +46,7 @@ export default function ProjectDetailsPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [chatCollapsed, setChatCollapsed] = useState(false)
 
   useEffect(() => {
     async function loadProject() {
@@ -157,7 +160,8 @@ export default function ProjectDetailsPage() {
         onCollapsedChange={setSidebarCollapsed}
       />
 
-      <main className="flex-1 overflow-auto">
+      <div className="flex flex-1 overflow-hidden">
+        <main className="flex-1 overflow-auto relative min-w-0">
         <div className="sticky top-0 z-10 border-b border-[#E8E0D5] bg-[#F5F0E8]/80 backdrop-blur-md">
           <div className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-4">
@@ -180,10 +184,22 @@ export default function ProjectDetailsPage() {
                 </div>
               </div>
             </div>
-            <Button 
-              onClick={handleSave} 
-              disabled={isSaving}
-              className="bg-primary hover:bg-primary/95 text-white font-black h-12 px-8 rounded-2xl shadow-xl shadow-primary/30 transition-all active:scale-95 flex items-center gap-3 text-sm uppercase tracking-widest"
+            <div className="flex items-center gap-3">
+              {chatCollapsed && (
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  className="bg-white hover:bg-white/50 border-orange-200 text-orange-600 hover:text-orange-700 h-10 w-10 rounded-xl shadow-sm"
+                  onClick={() => setChatCollapsed(false)}
+                  title="Open Project Chat"
+                >
+                  <MessageSquare className="h-5 w-5" />
+                </Button>
+              )}
+              <Button 
+                onClick={handleSave} 
+                disabled={isSaving}
+                className="bg-primary hover:bg-primary/95 text-white font-black h-12 px-8 rounded-2xl shadow-xl shadow-primary/30 transition-all active:scale-95 flex items-center gap-3 text-sm uppercase tracking-widest"
               style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
             >
               {isSaving ? (
@@ -195,6 +211,7 @@ export default function ProjectDetailsPage() {
             </Button>
           </div>
         </div>
+      </div>
 
         <div className="p-8 max-w-6xl mx-auto pb-24">
           <Tabs defaultValue="overview" className="space-y-8">
@@ -596,6 +613,14 @@ export default function ProjectDetailsPage() {
           </Tabs>
         </div>
       </main>
+      <ProjectChat 
+        projectId={id} 
+        projectName={project?.name || "Project"} 
+        className="shrink-0 hidden xl:flex z-20 shadow-[-5px_0_30px_-5px_rgba(0,0,0,0.05)]" 
+        collapsed={chatCollapsed}
+        onCollapsedChange={setChatCollapsed}
+      />
+      </div>
     </div>
   )
 }

@@ -475,6 +475,13 @@ export default function ProjectsPage() {
                         All Projects
                       </TabsTrigger>
                       <TabsTrigger
+                        value="draft"
+                        badge={stats.draft}
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-3 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
+                      >
+                        Drafts
+                      </TabsTrigger>
+                      <TabsTrigger
                         value="pending"
                         badge={stats.pending}
                         className="rounded-none border-b-2 border-transparent data-[state=active]:border-zinc-900 data-[state=active]:text-zinc-900 px-0 py-3 text-sm font-medium text-zinc-500 data-[state=active]:shadow-none data-[state=active]:bg-transparent"
