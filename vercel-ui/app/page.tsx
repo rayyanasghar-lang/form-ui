@@ -159,11 +159,20 @@ export default function LandingPage() {
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 p-1 bg-zinc-100 rounded-xl mb-8">
-                  <TabsTrigger value="login" className="rounded-lg data-[state=active]:shadow-sm" onClick={() => setSignupStep(1)}>
+                <TabsList className="grid w-full grid-cols-2 p-1 !bg-zinc-100 rounded-xl mb-8">
+                  <TabsTrigger 
+                    value="login" 
+                    className="rounded-lg !text-zinc-800 data-[state=active]:!text-white data-[state=active]:!shadow-sm" 
+                    onClick={() => setSignupStep(1)}
+                  >
                     Login
                   </TabsTrigger>
-                  <TabsTrigger value="signup" className="rounded-lg data-[state=active]:shadow-sm">Create Account</TabsTrigger>
+                  <TabsTrigger 
+                    value="signup" 
+                    className="rounded-lg !text-zinc-800 data-[state=active]:!text-white data-[state=active]:!shadow-sm"
+                  >
+                    Create Account
+                  </TabsTrigger>
                 </TabsList>
 
                 {/* Login Tab */}

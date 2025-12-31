@@ -753,8 +753,10 @@ export default function PermitPlansetForm() {
         name: formData.projectName,
         address: formData.projectAddress,
         type: formData.projectType,
-        submission_type_id: "draft", // Explicitly marking as draft ID as per user requirement or mapping
-        submission_type_name: "Draft",
+        type: formData.projectType,
+        submission_type_name: submissionMode,
+        general_notes: formData.generalNotes,
+        status: "draft",
       },
       status: "draft"
     }
