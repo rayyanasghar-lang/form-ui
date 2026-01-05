@@ -13,43 +13,53 @@ export async function uploadWithRcloneAction(formData: FormData) {
   const projectName = (formData.get("projectName") as string || "Uploads").trim()
 
   if (!file) {
+    console.error("No file object found in FormData")
     return { error: "No file provided" }
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer())
-  // Use process.cwd() instead of tmpdir() to match reproduction script
-  const tempFileName = `upload-${Date.now()}-${file.name}`
-  const tempFilePath = join(process.cwd(), tempFileName)
+  console.log(`Processing upload: ${file.name} (${file.size} bytes, type: ${file.type})`)
+  
+  let buffer: Buffer
+  try {
+    const arrayBuffer = await file.arrayBuffer()
+    buffer = Buffer.from(arrayBuffer)
+    console.log(`Buffer created, length: ${buffer.length}`)
+  } catch (err: any) {
+    console.error("Failed to create buffer from file:", err)
+    return { error: `Failed to process file: ${err.message}` }
+  }
+
+  // Use tmpdir() for better compatibility
+  const tempFileName = `upload-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+  const tempFilePath = join(tmpdir(), tempFileName)
 
   try {
     // 1. Save file temporarily
     await writeFile(tempFilePath, buffer)
-    console.log(`Saved temp file to: ${tempFilePath}`)
+    console.log(`Successfully wrote temp file to: ${tempFilePath}`)
 
     // 2. Construct rclone command
-    // Remote: odoo-test
-    // Target: odoo-test:ProjectName/FileName
     const remoteName = "odoo-test"
-    const targetPath = `${remoteName}:${projectName}`
+    // Encode projectName to avoid path issues but keep it readable
+    const safeProjectName = projectName.replace(/[/\\?%*:|"<>]/g, '_')
+    const targetPath = `${remoteName}:${safeProjectName}/${tempFileName}`
     
-    // Use copyto to specify the final filename directly or copy for folder
-    const command = `rclone copy "${tempFilePath}" "${targetPath}"`
-    
-    console.log(`Executing: ${command}`)
+    // Use copyto to be 100% sure about the destination filename
+    const command = `rclone copyto "${tempFilePath}" "${targetPath}"`
+    console.log(`Executing rclone: ${command}`)
 
     // 3. Execute rclone
     const { stdout, stderr } = await execAsync(command)
     
-    if (stderr) {
-      console.warn("Rclone stderr:", stderr)
-    }
-    console.log("Rclone stdout:", stdout)
+    if (stderr) console.warn("Rclone stderr:", stderr)
+    console.log("Rclone copyto completed")
 
     // 4. Verify upload and get file ID using lsjson
     let webViewLink = ""
     try {
-        // List the FOLDER contents, not the file directly
-        const lsCommand = `rclone lsjson "${targetPath}"`
+        // List the FOLDER contents to find our file ID
+        const folderPath = `${remoteName}:${safeProjectName}`
+        const lsCommand = `rclone lsjson "${folderPath}"`
         console.log(`Executing lsjson on folder: ${lsCommand}`)
         
         const { stdout: lsStdout, stderr: lsStderr } = await execAsync(lsCommand)

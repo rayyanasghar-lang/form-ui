@@ -38,7 +38,7 @@ function TabsWithBadgeTrigger({ className, badge, children, ...props }: TabsWith
       <span className="flex items-center gap-2">
         {children}
         {badge !== undefined && (
-          <span className="text-xs font-bold px-2 py-0.5 rounded-full border transition-colors bg-zinc-100 text-zinc-500 border-zinc-200 group-data-[state=active]:bg-[oklch(68.351%_0.19585_34.956/0.1)] group-data-[state=active]:text-[oklch(68.351%_0.19585_34.956)] group-data-[state=active]:border-[oklch(68.351%_0.19585_34.956/0.2)]">
+          <span className="hidden md:inline-flex text-xs font-bold px-2 py-0.5 rounded-full border transition-colors bg-zinc-100 text-zinc-500 border-zinc-200 group-data-[state=active]:bg-[oklch(68.351%_0.19585_34.956/0.1)] group-data-[state=active]:text-[oklch(68.351%_0.19585_34.956)] group-data-[state=active]:border-[oklch(68.351%_0.19585_34.956/0.2)]">
             {badge}
           </span>
         )}

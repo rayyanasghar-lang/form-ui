@@ -11,8 +11,6 @@ export async function submitProjectAction(payload: any): Promise<{ success: bool
         })
 
         const text = await response.text()
-        console.log("Odoo Response Status:", response.status)
-        console.log("Odoo Response Body:", text)
 
         let data
         try {

@@ -56,6 +56,47 @@ export default function ProjectDetailsPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("overview")
 
+  // Calculate form completion progress
+  const calculateProgress = (p: Project | null): number => {
+    if (!p) return 0
+    const fields = [
+      // User Profile
+      p.user_profile?.contact_name,
+      p.user_profile?.company_name,
+      p.user_profile?.email,
+      p.user_profile?.phone,
+      // Project Info
+      p.name,
+      p.address,
+      // System Summary
+      p.system_summary?.system_size,
+      p.system_summary?.system_type,
+      p.system_summary?.pv_modules,
+      p.system_summary?.inverters,
+      // Site Details
+      p.site_details?.roof_material,
+      p.site_details?.roof_pitch,
+      p.site_details?.number_of_arrays,
+      p.site_details?.utility_provider,
+      p.site_details?.jurisdiction,
+      // Electrical Details
+      p.electrical_details?.main_panel_size,
+      p.electrical_details?.bus_rating,
+      p.electrical_details?.main_breaker,
+      p.electrical_details?.pv_breaker_location,
+      // Advanced Electrical
+      p.advanced_electrical_details?.meter_location,
+      p.advanced_electrical_details?.service_entrance_type,
+      p.advanced_electrical_details?.subpanel_details,
+      // General Notes
+      p.general_notes,
+    ]
+    const filled = fields.filter(f => f !== undefined && f !== null && f !== "").length
+    return Math.round((filled / fields.length) * 100)
+  }
+
+  const progress = calculateProgress(project)
+
   useEffect(() => {
     async function loadProject() {
       setIsLoading(true)
@@ -97,12 +138,15 @@ export default function ProjectDetailsPage() {
     const payload = {
       name: project.name,
       address: project.address,
-      type: project.systemType,
+      type: project.type,
+      submission_type_id: project.submission_type?.id,
+      services: project.services?.map(s => s.id),
       system_summary: project.system_summary,
       site_details: project.site_details,
       electrical_details: project.electrical_details,
       advanced_electrical_details: project.advanced_electrical_details,
       optional_extra_details: project.optional_extra_details,
+      system_components: project.system_components,
       general_notes: project.general_notes,
     }
 
@@ -262,6 +306,31 @@ export default function ProjectDetailsPage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              {/* Circular Progress Indicator */}
+              <div className="hidden sm:flex items-center gap-2" title={`${progress}% complete`}>
+                <div className="relative w-10 h-10">
+                  <svg className="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
+                    <circle 
+                      cx="18" cy="18" r="15.9155" 
+                      fill="none" 
+                      stroke="#E8E0D5" 
+                      strokeWidth="3"
+                    />
+                    <circle 
+                      cx="18" cy="18" r="15.9155" 
+                      fill="none" 
+                      stroke="oklch(68.351% 0.19585 34.956)" 
+                      strokeWidth="3"
+                      strokeDasharray={`${progress}, 100`}
+                      strokeLinecap="round"
+                      className="transition-all duration-500"
+                    />
+                  </svg>
+                  <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-zinc-700">{progress}%</span>
+                </div>
+                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider hidden lg:block">Complete</span>
+              </div>
+
               {/* Desktop Chat Toggle */}
               <Button 
                 variant="outline" 
@@ -715,6 +784,16 @@ export default function ProjectDetailsPage() {
                             onChange={(e) => handleUpdateField('advanced_electrical_details.service_entrance_type', e.target.value)}
                           />
                         </div>
+                        <div className="space-y-2.5">
+                          <Label htmlFor="subpanelDetails" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Subpanel Details</Label>
+                          <Input 
+                            id="subpanelDetails" 
+                            className="h-12 rounded-xl border-zinc-200 font-bold"
+                            placeholder="e.g., 100A subpanel in garage"
+                            value={project.advanced_electrical_details?.subpanel_details || ""} 
+                            onChange={(e) => handleUpdateField('advanced_electrical_details.subpanel_details', e.target.value)}
+                          />
+                        </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -914,10 +993,11 @@ export default function ProjectDetailsPage() {
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="rounded-xl border-zinc-200 text-zinc-900 hover:bg-zinc-900 hover:text-white font-black h-10 px-6 group/btn transition-all" 
-                            onClick={() => window.open(file.url, '_blank')}
+                            disabled={!file.url?.startsWith('http')}
+                            className="rounded-xl border-zinc-200 text-zinc-900 hover:bg-zinc-900 hover:text-white font-black h-10 px-6 group/btn transition-all disabled:opacity-30" 
+                            onClick={() => file.url?.startsWith('http') && window.open(file.url, '_blank')}
                           >
-                            Open
+                            {file.url?.startsWith('http') ? 'Open' : 'Invalid Link'}
                             <ExternalLink className="w-3.5 h-3.5 ml-2" />
                           </Button>
                         </div>

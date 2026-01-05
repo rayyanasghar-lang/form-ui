@@ -120,7 +120,7 @@ export default function Sidebar({
 
       {/* Header with Logo */}
       <div className="px-5 h-16 flex items-center border-b border-[#E8E0D5]">
-        <Link href="/dashboard" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+        <Link href="/projects" className="flex items-center gap-2 transition-opacity hover:opacity-80">
           <Image src="/logo.png" alt="SunPermit" width={120} height={40} className="h-10 w-auto" />
         </Link>
       </div>

@@ -23,7 +23,7 @@ export default function Sidebar() {
     <aside className="w-60 bg-[#F5F0E8] border-r border-[#E8E0D5] flex flex-col h-screen sticky top-0">
       {/* Logo */}
       <div className="p-5 border-b border-[#E8E0D5]">
-        <Link href="/dashboard" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+        <Link href="/projects" className="flex items-center gap-2 transition-opacity hover:opacity-80">
           <Image src="/logo.png" alt="SunPermit" width={120} height={40} className="h-10 w-auto" />
         </Link>
       </div>
@@ -38,8 +38,8 @@ export default function Sidebar() {
           <NavItem 
             icon={Home} 
             label="Dashboard" 
-            href="/dashboard" 
-            active={pathname === "/dashboard"}
+            href="/projects" 
+            active={pathname === "/projects"}
           />
         </div>
 

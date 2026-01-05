@@ -91,6 +91,20 @@ export default function ProjectContactStep({
                         </div>
 
                         <div className="space-y-2">
+                            <Label htmlFor="companyName" className="flex items-center gap-2">
+                                <Building2 className="w-4 h-4 text-muted-foreground" />
+                                Company Name
+                            </Label>
+                            <Input
+                                id="companyName"
+                                placeholder="Enter company name"
+                                value={formData.companyName}
+                                onChange={(e) => updateField("companyName", e.target.value)}
+                            />
+                            {errors.companyName && <p className="text-sm text-destructive">{errors.companyName}</p>}
+                        </div>
+
+                        <div className="space-y-2">
                             <Label htmlFor="projectAddress" className="flex items-center gap-2">
                                 <MapPin className="w-4 h-4 text-muted-foreground" />
                                 Project Address

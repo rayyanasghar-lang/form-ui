@@ -53,12 +53,6 @@ export default function UploadsStep({ formData, updateField, setFilesToUpload }:
                     onFilesSelected={(files) => {
                         // Update the actual File objects for upload
                         setFilesToUpload(files)
-                        
-                        // Update the names in formData for the API payload
-                        updateField(
-                            "projectFiles",
-                            files.map((f) => f.name),
-                        )
                     }}
                 />
                 <p className="text-xs text-muted-foreground">

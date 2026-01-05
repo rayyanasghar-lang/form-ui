@@ -2,23 +2,17 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { MoreHorizontal, Eye, Edit, Trash2, ExternalLink } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { MoreHorizontal, Eye, Edit, Trash2, ExternalLink, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { 
-  TabsWithBadge as Tabs, 
-  TabsWithBadgeList as TabsList, 
-  TabsWithBadgeTrigger as TabsTrigger 
-} from "@/components/ui/tabs-with-badge"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+  TabsWithBadge as Tabs,
+  TabsWithBadgeList as TabsList,
+  TabsWithBadgeTrigger as TabsTrigger,
+} from "@/components/ui/tabs-with-badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,23 +20,38 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { StatusBadge } from "./status-badge"
 import type { Project, ProjectStatus } from "@/types/project"
 
 interface ProjectsTableProps {
   projects: Project[]
+  isLoading?: boolean
+  error?: string | null
   className?: string
 }
 
 type TabFilter = "all" | ProjectStatus
 
-export function ProjectsTable({ projects, className }: ProjectsTableProps) {
+export function ProjectsTable({ projects, isLoading = false, error = null, className }: ProjectsTableProps) {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState<TabFilter>("all")
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
 
-  const filteredProjects = activeTab === "all" 
-    ? projects 
-    : projects.filter(p => p.status === activeTab)
+  const filteredProjects = activeTab === "all" ? projects : projects.filter((p) => p.status === activeTab)
+
+  const totalPages = Math.ceil(filteredProjects.length / itemsPerPage)
+  const paginatedProjects = filteredProjects.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
+  // Reset to first page when tab changes
+  if (currentPage > 1 && currentPage > totalPages && totalPages > 0) {
+    setCurrentPage(1)
+  }
 
   const toggleSelect = (id: string) => {
     const newSet = new Set(selectedIds)
@@ -58,7 +67,7 @@ export function ProjectsTable({ projects, className }: ProjectsTableProps) {
     if (selectedIds.size === filteredProjects.length) {
       setSelectedIds(new Set())
     } else {
-      setSelectedIds(new Set(filteredProjects.map(p => p.id)))
+      setSelectedIds(new Set(filteredProjects.map((p) => p.id)))
     }
   }
 
@@ -70,7 +79,16 @@ export function ProjectsTable({ projects, className }: ProjectsTableProps) {
     }).format(date)
   }
 
-  const getStatusBadgeConfig = (status: ProjectStatus): { status: "done" | "in-process" | "rejected" | "draft"; label: string } => {
+  const handleViewDetails = (project: Project) => {
+    router.push(`/projects/${project.id}`)
+  }
+
+  const getStatusBadgeConfig = (
+    status: ProjectStatus,
+  ): {
+    status: "done" | "in-process" | "rejected" | "draft"
+    label: string
+  } => {
     switch (status) {
       case "approved":
         return { status: "done", label: "Approved" }
@@ -91,45 +109,38 @@ export function ProjectsTable({ projects, className }: ProjectsTableProps) {
     <Card className={`bg-[#F5F0E8] border-[#E8E0D5] shadow-lg ${className}`}>
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-bold text-zinc-900">
-            Projects
-          </CardTitle>
-          <Link href="/forms">
-            <Button 
-              size="sm" 
-              className="font-semibold"
-              style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
-            >
-              + New Project
-            </Button>
-          </Link>
+          <CardTitle className="text-xl font-bold text-zinc-900">Projects</CardTitle>
         </div>
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabFilter)} className="mt-4">
-          <TabsList>
-            <TabsTrigger value="all">
+          <TabsList className="overflow-x-auto md:overflow-x-visible w-full flex flex-nowrap md:flex-wrap gap-1 scrollbar-none ">
+            <TabsTrigger value="all" className="shrink-0 text-xs px-2 py-1 md:text-sm md:px-3 md:py-1.5">
               All
             </TabsTrigger>
-            <TabsTrigger 
-              value="pending" 
-              badge={projects.filter(p => p.status === 'pending').length}
+            <TabsTrigger
+              value="pending"
+              badge={projects.filter((p) => p.status === "pending").length}
+              className="shrink-0 text-xs px-2 py-1 md:text-sm md:px-3 md:py-1.5"
             >
               Pending
             </TabsTrigger>
-            <TabsTrigger 
-              value="in_review" 
-              badge={projects.filter(p => p.status === 'in_review').length}
+            <TabsTrigger
+              value="in_review"
+              badge={projects.filter((p) => p.status === "in_review").length}
+              className="shrink-0 text-xs px-2 py-1 md:text-sm md:px-3 md:py-1.5"
             >
               In Review
             </TabsTrigger>
-            <TabsTrigger 
-              value="approved" 
-              badge={projects.filter(p => p.status === 'approved').length}
+            <TabsTrigger
+              value="approved"
+              badge={projects.filter((p) => p.status === "approved").length}
+              className="shrink-0 text-xs px-2 py-1 md:text-sm md:px-3 md:py-1.5"
             >
               Approved
             </TabsTrigger>
-            <TabsTrigger 
-              value="rejected" 
-              badge={projects.filter(p => p.status === 'rejected').length}
+            <TabsTrigger
+              value="rejected"
+              badge={projects.filter((p) => p.status === "rejected").length}
+              className="shrink-0 text-xs px-2 py-1 md:text-sm md:px-3 md:py-1.5"
             >
               Rejected
             </TabsTrigger>
@@ -137,13 +148,14 @@ export function ProjectsTable({ projects, className }: ProjectsTableProps) {
         </Tabs>
       </CardHeader>
       <CardContent>
+        {/* Desktop Table */}
         <div className="rounded-xl border border-[#E0D9CF] overflow-hidden bg-white hidden md:block">
           <Table>
             <TableHeader>
               <TableRow className="bg-[#EDE8E0] hover:bg-[#EDE8E0]">
                 <TableHead className="w-12">
                   <Checkbox
-                    checked={selectedIds.size === filteredProjects.length && filteredProjects.length > 0}
+                    checked={paginatedProjects.length > 0 && paginatedProjects.every((p) => selectedIds.has(p.id))}
                     onCheckedChange={toggleAll}
                   />
                 </TableHead>
@@ -156,39 +168,43 @@ export function ProjectsTable({ projects, className }: ProjectsTableProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredProjects.length === 0 ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-24">
+                    <div className="flex flex-col items-center justify-center gap-3">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <p className="text-sm font-medium text-zinc-500">Loading projects...</p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : error ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-12 text-red-500 font-medium">
+                    {error}
+                  </TableCell>
+                </TableRow>
+              ) : filteredProjects.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
                     No projects found
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredProjects.map((project) => (
-                  <TableRow 
-                    key={project.id} 
-                    className="hover:bg-[#F5F0E8] transition-colors"
-                  >
+                paginatedProjects.map((project) => (
+                  <TableRow key={project.id} className="hover:bg-[#F5F0E8] transition-colors">
                     <TableCell>
                       <Checkbox
                         checked={selectedIds.has(project.id)}
                         onCheckedChange={() => toggleSelect(project.id)}
                       />
                     </TableCell>
-                    <TableCell className="font-medium text-zinc-900">
-                      {project.name}
-                    </TableCell>
-                    <TableCell className="text-zinc-600 max-w-[200px] truncate">
-                      {project.address}
-                    </TableCell>
+                    <TableCell className="font-medium text-zinc-900">{project.name}</TableCell>
+                    <TableCell className="text-zinc-600 max-w-[200px] truncate">{project.address}</TableCell>
                     <TableCell>
                       <StatusBadge {...getStatusBadgeConfig(project.status)} />
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {project.systemSize}
-                    </TableCell>
-                    <TableCell className="text-zinc-600">
-                      {formatDate(project.createdAt)}
-                    </TableCell>
+                    <TableCell className="font-medium">{project.systemSize}</TableCell>
+                    <TableCell className="text-zinc-600">{formatDate(project.createdAt)}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -197,23 +213,11 @@ export function ProjectsTable({ projects, className }: ProjectsTableProps) {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem className="cursor-pointer">
+                          <DropdownMenuItem className="cursor-pointer" onClick={() => handleViewDetails(project)}>
                             <Eye className="h-4 w-4 mr-2" />
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="cursor-pointer">
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit Project
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="cursor-pointer">
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            Download Plans
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600">
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
+                          
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -223,81 +227,123 @@ export function ProjectsTable({ projects, className }: ProjectsTableProps) {
             </TableBody>
           </Table>
         </div>
+        {/* Mobile Table */}
+        <div className="md:hidden">
+          {isLoading ? (
+            <div className="text-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
+              <p className="text-sm font-medium text-zinc-500">Loading projects...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-12 text-red-500 font-medium">{error}</div>
+          ) : filteredProjects.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground bg-white rounded-xl border border-[#E0D9CF]">
+              No projects found
+            </div>
+          ) : (
+            <Accordion type="single" collapsible className="w-full border-none">
+              {paginatedProjects.map((project) => {
+                const statusConfig = getStatusBadgeConfig(project.status)
+                return (
+                  <AccordionItem
+                    key={project.id}
+                    value={project.id}
+                    className="border-b border-[#E0D9CF] last:border-b-0 bg-white rounded-lg mb-1.5 overflow-hidden border shadow-sm w-full"
+                  >
+                    <AccordionTrigger className="px-3 py-1.5 hover:bg-[#F5F0E8] transition-colors hover:no-underline">
+                      <div className="flex flex-col items-start gap-0 text-left w-full pr-1">
+                        <div className="flex items-center justify-between w-full">
+                          <p className="font-bold text-zinc-900 text-sm truncate max-w-[180px] leading-tight">{project.name}</p>
+                          
+                        </div>
+                        <p className = "text-[10px] text-zinc-500 font-medium truncate w-full leading-tight">{formatDate(project.createdAt)}</p>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-2 pb-1.5">
+                      <div className="space-y-1.5 pt-0.5">
+                        {/* Project Details */}
+                        <div className="grid grid-cols-2 gap-1">
+                          <div>
+                            <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider mb-0 leading-none">System Size</p>
+                            <p className="text-[11px] font-bold text-zinc-900 leading-tight">{project.systemSize || "N/A"}</p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider mb-0 leading-none">Status</p>
+                            <StatusBadge {...statusConfig} />
+                          </div>
+                        </div>
 
-        {/* Mobile Card View */}
-        <div className="grid grid-cols-1 gap-4 md:hidden">
-            {filteredProjects.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground bg-white rounded-xl border border-[#E0D9CF]">
-                    No projects found
-                </div>
-            ) : (
-                filteredProjects.map((project) => (
-                    <div key={project.id} className="bg-white rounded-xl border border-[#E0D9CF] p-4 shadow-sm space-y-3">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <h3 className="font-bold text-zinc-900">{project.name}</h3>
-                                <p className="text-sm text-zinc-600">{project.address}</p>
-                            </div>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
-                                        <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48">
-                                    <DropdownMenuItem className="cursor-pointer">
-                                        <Eye className="h-4 w-4 mr-2" />
-                                        View Details
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem className="cursor-pointer">
-                                        <Edit className="h-4 w-4 mr-2" />
-                                        Edit Project
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem className="cursor-pointer">
-                                        <ExternalLink className="h-4 w-4 mr-2" />
-                                        Download Plans
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600">
-                                        <Trash2 className="h-4 w-4 mr-2" />
-                                        Delete
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                        <div>
+                          <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider mb-0 leading-none">Address</p>
+                          <div className="mt-1">
+                            <p className="font-bold text-zinc-900 leading-tight">{project.address}</p>
+                          </div>
                         </div>
+
+                        {/* Action Buttons */}
+                        <div className="pt-3 space-y-2 border-t border-[#E0D9CF]">
                         
-                        <div className="flex items-center justify-between">
-                             <StatusBadge {...getStatusBadgeConfig(project.status)} />
-                             <span className="text-xs font-medium text-zinc-500">{formatDate(project.createdAt)}</span>
+                        <Link href={`/projects/${project.id}`}>
+
+                              <Button
+                                className="w-full font-bold shadow-sm h-9 tracking-wide uppercase text-[10px]"
+                                style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
+                                >
+                                View Details
+                              </Button>
+                        </Link>
                         </div>
-                        
-                        <div className="pt-2 border-t border-zinc-100 flex items-center justify-between text-sm">
-                            <span className="text-zinc-500">System Size:</span>
-                            <span className="font-medium text-zinc-900">{project.systemSize}</span>
-                        </div>
-                    </div>
-                ))
-            )}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                )
+              })}
+            </Accordion>
+          )}
         </div>
-        
-        {/* Pagination placeholder */}
-        <div className="flex items-center justify-between mt-4 px-2">
-          <p className="text-sm text-muted-foreground">
-            Showing {filteredProjects.length} of {projects.length} projects
+      </CardContent>
+      {/* Pagination */}
+      {!isLoading && !error && filteredProjects.length > 0 && (
+        <div className="flex items-center justify-between p-4 border-t border-[#E8E0D5]">
+          <p className="text-sm text-zinc-500">
+            Showing {Math.min(filteredProjects.length, (currentPage - 1) * itemsPerPage + 1)}-
+            {Math.min(filteredProjects.length, currentPage * itemsPerPage)} of {filteredProjects.length} projects
           </p>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" disabled className="h-8">
+          <div className="flex items-center gap-1 ml-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage === 1}
+              className="h-8 text-xs"
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+            >
               Previous
             </Button>
-            <Button variant="outline" size="sm" className="h-8 bg-white">
-              1
-            </Button>
-            <Button variant="outline" size="sm" disabled className="h-8">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <Button
+                key={page}
+                variant="outline"
+                size="sm"
+                className={`h-8 w-8 text-xs ${
+                  currentPage === page ? "bg-zinc-900 text-white hover:bg-zinc-800" : "bg-white text-zinc-600 hover:bg-zinc-50"
+                }`}
+                onClick={() => setCurrentPage(page)}
+              >
+                {page}
+              </Button>
+            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage === totalPages || totalPages === 0}
+              className="h-8 text-xs"
+              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+            >
               Next
             </Button>
           </div>
         </div>
-      </CardContent>
+      )}
     </Card>
   )
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { toast } from "sonner"
 import axios from "axios"
 import { useRouter } from "next/navigation"
@@ -22,6 +22,12 @@ import ProjectSummary from "./project-summary"
 import { uploadWithRcloneAction } from "@/app/actions/upload-rclone"
 import { submitProjectAction } from "@/app/actions/submit-project"
 import { fetchServicesAction, Service } from "@/app/actions/fetch-services"
+import { 
+  scrapeZillowAction, 
+  scrapeASCE722Action, 
+  scrapeRegridAction 
+} from "@/app/actions/scrape-service"
+import { fetchNearbyStations, geocodeAddress, WeatherStation } from "@/app/actions/weather-service"
 
 import { Component } from "./system-components-table"
 
@@ -53,18 +59,21 @@ export default function PermitPlansetForm() {
     useState<"saving" | "saved" | "idle">("idle")
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
 
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const [scrapingStatus, setScrapingStatus] = useState<"idle" | "scraping" | "completed" | "error">("idle")
+  const [weatherLoading, setWeatherLoading] = useState(false)
+  const [weatherStations, setWeatherStations] = useState<WeatherStation[]>([])
 
   const [formData, setFormData] = useState({
-    // Project Information
+    companyName: "",
     projectName: "",
+    contactName: "Solar Professional",
+    email: "solar@example.com",
+    phone: "555-0199",
     projectAddress: "",
     projectType: "",
-
-    // Permit Services
     services: [] as string[],
-
-    // System Summary
     systemSize: "",
     systemType: "",
     pvModules: "",
@@ -73,47 +82,37 @@ export default function PermitPlansetForm() {
     batteryQty: "",
     batteryModel: "",
     batteryImage: [] as string[],
-
-    // Uploads
     projectFiles: [] as string[],
-
-    // General Notes
     generalNotes: "",
-
-    // Full Details Mode - Site Details (Roof Mount)
+    sources: {} as any,
+    // Site Details
     roofMaterial: "",
     roofPitch: "",
     numberOfArrays: "",
-    arrayLayout: [] as string[],
     useRoofImages: false,
-
-    // Full Details Mode - Site Details (Ground Mount)
     groundMountType: "",
+    foundationType: "",
     rowCount: "",
     moduleCountPerRow: "",
-    foundationType: "",
     structuralNotes: "",
-    structuralSketch: [] as string[],
-
-    // Full Details Mode - Electrical Details
+    lotSize: "",
+    parcelNumber: "",
+    windSpeed: "",
+    snowLoad: "",
+    // Electrical Details
     mainPanelSize: "",
     busRating: "",
     mainBreaker: "",
     pvBreakerLocation: "",
-    oneLineDiagram: [] as string[],
     designForMe: false,
-
-    // Advanced Electrical
     meterLocation: "",
     serviceEntranceType: "",
     subpanelDetails: "",
-
-    // Full Details Mode - Utility & AHJ
+    // Utility & Jurisdiction
     utilityProvider: "",
     jurisdiction: "",
     useLastProjectValues: false,
-
-    // Full Details Mode - Optional Extras
+    // Optional Extras
     miracleWattRequired: false,
     miracleWattNotes: "",
     derRlcRequired: false,
@@ -126,504 +125,71 @@ export default function PermitPlansetForm() {
     inspectionNotesText: "",
     batterySldRequested: false,
     batterySldNotes: "",
-
-    // Scraped Data
-    lotSize: "",
-    parcelNumber: "",
-    owner: "",
-    landUse: "",
-    windSpeed: "",
-    snowLoad: "",
-    windSpeed716: "",
-    snowLoad716: "",
-    interiorArea: "",
-    structureArea: "",
-    newConstruction: null as boolean | null,
-    yearBuilt: "",
-    
-    // Scraper Sources (Nested)
-    sources: {} as any, // Using 'any' briefly to map to SourceData
   })
-
-  // Scraper & Weather Status
-  const [scrapingStatus, setScrapingStatus] = useState<"idle" | "scraping" | "completed" | "error">("idle")
-  const [weatherStations, setWeatherStations] = useState<any[]>([])
-  const [weatherLoading, setWeatherLoading] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
 
   /* ---------------- Fetch Services ---------------- */
   useEffect(() => {
-    const loadServices = async () => {
-      setServicesLoading(true)
-      const result = await fetchServicesAction()
-      
-      if ("error" in result) {
-        console.error("Failed to fetch services:", result.error)
-      } else if (result.data) {
-        setAvailableServices(result.data)
+    fetchServicesAction().then((res) => {
+      if ("data" in res && res.data) {
+        setAvailableServices(res.data)
       }
       setServicesLoading(false)
-    }
-    
-    loadServices()
+    })
   }, [])
 
-  // Load draft from local storage on mount
-  useEffect(() => {
-    const savedDraft = localStorage.getItem("permit-planset-draft")
-    if (savedDraft) {
-      try {
-        const parsed = JSON.parse(savedDraft)
-        if (parsed.formData) setFormData(parsed.formData)
-        if (parsed.submissionMode) setSubmissionMode(parsed.submissionMode)
-        if (parsed.components) setComponents(parsed.components)
-        if (parsed.currentStep) setCurrentStep(parsed.currentStep)
-      } catch (e) {
-        console.error("Failed to load draft:", e)
-      }
-    }
-  }, [])
-
-  // Listen for scraped property data
-  useEffect(() => {
-    const handlePropertyUpdate = (event: any) => {
-      const { lotSize, parcelNumber, owner, landUse, windSpeed, snowLoad, sources } = event.detail;
-      setFormData(prev => ({
-        ...prev,
-        lotSize: lotSize || prev.lotSize,
-        parcelNumber: parcelNumber || prev.parcelNumber,
-        owner: owner || prev.owner,
-        landUse: landUse || prev.landUse,
-        windSpeed: windSpeed || prev.windSpeed,
-        snowLoad: snowLoad || prev.snowLoad,
-        windSpeed716: event.detail.windSpeed716 || prev.windSpeed716,
-        snowLoad716: event.detail.snowLoad716 || prev.snowLoad716,
-        interiorArea: event.detail.interiorArea || prev.interiorArea,
-        structureArea: event.detail.structureArea || prev.structureArea,
-        newConstruction: event.detail.newConstruction ?? prev.newConstruction,
-        yearBuilt: event.detail.yearBuilt || prev.yearBuilt,
-        sources: sources || prev.sources
-      }));
-    };
-
-    const handleScrapingCompleted = () => {
-      setScrapingStatus("completed");
-      toast.success("Property data updated", {
-        description: "Data from Regrid, Zillow and ASCE fetched successfully."
-      });
-    };
-
-    const handleScrapingStarted = () => {
-      setScrapingStatus("scraping");
-      setFormData(prev => ({
-        ...prev,
-        lotSize: "",
-        parcelNumber: "",
-        owner: "",
-        landUse: "",
-        windSpeed: "",
-        snowLoad: "",
-        interiorArea: "",
-        structureArea: "",
-        newConstruction: null,
-        yearBuilt: "",
-        sources: {},
-      }));
-      setWeatherStations([]);
-      toast.info("Fetching property data...", {
-        description: "Getting data from Regrid, Zillow and ASCE Hazard Tool."
-      });
-    };
-
-    window.addEventListener("property-data-updated", handlePropertyUpdate);
-    window.addEventListener("property-data-scraping-started", handleScrapingStarted);
-    window.addEventListener("property-data-scraping-completed", handleScrapingCompleted);
-    
-    return () => {
-      window.removeEventListener("property-data-updated", handlePropertyUpdate);
-      window.removeEventListener("property-data-scraping-started", handleScrapingStarted);
-      window.removeEventListener("property-data-scraping-completed", handleScrapingCompleted);
-    };
-  }, []);
-
-  const startScraping = async () => {
-    if (!formData.projectAddress) {
-      toast.error("Please enter an address first");
-      return;
-    }
-
-    setScrapingStatus("scraping");
-    setWeatherLoading(true);
-    window.dispatchEvent(new CustomEvent("property-data-scraping-started"));
-
-    try {
-      const { geocodeAddress, fetchNearbyStations } = await import("@/app/actions/weather-service");
-      const geoResult = await geocodeAddress(formData.projectAddress);
-      
-      if (geoResult.success && geoResult.lat && geoResult.lng) {
-        const stationsResult = await fetchNearbyStations(geoResult.lat, geoResult.lng);
-        if (stationsResult.success && stationsResult.data) {
-          setWeatherStations(stationsResult.data);
-        }
-
-        try {
-          const { data: solarData } = await axios.get('/api/solar', { params: { address: formData.projectAddress } });
-          const { saveSolarData } = await import("@/lib/solar-store");
-          saveSolarData({
-            address: solarData.address || formData.projectAddress,
-            lat: solarData.lat,
-            lng: solarData.lng,
-            solar: solarData.solar,
-            layers: solarData.layers,
-          });
-        } catch (err) {
-          console.error("Solar Analysis Error (Manual Trigger):", err);
-        }
-      }
-
-      const { scrapeZillowAction, scrapeASCE716Action, scrapeASCE722Action, scrapeRegridAction } = await import("@/app/actions/scrape-service");
-      const { savePropertyData, updatePropertyData } = await import("@/lib/property-store");
-
-      savePropertyData({
-        address: formData.projectAddress,
-        lotSize: null,
-        parcelNumber: null,
-        owner: null,
-        landUse: null,
-        windSpeed: null,
-        snowLoad: null,
-        sources: {}
-      });
-
-      Promise.allSettled([
-        scrapeZillowAction(formData.projectAddress).then(res => {
-          if (res.success && res.data) {
-            updatePropertyData({
-              lotSize: res.data.lot_size,
-              parcelNumber: res.data.parcel_number,
-              interiorArea: res.data.interior_area,
-              structureArea: res.data.structure_area,
-              newConstruction: res.data.new_construction,
-              yearBuilt: res.data.year_built,
-              sources: {
-                zillow: {
-                  parcelNumber: res.data.parcel_number || null,
-                  lotSize: res.data.lot_size || null,
-                  interiorArea: res.data.interior_area || null,
-                  structureArea: res.data.structure_area || null,
-                  newConstruction: res.data.new_construction ?? null,
-                  yearBuilt: res.data.year_built || null,
-                }
-              }
-            });
-          }
-        }),
-        scrapeASCE716Action(formData.projectAddress).then(res => {
-          if (res.success && res.data) {
-            updatePropertyData({
-              windSpeed716: res.data.windSpeed || null,
-              snowLoad716: res.data.snowLoad || null,
-              sources: {
-                asce716: {
-                  windSpeed: res.data.windSpeed || null,
-                  snowLoad: res.data.snowLoad || null
-                }
-              }
-            });
-          }
-        }),
-        scrapeASCE722Action(formData.projectAddress).then(res => {
-          if (res.success && res.data) {
-            updatePropertyData({
-              windSpeed: res.data.windSpeed || null,
-              snowLoad: res.data.snowLoad || null,
-              sources: {
-                asce: {
-                  windSpeed: res.data.windSpeed || null,
-                  snowLoad: res.data.snowLoad || null
-                }
-              }
-            });
-          }
-        }),
-        scrapeRegridAction(formData.projectAddress).then(res => {
-          if (res.success && res.data) {
-            updatePropertyData({
-              lotSize: res.data.lot_size,
-              parcelNumber: res.data.parcel_number,
-              owner: res.data.owner,
-              landUse: res.data.land_use,
-              sources: {
-                regrid: {
-                  parcelNumber: res.data.parcel_number || null,
-                  owner: res.data.owner || null,
-                  lotSize: res.data.lot_size || null,
-                  landUse: res.data.land_use || null
-                }
-              }
-            });
-          }
-        })
-      ]).finally(() => {
-        setScrapingStatus("completed");
-        setWeatherLoading(false);
-        window.dispatchEvent(new CustomEvent("property-data-scraping-completed"));
-      });
-    } catch (err) {
-      console.error("Scraping trigger error:", err);
-      setScrapingStatus("error");
-      setWeatherLoading(false);
-    }
-  };
-
-  /* ---------------- Draft Autosave ---------------- */
-  const saveDraft = useCallback(() => {
-    localStorage.setItem(
-      "permit-planset-draft",
-      JSON.stringify({
-        formData,
-        submissionMode,
-        components,
-        currentStep,
+  /* ---------------- Save Draft ---------------- */
+  const handleSaveDraft = async () => {
+    // Basic validation for Step 1
+    if (!formData.projectName || !formData.projectAddress || !formData.companyName) {
+      setErrors({
+        projectName: !formData.projectName ? "Project name is required" : "",
+        companyName: !formData.companyName ? "Company name is required" : "",
+        projectAddress: !formData.projectAddress ? "Project address is required" : "",
       })
-    )
-    setLastSaved(new Date())
-    setSaveStatus("saved")
-  }, [formData, submissionMode, components, currentStep])
+      toast.error("Please fill in the required fields to save a draft")
+      return
+    }
 
-  useEffect(() => {
     setSaveStatus("saving")
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
-    saveTimeoutRef.current = setTimeout(saveDraft, 500)
-  }, [formData, submissionMode, components, currentStep, saveDraft])
+    console.log("Saving draft. Current projectFiles:", formData.projectFiles)
+    console.log("New files pending upload (will not be saved in draft):", filesToUpload.length)
+    try {
+      // Filter out temporary filenames, only save real URLs
+      const finalFormData = {
+        ...formData,
+        projectFiles: formData.projectFiles.filter((f) => f.startsWith("http")),
+      }
+      
+      const payload = prepareProjectPayload(finalFormData, components, "draft")
+      const res = await submitProjectAction(payload)
+      if (res.success) {
+        setLastSaved(new Date())
+        setSaveStatus("saved")
+        toast.success("Draft saved to server")
+      } else {
+        setSaveStatus("idle")
+        const errorMsg = typeof res.error === 'object' ? res.error.message || res.error.status : res.error;
+        toast.error(errorMsg || "Failed to save draft")
+      }
+    } catch (error) {
+      setSaveStatus("idle")
+      toast.error("Error saving draft")
+    }
+  }
 
   const STEPS =
     submissionMode === "provide details" ? DETAILED_STEPS : QUICK_STEPS
 
   /* ---------------- Helpers ---------------- */
   const updateField = (field: string, value: any) => {
-    if (field === "projectFiles" && Array.isArray(value) && value.length > 0 && value[0] instanceof File) {
-      setFilesToUpload(value as File[])
-      setFormData((prev) => ({ ...prev, [field]: (value as File[]).map((f) => f.name) }))
-    } else {
-      setFormData((prev) => ({ ...prev, [field]: value }))
-    }
-
+    setFormData((prev) => ({ ...prev, [field]: value }))
+    // Clear error for field if it exists
     if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }))
-    }
-  }
-
-  const addComponent = () => {
-    const newComponent: Component = {
-      id: Date.now().toString(),
-      type: "",
-      makeModel: "",
-      qty: "",
-      attachment: [],
-      notes: "",
-    }
-    setComponents([...components, newComponent])
-  }
-
-  const updateComponent = (id: string, field: keyof Component, value: any) => {
-    setComponents(components.map(comp =>
-      comp.id === id ? { ...comp, [field]: value } : comp
-    ))
-  }
-
-  const removeComponent = (id: string) => {
-    setComponents(components.filter(comp => comp.id !== id))
-  }
-
-  const validateStep = (step: number): boolean => {
-    const newErrors: Record<string, string> = {}
-
-    if (step === 0) {
-      if (!formData.projectName) newErrors.projectName = "Project name is required"
-      if (!formData.projectAddress) newErrors.projectAddress = "Project address is required"
-      if (!formData.projectType) newErrors.projectType = "Project type is required"
-      if (formData.services.length === 0) newErrors.services = "Select at least one permit service"
-    } else if (step === 1) {
-      if (!formData.systemSize) newErrors.systemSize = "System size is required"
-      if (!formData.systemType) newErrors.systemType = "System type is required"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const submitForm = async () => {
-    setIsSubmitting(true)
-    
-    // Upload files to Google Drive
-    const uploadedFiles: { name: string; url: string }[] = []
-    const uploadErrors: string[] = []
-
-    if (filesToUpload.length > 0) {
-      try {
-        await Promise.all(
-          filesToUpload.map(async (file) => {
-            const uploadData = new FormData()
-            uploadData.append("file", file)
-            uploadData.append("projectName", formData.projectName || "Untitled Project")
-
-            const result = await uploadWithRcloneAction(uploadData)
-            if (result.error) {
-              uploadErrors.push(`${file.name}: ${result.error}`)
-            } else if (result.webViewLink) {
-              uploadedFiles.push({ name: file.name, url: result.webViewLink })
-            }
-          }),
-        )
-
-        if (uploadErrors.length > 0 && uploadedFiles.length === 0) {
-          toast.error("Upload Error", { description: "Failed to upload files." })
-          setIsSubmitting(false)
-          return
-        }
-      } catch (error) {
-        toast.error("Upload Failed")
-        setIsSubmitting(false)
-        return
-      }
-    }
-
-    const payload = {
-      user_profile: {
-        company_name: "Solar Solutions Inc.",
-        contact_name: "John Doe",
-        email: "john.doe@solarsolutions.com",
-        phone: "+1 (555) 123-4567",
-      },
-      project: {
-        name: formData.projectName,
-        address: formData.projectAddress,
-        type: formData.projectType,
-        submission_type_name: submissionMode,
-        general_notes: formData.generalNotes,
-        status: "draft",
-      },
-      services: formData.services,
-      system_summary: {
-        system_size: parseFloat(formData.systemSize) || 0,
-        system_type: formData.systemType,
-        pv_modules: parseInt(formData.pvModules) || 0,
-        inverters: parseInt(formData.inverters) || 0,
-      },
-      battery_info: formData.batteryBackup
-        ? {
-          qty: parseInt(formData.batteryQty) || 0,
-          model: formData.batteryModel,
-          image: formData.batteryImage,
-        }
-        : {
-          qty: 0,
-          model: "",
-          image: [],
-        },
-      site_details: {
-        roof_material: formData.roofMaterial || "",
-        roof_pitch: formData.roofPitch || "",
-        number_of_arrays: parseInt(formData.numberOfArrays) || 0,
-        utility_provider: formData.utilityProvider || "",
-        jurisdiction: formData.jurisdiction || "",
-      },
-      electrical_details: {
-        main_panel_size: formData.mainPanelSize || "",
-        bus_rating: formData.busRating || "",
-        main_breaker: formData.mainBreaker || "",
-        pv_breaker_location: formData.pvBreakerLocation || "",
-        one_line_diagram: formData.oneLineDiagram || [],
-      },
-      advanced_electrical_details: {
-        meter_location: formData.meterLocation || "",
-        service_entrance_type: formData.serviceEntranceType || "",
-        subpanel_details: formData.subpanelDetails || "",
-      },
-      optional_extra_details: {
-        miracle_watt_required: formData.miracleWattRequired || false,
-        der_rlc_required: formData.derRlcRequired || false,
-        der_rlc_notes: formData.derRlcNotes || "",
-        setback_constraints: formData.setbackConstraints || false,
-        site_access_restrictions: formData.siteAccessRestrictions || false,
-        inspection_notes: formData.inspectionNotes || false,
-        inspection_notes_text: formData.inspectionNotesText || "",
-        battery_sld_requested: formData.batterySldRequested || false,
-      },
-      system_components: components.map((c) => ({
-        type: c.type,
-        make_model: c.makeModel,
-        qty: parseInt(c.qty) || 0,
-        attachment: c.attachment,
-        notes: c.notes,
-      })),
-      uploads: formData.projectFiles.map((f) => {
-        const uploaded = uploadedFiles.find((u) => u.name === f)
-        return {
-          url: uploaded?.url || "",
-          name: f,
-          category: "Plan",
-          mime_type: "application/pdf",
-          size: 0,
-        }
-      }),
-    }
-
-    try {
-      const result = await submitProjectAction(payload)
-      if (result.success) {
-        localStorage.removeItem("permit-planset-draft")
-        toast.success("Success!", { description: "Project created successfully!" })
-        router.push("/projects")
-      } else {
-        toast.error("Submission Failed", { description: result.error as any })
-      }
-    } catch (error) {
-      toast.error("Submission Error")
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  const handleSaveDraft = async () => {
-    if (!formData.projectName) {
-      toast.error("Project name required to save draft")
-      return
-    }
-
-    setIsSubmitting(true)
-    const payload = {
-      user_profile: {
-        company_name: "Solar Solutions Inc.",
-        contact_name: "John Doe",
-        email: "john.doe@solarsolutions.com",
-        phone: "+1 (555) 123-4567",
-      },
-      project: {
-        name: formData.projectName,
-        address: formData.projectAddress,
-        type: formData.projectType,
-        submission_type_name: submissionMode,
-        general_notes: formData.generalNotes,
-        status: "draft",
-      },
-      status: "draft"
-    }
-
-    try {
-      const result = await submitProjectAction(payload)
-      if (result.success) {
-        toast.success("Draft Saved!")
-        localStorage.removeItem("permit-planset-draft")
-        router.push("/projects")
-      } else {
-        toast.error("Failed to Save Draft")
-      }
-    } catch (error) {
-      toast.error("Error")
-    } finally {
-      setIsSubmitting(false)
+      setErrors((prev) => {
+        const next = { ...prev }
+        delete next[field]
+        return next
+      })
     }
   }
 
@@ -636,13 +202,245 @@ export default function PermitPlansetForm() {
     )
   }
 
-  const handleNext = () => {
-    if (validateStep(currentStep)) {
-      if (currentStep < STEPS.length - 1) {
-        setCurrentStep((s) => s + 1)
+  const addComponent = () => {
+    const newId = Math.random().toString(36).substr(2, 9)
+    setComponents((prev) => [
+      ...prev,
+      { id: newId, type: "module", makeModel: "", qty: "1", attachment: [], notes: "" },
+    ])
+  }
+
+  const updateComponent = (id: string, field: keyof Component, value: any) => {
+    setComponents((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, [field]: value } : c))
+    )
+  }
+
+  const removeComponent = (id: string) => {
+    setComponents((prev) => prev.filter((c) => c.id !== id))
+  }
+
+  const prepareProjectPayload = (data: typeof formData, components: Component[], status: string) => {
+    // Map project files ensuring we have both url and name
+    const uploads = data.projectFiles.map(item => {
+      if (typeof item === 'string') {
+        const url = item;
+        return {
+          url: url,
+          name: url.split('/').pop()?.split('?')[0] || 'file',
+          category: 'General'
+        };
       } else {
-        submitForm()
+        return {
+          url: (item as any).url,
+          name: (item as any).name,
+          category: 'General'
+        };
       }
+    });
+
+    return {
+      user_profile: {
+        company_name: data.companyName,
+        contact_name: data.contactName,
+        email: data.email,
+        phone: data.phone,
+      },
+      project: {
+        name: data.projectName,
+        address: data.projectAddress,
+        type: data.projectType,
+        general_notes: data.generalNotes,
+        submission_type_id: submissionMode === "quick" ? "7506fa4e-e2a5-4dcb-b14c-847b3aed1b48" : "755bbe68-75ec-4487-861f-b95de7fde5b6",
+        submission_type_name: submissionMode === "quick" ? "quick" : "provide details",
+      },
+      services: data.services,
+      system_summary: {
+        system_size: data.systemSize,
+        system_type: data.systemType,
+        pv_modules: data.pvModules,
+        inverters: data.inverters,
+      },
+      battery_info: {
+        qty: data.batteryQty,
+        model: data.batteryModel,
+        image: data.batteryImage,
+      },
+      site_details: {
+        roof_material: data.roofMaterial,
+        roof_pitch: data.roofPitch,
+        number_of_arrays: data.numberOfArrays,
+        ground_mount_type: data.groundMountType,
+        foundation_type: data.foundationType,
+        main_panel_size: data.mainPanelSize,
+        utility_provider: data.utilityProvider,
+        jurisdiction: data.jurisdiction,
+        lot_size: data.lotSize,
+        parcel_number: data.parcelNumber,
+        wind_speed: data.windSpeed,
+        snow_load: data.snowLoad,
+      },
+      electrical_details: {
+        main_panel_size: data.mainPanelSize,
+        bus_rating: data.busRating,
+        main_breaker: data.mainBreaker,
+        pv_breaker_location: data.pvBreakerLocation,
+      },
+      advanced_electrical_details: {
+        meter_location: data.meterLocation,
+        service_entrance_type: data.serviceEntranceType,
+        subpanel_details: data.subpanelDetails,
+      },
+      optional_extra_details: {
+        miracle_watt_required: data.miracleWattRequired,
+        miracle_watt_notes: data.miracleWattNotes,
+        der_rlc_required: data.derRlcRequired,
+        der_rlc_notes: data.derRlcNotes,
+        setback_constraints: data.setbackConstraints,
+        setback_notes: data.setbackNotes,
+        site_access_restrictions: data.siteAccessRestrictions,
+        site_access_notes: data.siteAccessNotes,
+        inspection_notes: data.inspectionNotes,
+        inspection_notes_text: data.inspectionNotesText,
+        battery_sld_requested: data.batterySldRequested,
+        battery_sld_notes: data.batterySldNotes,
+      },
+      system_components: components.map(c => ({
+        type: c.type,
+        make_model: c.makeModel,
+        qty: c.qty,
+        attachment: c.attachment,
+        notes: c.notes
+      })),
+      uploads: uploads,
+      status: status
+    }
+  }
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true)
+    console.log("Starting submission. filesToUpload:", filesToUpload)
+    try {
+      // 1. Upload files if any
+      let uploadedFiles: Array<{ url: string, name: string }> = []
+      if (filesToUpload.length > 0) {
+        console.log(`Uploading ${filesToUpload.length} files...`)
+        // Upload sequentially to avoid network congestion/timeouts
+        for (const file of filesToUpload) {
+          console.log(`Uploading file: ${file.name} (${file.size} bytes)`)
+          const fd = new FormData()
+          fd.append("file", file)
+          fd.append("projectName", formData.projectName || "Default Project")
+          
+          const result = await uploadWithRcloneAction(fd)
+          if (!result.success) {
+            toast.error(`Failed to upload ${file.name}: ${result.error || "Unknown error"}`)
+            setIsSubmitting(false)
+            return
+          }
+          if (result.webViewLink) {
+            uploadedFiles.push({
+              url: result.webViewLink,
+              name: file.name
+            })
+          }
+        }
+      }
+
+      // 2. Submit project data
+      // Filter out any non-URL strings (like filenames that might have leaked into state)
+      // and map existing URLs to objects
+      const existingUrls = formData.projectFiles
+        .filter(f => typeof f === 'string' && f.startsWith('http'))
+        .map(url => ({ url, name: (url as string).split('/').pop()?.split('?')[0] || 'file' }))
+      
+      const finalFormData = {
+        ...formData,
+        projectFiles: [...existingUrls, ...uploadedFiles] as any,
+      }
+      
+      const payload = prepareProjectPayload(finalFormData, components, "submitted")
+
+      const res = await submitProjectAction(payload)
+      if (res.success) {
+        toast.success("Project submitted successfully!")
+        localStorage.removeItem("permit-planset-draft")
+        router.push("/projects")
+      } else {
+        const errorMsg = typeof res.error === 'object' ? res.error.message || res.error.status : res.error;
+        toast.error(errorMsg || "Submission failed")
+      }
+    } catch (error) {
+      console.error("Submission error:", error)
+      toast.error("An unexpected error occurred")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleStartScraping = async () => {
+    if (!formData.projectAddress) {
+      toast.error("Please enter an address first")
+      return
+    }
+
+    setScrapingStatus("scraping")
+    setWeatherLoading(true)
+
+    try {
+      // 1. Weather & Geocoding
+      geocodeAddress(formData.projectAddress).then((geo) => {
+        if (geo.success && geo.lat && geo.lng) {
+          fetchNearbyStations(geo.lat, geo.lng).then((stations) => {
+            if (stations.success && stations.data) {
+              setWeatherStations(stations.data)
+            }
+            setWeatherLoading(false)
+          })
+        } else {
+          setWeatherLoading(false)
+        }
+      })
+
+      // 2. Property Scraping
+      const [zillow, asce, regrid] = await Promise.all([
+        scrapeZillowAction(formData.projectAddress),
+        scrapeASCE722Action(formData.projectAddress),
+        scrapeRegridAction(formData.projectAddress),
+      ])
+
+      const sources: any = {}
+      if (zillow.success) sources.zillow = zillow.data
+      if (asce.success) sources.asce = asce.data
+      if (regrid.success) sources.regrid = regrid.data
+
+      setFormData((prev) => ({
+        ...prev,
+        sources,
+        // Auto-fill some fields if found
+        lotSize: regrid.data?.lot_size || zillow.data?.lot_size || prev.lotSize,
+        parcelNumber:
+          regrid.data?.parcel_number ||
+          zillow.data?.parcel_number ||
+          prev.parcelNumber,
+        windSpeed: asce.data?.windSpeed || prev.windSpeed,
+        snowLoad: asce.data?.snowLoad || prev.snowLoad,
+      }))
+
+      setScrapingStatus("completed")
+      toast.success("Property intelligence gathered!")
+    } catch (error) {
+      console.error("Scraping error:", error)
+      setScrapingStatus("error")
+      toast.error("Failed to gather property records")
+    }
+  }
+
+  const handleNext = () => {
+    if (currentStep === STEPS.length - 1) {
+      handleSubmit()
+    } else {
+      setCurrentStep((s) => s + 1)
     }
   }
 
@@ -675,7 +473,7 @@ export default function PermitPlansetForm() {
             availableServices={availableServices}
             servicesLoading={servicesLoading}
             scrapingStatus={scrapingStatus}
-            onStartScraping={startScraping}
+            onStartScraping={handleStartScraping}
             weatherStations={weatherStations}
             weatherLoading={weatherLoading}
           />
@@ -759,17 +557,19 @@ export default function PermitPlansetForm() {
       </div>
 
       {/* Sticky Mobile Buttons */}
-      <div className="fixed md:static bottom-0 left-0 right-0 z-40 bg-background border-t md:border-none px-4 py-3 md:p-0">
-        <FormButtons
-          onNext={handleNext}
-          onBack={handleBack}
-          isFirstStep={currentStep === 0}
-          isLastStep={currentStep === STEPS.length - 1}
-          isLoading={isSubmitting}
-          saveStatus={saveStatus}
-          lastSaved={lastSaved}
-          onSaveDraft={currentStep === 0 ? handleSaveDraft : undefined}
-        />
+      <div className="fixed md:static bottom-0 left-0 right-0 z-40 bg-[#F5F0E8] md:bg-transparent border-t md:border-none px-4 py-3 md:pt-4 md:pb-0">
+        <div className="max-w-3xl mx-auto">
+          <FormButtons
+            onNext={handleNext}
+            onBack={handleBack}
+            isFirstStep={currentStep === 0}
+            isLastStep={currentStep === STEPS.length - 1}
+            isLoading={isSubmitting}
+            saveStatus={saveStatus}
+            lastSaved={lastSaved}
+            onSaveDraft={handleSaveDraft}
+          />
+        </div>
       </div>
     </form>
   )

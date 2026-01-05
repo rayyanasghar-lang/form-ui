@@ -39,6 +39,7 @@ export async function fetchProjectsAction(): Promise<ProjectsResponse | { error:
         batteryBackup: !!item.system_summary?.battery_info,
         createdAt: item.created_at ? new Date(item.created_at) : new Date(),
         updatedAt: item.updated_at ? new Date(item.updated_at) : new Date(),
+        type: item.type || item.system_summary?.system_type || "residential", // Fallback for type
         
         // Detailed Nested Fields
         user_profile: item.user_profile,
@@ -104,6 +105,7 @@ export async function fetchProjectByIdAction(id: string): Promise<{ data?: Proje
       batteryBackup: !!item.system_summary?.battery_info,
       createdAt: item.created_at ? new Date(item.created_at) : new Date(),
       updatedAt: item.updated_at ? new Date(item.updated_at) : new Date(),
+      type: item.type || item.system_summary?.system_type || "residential",
       
       // Detailed Nested Fields
       user_profile: item.user_profile,
@@ -139,7 +141,7 @@ export async function updateProjectAction(id: string, payload: any): Promise<{ s
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        project_id: id,
+        id: id,
         ...payload
       }),
     })

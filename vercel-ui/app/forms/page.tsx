@@ -21,7 +21,7 @@ export default function FormsPage() {
     <div className="min-h-screen flex flex-col selection:bg-primary/20">
       <Navbar
         title="Forms"
-        backLink={{ label: "Dashboard", href: "/dashboard" }}
+        backLink={{ label: "Dashboard", href: "/projects" }}
       />
 
       <main className="flex-1 px-4 sm:px-6 lg:px-8 pt-6 pb-28 md:pb-12">
@@ -30,7 +30,7 @@ export default function FormsPage() {
           {/* Header */}
           <div className="mb-6 md:mb-10">
             <div className="flex items-center gap-3 mb-2">
-              <Link href="/dashboard" className="md:hidden">
+              <Link href="/projects" className="md:hidden">
                 <Button
                   variant="ghost"
                   size="icon"
