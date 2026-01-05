@@ -4,22 +4,26 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { toast } from "sonner"
 import axios from "axios"
 import { useRouter } from "next/navigation"
+
 import Stepper from "./stepper"
 import FormCard from "./form-card"
 import FormButtons from "./form-buttons"
-import ProjectContactStep from "./permit-form/project-contact-step"
-import SystemSummaryStep from "./permit-form/system-summary-step"
-import UploadsStep from "./permit-form/uploads-step"
-import GeneralNotesStep from "./permit-form/general-notes-step"
+
+import ProjectContactStep from "@/components/permit-form/project-contact-step"
+import SystemSummaryStep from "@/components/permit-form/system-summary-step"
+import UploadsStep from "@/components/permit-form/uploads-step"
+import GeneralNotesStep from "@/components/permit-form/general-notes-step"
 import SiteDetails from "./site-details"
 import ElectricalDetails from "./electrical-details"
 import UtilityDetails from "./utility-details"
 import OptionalExtras from "./optional-extras"
 import ProjectSummary from "./project-summary"
+
 import { uploadWithRcloneAction } from "@/app/actions/upload-rclone"
 import { submitProjectAction } from "@/app/actions/submit-project"
 import { fetchServicesAction, Service } from "@/app/actions/fetch-services"
-import { fetchNearbyStations, geocodeAddress } from "@/app/actions/weather-service"
+
+import { Component } from "./system-components-table"
 
 const QUICK_STEPS = ["Project & Contact", "System Summary", "Uploads", "Notes"]
 const DETAILED_STEPS = [
@@ -30,22 +34,25 @@ const DETAILED_STEPS = [
   "Uploads",
   "Notes",
 ]
-import { Component } from "./system-components-table"
 
 export default function PermitPlansetForm() {
   const router = useRouter()
+
   const [currentStep, setCurrentStep] = useState(0)
-  const [submissionMode, setSubmissionMode] = useState<"quick" | "provide details">("quick")
+  const [submissionMode, setSubmissionMode] =
+    useState<"quick" | "provide details">("quick")
+
   const [components, setComponents] = useState<Component[]>([])
   const [filesToUpload, setFilesToUpload] = useState<File[]>([])
+
   const [availableServices, setAvailableServices] = useState<Service[]>([])
   const [servicesLoading, setServicesLoading] = useState(true)
+
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [saveStatus, setSaveStatus] = useState<"saving" | "saved" | "idle">("idle")
+  const [saveStatus, setSaveStatus] =
+    useState<"saving" | "saved" | "idle">("idle")
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
-  const [scrapingStatus, setScrapingStatus] = useState<"idle" | "scraping" | "completed" | "error">("idle")
-  const [weatherStations, setWeatherStations] = useState<any[]>([])
-  const [weatherLoading, setWeatherLoading] = useState(false)
+
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const [formData, setFormData] = useState({
@@ -138,7 +145,13 @@ export default function PermitPlansetForm() {
     sources: {} as any, // Using 'any' briefly to map to SourceData
   })
 
-  // Fetch services from API on mount
+  // Scraper & Weather Status
+  const [scrapingStatus, setScrapingStatus] = useState<"idle" | "scraping" | "completed" | "error">("idle")
+  const [weatherStations, setWeatherStations] = useState<any[]>([])
+  const [weatherLoading, setWeatherLoading] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  /* ---------------- Fetch Services ---------------- */
   useEffect(() => {
     const loadServices = async () => {
       setServicesLoading(true)
@@ -146,7 +159,6 @@ export default function PermitPlansetForm() {
       
       if ("error" in result) {
         console.error("Failed to fetch services:", result.error)
-        // Optionally show error to user
       } else if (result.data) {
         setAvailableServices(result.data)
       }
@@ -203,7 +215,6 @@ export default function PermitPlansetForm() {
 
     const handleScrapingStarted = () => {
       setScrapingStatus("scraping");
-      // Clear previous data
       setFormData(prev => ({
         ...prev,
         lotSize: "",
@@ -246,7 +257,6 @@ export default function PermitPlansetForm() {
     window.dispatchEvent(new CustomEvent("property-data-scraping-started"));
 
     try {
-      // 1. Geocode & Fetch Weather (formerly automatic)
       const { geocodeAddress, fetchNearbyStations } = await import("@/app/actions/weather-service");
       const geoResult = await geocodeAddress(formData.projectAddress);
       
@@ -256,7 +266,6 @@ export default function PermitPlansetForm() {
           setWeatherStations(stationsResult.data);
         }
 
-        // 2. Fetch Solar Data (formerly in address-autocomplete)
         try {
           const { data: solarData } = await axios.get('/api/solar', { params: { address: formData.projectAddress } });
           const { saveSolarData } = await import("@/lib/solar-store");
@@ -272,11 +281,9 @@ export default function PermitPlansetForm() {
         }
       }
 
-      // 3. Property Scrapers
       const { scrapeZillowAction, scrapeASCE716Action, scrapeASCE722Action, scrapeRegridAction } = await import("@/app/actions/scrape-service");
       const { savePropertyData, updatePropertyData } = await import("@/lib/property-store");
 
-      // Initial empty save to establish the address and timestamp
       savePropertyData({
         address: formData.projectAddress,
         lotSize: null,
@@ -288,7 +295,6 @@ export default function PermitPlansetForm() {
         sources: {}
       });
 
-      // Run all scrapers in parallel, but update independently
       Promise.allSettled([
         scrapeZillowAction(formData.projectAddress).then(res => {
           if (res.success && res.data) {
@@ -370,68 +376,41 @@ export default function PermitPlansetForm() {
     }
   };
 
-  // Debounced auto-save to local storage
+  /* ---------------- Draft Autosave ---------------- */
   const saveDraft = useCallback(() => {
-    const draft = {
-      formData,
-      submissionMode,
-      components,
-      currentStep,
-      savedAt: new Date().toISOString(),
-    }
-    localStorage.setItem("permit-planset-draft", JSON.stringify(draft))
+    localStorage.setItem(
+      "permit-planset-draft",
+      JSON.stringify({
+        formData,
+        submissionMode,
+        components,
+        currentStep,
+      })
+    )
     setLastSaved(new Date())
     setSaveStatus("saved")
   }, [formData, submissionMode, components, currentStep])
 
-  // Save draft to local storage on change with debounce
   useEffect(() => {
-    // Clear any pending save
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current)
-    }
-
-    // Show saving indicator
     setSaveStatus("saving")
-
-    // Debounce the save by 500ms
-    saveTimeoutRef.current = setTimeout(() => {
-      saveDraft()
-    }, 500)
-
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current)
-      }
-    }
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+    saveTimeoutRef.current = setTimeout(saveDraft, 500)
   }, [formData, submissionMode, components, currentStep, saveDraft])
 
-  const STEPS = submissionMode === "provide details" ? DETAILED_STEPS : QUICK_STEPS
+  const STEPS =
+    submissionMode === "provide details" ? DETAILED_STEPS : QUICK_STEPS
 
-  const [errors, setErrors] = useState<Record<string, string>>({})
-
-  const updateField = (field: string, value: string | string[] | boolean | File[]) => {
+  /* ---------------- Helpers ---------------- */
+  const updateField = (field: string, value: any) => {
     if (field === "projectFiles" && Array.isArray(value) && value.length > 0 && value[0] instanceof File) {
       setFilesToUpload(value as File[])
       setFormData((prev) => ({ ...prev, [field]: (value as File[]).map((f) => f.name) }))
     } else {
-      setFormData((prev) => ({ ...prev, [field]: value as string | string[] | boolean }))
+      setFormData((prev) => ({ ...prev, [field]: value }))
     }
 
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }))
-    }
-  }
-
-  const toggleService = (serviceName: string) => {
-    const current = formData.services
-    if (current.includes(serviceName)) {
-      updateField(
-        "services",
-        current.filter((name) => name !== serviceName),
-      )
-    } else {
-      updateField("services", [...current, serviceName])
     }
   }
 
@@ -447,7 +426,7 @@ export default function PermitPlansetForm() {
     setComponents([...components, newComponent])
   }
 
-  const updateComponent = (id: string, field: keyof Component, value: string | string[]) => {
+  const updateComponent = (id: string, field: keyof Component, value: any) => {
     setComponents(components.map(comp =>
       comp.id === id ? { ...comp, [field]: value } : comp
     ))
@@ -457,22 +436,18 @@ export default function PermitPlansetForm() {
     setComponents(components.filter(comp => comp.id !== id))
   }
 
-
   const validateStep = (step: number): boolean => {
     const newErrors: Record<string, string> = {}
 
     if (step === 0) {
-      // Step 1: Project & Contact
       if (!formData.projectName) newErrors.projectName = "Project name is required"
       if (!formData.projectAddress) newErrors.projectAddress = "Project address is required"
       if (!formData.projectType) newErrors.projectType = "Project type is required"
       if (formData.services.length === 0) newErrors.services = "Select at least one permit service"
     } else if (step === 1) {
-      // Step 2: System Summary
       if (!formData.systemSize) newErrors.systemSize = "System size is required"
       if (!formData.systemType) newErrors.systemType = "System type is required"
     }
-    // Steps 3 and 4 (Uploads and Notes) are optional
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -480,18 +455,12 @@ export default function PermitPlansetForm() {
 
   const submitForm = async () => {
     setIsSubmitting(true)
-    console.log("[Frontend] submitForm called. Files to upload:", filesToUpload.length)
-
-    // Services are already stored as names from the API, so just use them directly
-    const serviceNames = formData.services
-
+    
     // Upload files to Google Drive
     const uploadedFiles: { name: string; url: string }[] = []
     const uploadErrors: string[] = []
 
     if (filesToUpload.length > 0) {
-      console.log(`Starting upload of ${filesToUpload.length} file(s) to Google Drive...`)
-
       try {
         await Promise.all(
           filesToUpload.map(async (file) => {
@@ -499,56 +468,30 @@ export default function PermitPlansetForm() {
             uploadData.append("file", file)
             uploadData.append("projectName", formData.projectName || "Untitled Project")
 
-            console.log(`[Frontend] calling uploadWithRcloneAction for: ${file.name}`)
             const result = await uploadWithRcloneAction(uploadData)
-            console.log(`[Frontend] upload result:`, result)
-
-            // Check if upload was successful
             if (result.error) {
-              console.error(`❌ Failed to upload ${file.name}:`, result.error)
-              if (result.details) {
-                console.error(`   Details:`, result.details)
-              }
               uploadErrors.push(`${file.name}: ${result.error}`)
             } else if (result.webViewLink) {
-              console.log(`✓ Successfully uploaded ${file.name}`)
               uploadedFiles.push({ name: file.name, url: result.webViewLink })
-            } else {
-              console.error(`❌ Unexpected response for ${file.name}:`, result)
-              uploadErrors.push(`${file.name}: Unexpected response from server`)
             }
           }),
         )
 
-        // Report results
-        if (uploadErrors.length > 0) {
-          console.error(`\n❌ Upload Summary: ${uploadErrors.length} file(s) failed, ${uploadedFiles.length} succeeded`)
-          toast.error(`Upload Error`, {
-            description: `Failed to upload ${uploadErrors.length} file(s). Check console for details.`,
-          })
-
-          // Don't proceed if all uploads failed
-          if (uploadedFiles.length === 0) {
-            setIsSubmitting(false)
-            return
-          }
-        } else {
-          console.log(`✓ Upload Summary: All ${uploadedFiles.length} file(s) uploaded successfully!`)
+        if (uploadErrors.length > 0 && uploadedFiles.length === 0) {
+          toast.error("Upload Error", { description: "Failed to upload files." })
+          setIsSubmitting(false)
+          return
         }
       } catch (error) {
-        console.error("❌ Unexpected error during file upload:", error)
-        toast.error("Upload Failed", {
-          description: "An unexpected error occurred while uploading files.",
-        })
+        toast.error("Upload Failed")
         setIsSubmitting(false)
         return
       }
     }
 
-    // Construct payload to match API expectations
     const payload = {
       user_profile: {
-        company_name: "Solar Solutions Inc.", // This would ideally come from a global state/context
+        company_name: "Solar Solutions Inc.",
         contact_name: "John Doe",
         email: "john.doe@solarsolutions.com",
         phone: "+1 (555) 123-4567",
@@ -557,11 +500,11 @@ export default function PermitPlansetForm() {
         name: formData.projectName,
         address: formData.projectAddress,
         type: formData.projectType,
-        submission_type_name: submissionMode, // Changed from submission_type_id to submission_type_name
+        submission_type_name: submissionMode,
         general_notes: formData.generalNotes,
-        status: "draft", // Enforce draft status for all new projects
+        status: "draft",
       },
-      services: serviceNames, // Changed from serviceIds to serviceNames array
+      services: formData.services,
       system_summary: {
         system_size: parseFloat(formData.systemSize) || 0,
         system_type: formData.systemType,
@@ -621,7 +564,7 @@ export default function PermitPlansetForm() {
           url: uploaded?.url || "",
           name: f,
           category: "Plan",
-          mime_type: "application/pdf", // Default to PDF, could be improved
+          mime_type: "application/pdf",
           size: 0,
         }
       }),
@@ -629,119 +572,27 @@ export default function PermitPlansetForm() {
 
     try {
       const result = await submitProjectAction(payload)
-
       if (result.success) {
-        console.log("Form submitted successfully:", result.data)
         localStorage.removeItem("permit-planset-draft")
-        localStorage.removeItem("permit planset data")
-        toast.success("Success!", {
-          description: "Project created successfully!",
-        })
-        // Reset form to first step
-        setCurrentStep(0)
-        // Optionally reset formData if desired, but user only asked to move to first step
-        // Given they want to clear local storage, a reset is likely expected.
-        setFormData({
-          projectName: "",
-          projectAddress: "",
-          projectType: "",
-          services: [],
-          systemSize: "",
-          systemType: "",
-          pvModules: "",
-          inverters: "",
-          batteryBackup: false,
-          batteryQty: "",
-          batteryModel: "",
-          batteryImage: [],
-          projectFiles: [],
-          generalNotes: "",
-          roofMaterial: "",
-          roofPitch: "",
-          numberOfArrays: "",
-          arrayLayout: [],
-          useRoofImages: false,
-          groundMountType: "",
-          rowCount: "",
-          moduleCountPerRow: "",
-          foundationType: "",
-          structuralNotes: "",
-          structuralSketch: [],
-          mainPanelSize: "",
-          busRating: "",
-          mainBreaker: "",
-          pvBreakerLocation: "",
-          oneLineDiagram: [],
-          designForMe: false,
-          meterLocation: "",
-          serviceEntranceType: "",
-          subpanelDetails: "",
-          utilityProvider: "",
-          jurisdiction: "",
-          useLastProjectValues: false,
-          miracleWattRequired: false,
-          miracleWattNotes: "",
-          derRlcRequired: false,
-          derRlcNotes: "",
-          setbackConstraints: false,
-          setbackNotes: "",
-          siteAccessRestrictions: false,
-          siteAccessNotes: "",
-          inspectionNotes: false,
-          inspectionNotesText: "",
-          batterySldRequested: false,
-          batterySldNotes: "",
-          lotSize: "",
-          parcelNumber: "",
-          owner: "",
-          landUse: "",
-          windSpeed: "",
-          snowLoad: "",
-          windSpeed716: "",
-          snowLoad716: "",
-          interiorArea: "",
-          structureArea: "",
-          newConstruction: null,
-          yearBuilt: "",
-          sources: {},
-        })
-        setComponents([])
-        setFilesToUpload([])
+        toast.success("Success!", { description: "Project created successfully!" })
+        router.push("/projects")
       } else {
-        console.error("Submission failed:", result)
-        toast.error("Submission Failed", {
-          description: `Failed to submit project: ${result.error}`,
-        })
+        toast.error("Submission Failed", { description: result.error as any })
       }
     } catch (error) {
-      console.error("Error submitting form:", error)
-      toast.error("Submission Error", {
-        description: "An unexpected error occurred. Check console for details.",
-      })
+      toast.error("Submission Error")
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const handleSaveDraft = async () => {
-    // Validate required fields for draft
-    const newErrors: Record<string, string> = {}
-    if (!formData.projectName) newErrors.projectName = "Project name is required"
-    if (!formData.projectAddress) newErrors.projectAddress = "Project address is required"
-    if (!formData.projectType) newErrors.projectType = "Project type is required"
-    
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors)
-      toast.error("Required Fields Missing", {
-        description: "Please fill in Name, Address, and Type to save a draft.",
-      })
-      setCurrentStep(0)
+    if (!formData.projectName) {
+      toast.error("Project name required to save draft")
       return
     }
 
     setIsSubmitting(true)
-    
-    // Construct minimal payload for draft
     const payload = {
       user_profile: {
         company_name: "Solar Solutions Inc.",
@@ -753,7 +604,6 @@ export default function PermitPlansetForm() {
         name: formData.projectName,
         address: formData.projectAddress,
         type: formData.projectType,
-        type: formData.projectType,
         submission_type_name: submissionMode,
         general_notes: formData.generalNotes,
         status: "draft",
@@ -764,30 +614,32 @@ export default function PermitPlansetForm() {
     try {
       const result = await submitProjectAction(payload)
       if (result.success) {
-        toast.success("Draft Saved!", {
-          description: "Project draft has been created successfully.",
-        })
+        toast.success("Draft Saved!")
         localStorage.removeItem("permit-planset-draft")
         router.push("/projects")
       } else {
-        toast.error("Failed to Save Draft", {
-          description: result.error?.message || "Check console for details.",
-        })
+        toast.error("Failed to Save Draft")
       }
     } catch (error) {
-      console.error("Error saving draft:", error)
-      toast.error("Error", {
-        description: "An unexpected error occurred.",
-      })
+      toast.error("Error")
     } finally {
       setIsSubmitting(false)
     }
   }
 
+  const toggleService = (name: string) => {
+    updateField(
+      "services",
+      formData.services.includes(name)
+        ? formData.services.filter((s) => s !== name)
+        : [...formData.services, name]
+    )
+  }
+
   const handleNext = () => {
     if (validateStep(currentStep)) {
       if (currentStep < STEPS.length - 1) {
-        setCurrentStep(currentStep + 1)
+        setCurrentStep((s) => s + 1)
       } else {
         submitForm()
       }
@@ -795,122 +647,130 @@ export default function PermitPlansetForm() {
   }
 
   const handleBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1)
-    }
+    if (currentStep > 0) setCurrentStep((s) => s - 1)
   }
 
-  // Scroll to top on step change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }, [currentStep])
 
+  /* ---------------- Render ---------------- */
   return (
-    <form className="space-y-6">
-      <Stepper steps={STEPS} currentStep={currentStep} />
+    <form className="space-y-6 pb-32 md:pb-0">
+      
+      {/* Sticky Stepper */}
+      <div className="sticky top-[64px] z-30 bg-background/80 backdrop-blur border-b md:static md:border-none">
+        <Stepper steps={STEPS} currentStep={currentStep} />
+      </div>
 
-      {/* STEP 1 — Project & Contact */}
-      {currentStep === 0 && (
-        <ProjectContactStep
-          formData={formData}
-          updateField={updateField}
-          errors={errors}
-          submissionMode={submissionMode}
-          setSubmissionMode={setSubmissionMode}
-          toggleService={toggleService}
-          availableServices={availableServices}
-          servicesLoading={servicesLoading}
-          scrapingStatus={scrapingStatus}
-          onStartScraping={startScraping}
-          weatherStations={weatherStations}
-          weatherLoading={weatherLoading}
+      <div className="max-w-3xl mx-auto space-y-6">
+        {currentStep === 0 && (
+          <ProjectContactStep
+            formData={formData}
+            updateField={updateField}
+            errors={errors}
+            submissionMode={submissionMode}
+            setSubmissionMode={setSubmissionMode}
+            toggleService={toggleService}
+            availableServices={availableServices}
+            servicesLoading={servicesLoading}
+            scrapingStatus={scrapingStatus}
+            onStartScraping={startScraping}
+            weatherStations={weatherStations}
+            weatherLoading={weatherLoading}
+          />
+        )}
+
+        {currentStep === 1 && (
+          <SystemSummaryStep
+            formData={formData}
+            updateField={updateField}
+            errors={errors}
+            submissionMode={submissionMode}
+            components={components}
+            addComponent={addComponent}
+            updateComponent={updateComponent}
+            removeComponent={removeComponent}
+          />
+        )}
+
+        {submissionMode === "provide details" && currentStep === 2 && (
+          <>
+            <FormCard title="Site Details">
+              <SiteDetails
+                systemType={formData.systemType}
+                formData={formData}
+                onUpdateField={updateField}
+                onFileUpload={updateField}
+              />
+            </FormCard>
+
+            <FormCard title="Electrical Details">
+              <ElectricalDetails
+                formData={formData}
+                onUpdateField={updateField}
+                onFileUpload={updateField}
+              />
+            </FormCard>
+          </>
+        )}
+
+        {submissionMode === "provide details" && currentStep === 3 && (
+          <>
+            <FormCard title="Utility & Jurisdiction">
+              <UtilityDetails
+                formData={formData}
+                onUpdateField={updateField}
+              />
+            </FormCard>
+
+            <FormCard title="Optional Extras">
+              <OptionalExtras
+                formData={formData}
+                onUpdateField={updateField}
+              />
+            </FormCard>
+
+            <FormCard title="Project Summary">
+              <ProjectSummary
+                formData={formData}
+                componentsCount={components.length}
+              />
+            </FormCard>
+          </>
+        )}
+
+        {(submissionMode === "quick" && currentStep === 2) ||
+        (submissionMode === "provide details" && currentStep === 4) ? (
+          <UploadsStep
+            formData={formData}
+            updateField={updateField}
+            setFilesToUpload={setFilesToUpload}
+          />
+        ) : null}
+
+        {(submissionMode === "quick" && currentStep === 3) ||
+        (submissionMode === "provide details" && currentStep === 5) ? (
+          <GeneralNotesStep
+            formData={formData}
+            updateField={updateField}
+          />
+        ) : null}
+      </div>
+
+      {/* Sticky Mobile Buttons */}
+      <div className="fixed md:static bottom-0 left-0 right-0 z-40 bg-background border-t md:border-none px-4 py-3 md:p-0">
+        <FormButtons
+          onNext={handleNext}
+          onBack={handleBack}
+          isFirstStep={currentStep === 0}
+          isLastStep={currentStep === STEPS.length - 1}
+          isLoading={isSubmitting}
+          saveStatus={saveStatus}
+          lastSaved={lastSaved}
+          onSaveDraft={currentStep === 0 ? handleSaveDraft : undefined}
         />
-      )}
-
-      {/* STEP 2 — System Summary */}
-      {currentStep === 1 && (
-        <SystemSummaryStep
-          formData={formData}
-          updateField={updateField}
-          errors={errors}
-          submissionMode={submissionMode}
-          components={components}
-          addComponent={addComponent}
-          updateComponent={updateComponent}
-          removeComponent={removeComponent}
-        />
-      )}
-
-      {/* DETAILED STEP 2 — Site & Electrical Details */}
-      {currentStep === 2 && submissionMode === "provide details" && (
-        <>
-          <FormCard title="Site Details">
-            <SiteDetails
-              systemType={formData.systemType}
-              formData={formData}
-              onUpdateField={updateField}
-              onFileUpload={updateField}
-            />
-          </FormCard>
-
-          <FormCard title="Electrical Details">
-            <ElectricalDetails
-              formData={formData}
-              onUpdateField={updateField}
-              onFileUpload={updateField}
-            />
-          </FormCard>
-        </>
-      )}
-
-      {/* DETAILED STEP 3 — Jurisdiction & Extras */}
-      {currentStep === 3 && submissionMode === "provide details" && (
-        <>
-          <FormCard title="Utility & Jurisdiction">
-            <UtilityDetails
-              formData={formData}
-              onUpdateField={updateField}
-            />
-          </FormCard>
-
-          <FormCard title="Optional Extra Details">
-            <OptionalExtras
-              formData={formData}
-              onUpdateField={updateField}
-            />
-          </FormCard>
-
-          <FormCard title="Project Summary">
-            <ProjectSummary
-              formData={formData}
-              componentsCount={components.length}
-            />
-          </FormCard>
-        </>
-      )}
-
-
-      {/* STEP 3 — Required Uploads */}
-      {/* UPLOADS STEP (Index 2 for Quick, Index 4 for Detailed) */}
-      {((submissionMode === "quick" && currentStep === 2) || (submissionMode === "provide details" && currentStep === 4)) && (
-        <UploadsStep formData={formData} updateField={updateField} setFilesToUpload={setFilesToUpload} />
-      )}
-
-      {/* NOTES STEP (Index 3 for Quick, Index 5 for Detailed) */}
-      {((submissionMode === "quick" && currentStep === 3) || (submissionMode === "provide details" && currentStep === 5)) && (
-        <GeneralNotesStep formData={formData} updateField={updateField} />
-      )}
-
-      <FormButtons
-        onNext={handleNext}
-        onBack={handleBack}
-        isFirstStep={currentStep === 0}
-        isLastStep={currentStep === STEPS.length - 1}
-        isLoading={isSubmitting}
-        saveStatus={saveStatus}
-        lastSaved={lastSaved}
-        onSaveDraft={currentStep === 0 ? handleSaveDraft : undefined}
-      />
+      </div>
     </form>
   )
 }
