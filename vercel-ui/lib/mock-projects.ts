@@ -19,6 +19,8 @@ export const mockProjects: Project[] = [
     ownerName: 'John Smith',
     ownerEmail: 'john.smith@email.com',
     ownerPhone: '(555) 123-4567',
+    type: 'residential',
+    general_notes: '',
   },
   {
     id: 'proj-002',
@@ -36,6 +38,8 @@ export const mockProjects: Project[] = [
     ownerName: 'Sarah Jones',
     ownerEmail: 'sarah.jones@email.com',
     ownerPhone: '(555) 234-5678',
+    type: 'residential',
+    general_notes: '',
   },
   {
     id: 'proj-003',
@@ -53,6 +57,8 @@ export const mockProjects: Project[] = [
     ownerName: 'Miguel Garcia',
     ownerEmail: 'm.garcia@business.com',
     ownerPhone: '(555) 345-6789',
+    type: 'commercial',
+    general_notes: '',
   },
   {
     id: 'proj-004',
@@ -71,6 +77,8 @@ export const mockProjects: Project[] = [
     ownerName: 'Robert Williams',
     ownerEmail: 'rwilliams@email.com',
     ownerPhone: '(555) 456-7890',
+    type: 'residential',
+    general_notes: '',
   },
   {
     id: 'proj-005',
@@ -88,6 +96,8 @@ export const mockProjects: Project[] = [
     ownerName: 'Emily Thompson',
     ownerEmail: 'ethompson@email.com',
     ownerPhone: '(555) 567-8901',
+    type: 'residential',
+    general_notes: '',
   },
   {
     id: 'proj-006',
@@ -104,6 +114,8 @@ export const mockProjects: Project[] = [
     ownerName: 'Mark Davis',
     ownerEmail: 'mdavis@email.com',
     ownerPhone: '(555) 678-9012',
+    type: 'residential',
+    general_notes: '',
   },
   {
     id: 'proj-007',
@@ -121,6 +133,8 @@ export const mockProjects: Project[] = [
     ownerName: 'Ana Martinez',
     ownerEmail: 'amartinez@email.com',
     ownerPhone: '(555) 789-0123',
+    type: 'residential',
+    general_notes: '',
   },
   {
     id: 'proj-008',
@@ -139,6 +153,8 @@ export const mockProjects: Project[] = [
     ownerName: 'Tom Anderson',
     ownerEmail: 'tanderson@business.com',
     ownerPhone: '(555) 890-1234',
+    type: 'residential',
+    general_notes: '',
   },
 ];
 
@@ -148,8 +164,10 @@ export function getProjectStats(projectsArray: Project[] = mockProjects): Projec
   const pending = projectsArray.filter(p => p.status === 'pending').length;
   const inReview = projectsArray.filter(p => p.status === 'in_review').length;
   const approved = projectsArray.filter(p => p.status === 'approved').length;
+  const done = projectsArray.filter(p => p.status === 'approved' || p.status === 'done').length;
   const rejected = projectsArray.filter(p => p.status === 'rejected').length;
   const draft = projectsArray.filter(p => p.status === 'draft').length;
+  const inProcess = projectsArray.filter(p => p.status === 'pending' || p.status === 'in_review' || p.status === 'in_process').length;
   
   const totalCapacityKW = projectsArray.reduce((sum, p) => {
     const sizeStr = typeof p.systemSize === 'string' ? p.systemSize : '0';
@@ -162,6 +180,8 @@ export function getProjectStats(projectsArray: Project[] = mockProjects): Projec
     pending,
     inReview,
     approved,
+    done,
+    inProcess,
     rejected,
     draft,
     totalCapacityKW: Math.round(totalCapacityKW * 10) / 10,

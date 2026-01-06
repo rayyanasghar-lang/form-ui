@@ -1,5 +1,5 @@
 // Project status types
-export type ProjectStatus = 'draft' | 'pending' | 'in_review' | 'approved' | 'rejected';
+export type ProjectStatus = 'draft' | 'pending' | 'in_review' | 'approved' | 'rejected' | 'done' | 'in_process';
 
 // Project interface matching permit form data structure
 export interface Project {
@@ -117,7 +117,9 @@ export interface ProjectStats {
   total: number;
   pending: number;
   inReview: number;
+  inProcess: number;
   approved: number;
+  done: number;
   rejected: number;
   draft: number;
   totalCapacityKW: number;
@@ -145,4 +147,12 @@ export interface ProjectFilters {
   };
   sortBy?: keyof Project;
   sortOrder?: 'asc' | 'desc';
+}
+
+
+export interface ProjectTableProps {
+  projects: Project[]
+  isLoading?: boolean
+  error?: string | null
+  className?: string
 }

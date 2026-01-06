@@ -244,8 +244,8 @@ export default function ProjectsPage() {
             <motion.div variants={item}>
               <Card className="bg-white border-[#E8E0D5] shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-zinc-500">Pending Reviews</span>
+                    <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-zinc-500">In Process</span>
                     <div 
                       className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border border-zinc-200"
                       style={{ 
@@ -259,7 +259,7 @@ export default function ProjectsPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className="text-3xl font-bold text-zinc-900 tracking-tight">{stats.pending + stats.inReview}</div>
+                  <div className="text-3xl font-bold text-zinc-900 tracking-tight">{stats.inProcess}</div>
                   <div className="mt-4 space-y-1">
                     <div className="flex items-center gap-1.5 text-[13px] font-bold text-amber-600 whitespace-nowrap">
                       Down {stats.inReview} this period
@@ -278,7 +278,7 @@ export default function ProjectsPage() {
               <Card className="bg-white border-[#E8E0D5] shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-zinc-500">Approved Projects</span>
+                    <span className="text-sm font-medium text-zinc-500">Done Projects</span>
                     <div 
                       className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border border-zinc-200"
                       style={{ 
@@ -292,7 +292,7 @@ export default function ProjectsPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className="text-3xl font-bold text-zinc-900 tracking-tight">{stats.approved}</div>
+                  <div className="text-3xl font-bold text-zinc-900 tracking-tight">{stats.done}</div>
                   <div className="mt-4 space-y-1">
                     <div className="flex items-center gap-1.5 text-[13px] font-bold text-green-600">
                       Strong user retention

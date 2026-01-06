@@ -22,25 +22,33 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { StatusBadge } from "./status-badge"
-import type { Project, ProjectStatus } from "@/types/project"
+import type { Project, ProjectStatus,ProjectTableProps } from "@/types/project"
+import { CalculateProjectProgress } from "@/lib/calculate-progress"
 
-interface ProjectsTableProps {
-  projects: Project[]
-  isLoading?: boolean
-  error?: string | null
-  className?: string
-}
 
-type TabFilter = "all" | ProjectStatus
+type TabFilter = "all" | "in_process" | "done" | "rejected" | "draft"
 
-export function ProjectsTable({ projects, isLoading = false, error = null, className }: ProjectsTableProps) {
+
+
+export function ProjectsTable({ projects, isLoading = false, error = null, className }: ProjectTableProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<TabFilter>("all")
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
-  const filteredProjects = activeTab === "all" ? projects : projects.filter((p) => p.status === activeTab)
+  const filteredProjects =
+    activeTab === "all"
+      ? projects
+      : projects.filter((p) => {
+          if (activeTab === "in_process") {
+            return p.status === "pending" || p.status === "in_review" || p.status === "in_process"
+          }
+          if (activeTab === "done") {
+            return p.status === "approved" || p.status === "done"
+          }
+          return p.status === activeTab
+        })
 
   const totalPages = Math.ceil(filteredProjects.length / itemsPerPage)
   const paginatedProjects = filteredProjects.slice(
@@ -71,12 +79,13 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
     }
   }
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: Date | string) => {
+    const d = new Date(date)
     return new Intl.DateTimeFormat("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
-    }).format(date)
+    }).format(d)
   }
 
   const handleViewDetails = (project: Project) => {
@@ -91,23 +100,24 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
   } => {
     switch (status) {
       case "approved":
-        return { status: "done", label: "Approved" }
+      case "done":
+        return { status: "done", label: "Done" }
       case "rejected":
         return { status: "rejected", label: "Rejected" }
       case "draft":
         return { status: "draft", label: "Draft" }
       case "pending":
-        return { status: "in-process", label: "Pending" }
       case "in_review":
-        return { status: "in-process", label: "In Review" }
+      case "in_process":
+        return { status: "in-process", label: "In Process" }
       default:
         return { status: "draft", label: status }
     }
   }
 
   return (
-    <Card className={`bg-[#F5F0E8] border-[#E8E0D5] shadow-lg ${className}`}>
-      <CardHeader className="pb-4">
+    <div className={` ${className}`}>
+      <div className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-bold text-zinc-900">Projects</CardTitle>
         </div>
@@ -117,25 +127,22 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
               All
             </TabsTrigger>
             <TabsTrigger
-              value="pending"
-              badge={projects.filter((p) => p.status === "pending").length}
+              value="in_process"
+              badge={
+                projects.filter(
+                  (p) => p.status === "pending" || p.status === "in_review" || p.status === "in_process",
+                ).length
+              }
               className="shrink-0 text-xs px-2 py-1 md:text-sm md:px-3 md:py-1.5"
             >
-              Pending
+              In Process
             </TabsTrigger>
             <TabsTrigger
-              value="in_review"
-              badge={projects.filter((p) => p.status === "in_review").length}
+              value="done"
+              badge={projects.filter((p) => p.status === "approved" || p.status === "done").length}
               className="shrink-0 text-xs px-2 py-1 md:text-sm md:px-3 md:py-1.5"
             >
-              In Review
-            </TabsTrigger>
-            <TabsTrigger
-              value="approved"
-              badge={projects.filter((p) => p.status === "approved").length}
-              className="shrink-0 text-xs px-2 py-1 md:text-sm md:px-3 md:py-1.5"
-            >
-              Approved
+              Done
             </TabsTrigger>
             <TabsTrigger
               value="rejected"
@@ -144,15 +151,22 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
             >
               Rejected
             </TabsTrigger>
+            <TabsTrigger
+              value="draft"
+              badge={projects.filter((p) => p.status === "draft").length}
+              className="shrink-0 text-xs px-2 py-1 md:text-sm md:px-3 md:py-1.5"
+            >
+              Draft
+            </TabsTrigger>
           </TabsList>
         </Tabs>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div className="px-0">
         {/* Desktop Table */}
-        <div className="rounded-xl border border-[#E0D9CF] overflow-hidden bg-white hidden md:block">
+        <div className="hidden md:block">
           <Table>
             <TableHeader>
-              <TableRow className="bg-[#EDE8E0] hover:bg-[#EDE8E0]">
+              <TableRow className="border-b border-zinc-200 hover:bg-transparent">
                 <TableHead className="w-12">
                   <Checkbox
                     checked={paginatedProjects.length > 0 && paginatedProjects.every((p) => selectedIds.has(p.id))}
@@ -162,7 +176,7 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                 <TableHead className="font-semibold text-zinc-700">Project</TableHead>
                 <TableHead className="font-semibold text-zinc-700">Address</TableHead>
                 <TableHead className="font-semibold text-zinc-700">Status</TableHead>
-                <TableHead className="font-semibold text-zinc-700">System Size</TableHead>
+                <TableHead className="font-semibold text-zinc-700">Completion %</TableHead>
                 <TableHead className="font-semibold text-zinc-700">Created</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
@@ -191,7 +205,7 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                 </TableRow>
               ) : (
                 paginatedProjects.map((project) => (
-                  <TableRow key={project.id} className="hover:bg-[#F5F0E8] transition-colors">
+                  <TableRow key={project.id} className="hover:bg-zinc-50/50 transition-colors border-b border-zinc-100 last:border-0">
                     <TableCell>
                       <Checkbox
                         checked={selectedIds.has(project.id)}
@@ -203,7 +217,7 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                     <TableCell>
                       <StatusBadge {...getStatusBadgeConfig(project.status)} />
                     </TableCell>
-                    <TableCell className="font-medium">{project.systemSize}</TableCell>
+                    <TableCell className="font-normal">{CalculateProjectProgress(project)}%</TableCell>
                     <TableCell className="text-zinc-600">{formatDate(project.createdAt)}</TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -248,9 +262,9 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                   <AccordionItem
                     key={project.id}
                     value={project.id}
-                    className="border-b border-[#E0D9CF] last:border-b-0 bg-white rounded-lg mb-1.5 overflow-hidden border shadow-sm w-full"
+                    className="border-b border-zinc-100 last:border-b-0 rounded-none mb-0 overflow-hidden w-full"
                   >
-                    <AccordionTrigger className="px-3 py-1.5 hover:bg-[#F5F0E8] transition-colors hover:no-underline">
+                    <AccordionTrigger className="px-3 py-1.5 hover:bg-zinc-50/50 transition-colors hover:no-underline">
                       <div className="flex flex-col items-start gap-0 text-left w-full pr-1">
                         <div className="flex items-center justify-between w-full">
                           <p className="font-bold text-zinc-900 text-sm truncate max-w-[180px] leading-tight">{project.name}</p>
@@ -264,8 +278,8 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                         {/* Project Details */}
                         <div className="grid grid-cols-2 gap-1">
                           <div>
-                            <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider mb-0 leading-none">System Size</p>
-                            <p className="text-[11px] font-bold text-zinc-900 leading-tight">{project.systemSize || "N/A"}</p>
+                            <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider mb-0 leading-none">Project Progress</p>
+                            <p className="text-[11px] font-bold text-zinc-900 leading-tight">{CalculateProjectProgress(project)}%</p>
                           </div>
                           <div>
                             <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider mb-0 leading-none">Status</p>
@@ -301,10 +315,10 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
             </Accordion>
           )}
         </div>
-      </CardContent>
+      </div>
       {/* Pagination */}
       {!isLoading && !error && filteredProjects.length > 0 && (
-        <div className="flex items-center justify-between p-4 border-t border-[#E8E0D5]">
+        <div className="flex items-center justify-between p-4 border-t border-zinc-200">
           <p className="text-sm text-zinc-500">
             Showing {Math.min(filteredProjects.length, (currentPage - 1) * itemsPerPage + 1)}-
             {Math.min(filteredProjects.length, currentPage * itemsPerPage)} of {filteredProjects.length} projects
@@ -344,6 +358,6 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
           </div>
         </div>
       )}
-    </Card>
+    </div>
   )
 }
