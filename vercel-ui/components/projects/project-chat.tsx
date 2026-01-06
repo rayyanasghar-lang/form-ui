@@ -98,13 +98,13 @@ export function ProjectChat({ className, projectId, projectName, collapsed = fal
   return (
     <div 
         className={cn(
-            "flex flex-col h-full bg-[#F5F0E8] border-l border-[#E8E0D5] transition-all duration-300 ease-in-out relative", 
+            "flex flex-col h-full bg-background border-l border-border transition-all duration-300 ease-in-out relative", 
             collapsed ? 'w-0 overflow-hidden opacity-0 border-l-0' : 'w-96',
             className
         )}
     >
       {/* Header */}
-      <div className="h-16 px-6 border-b border-[#E8E0D5] flex items-center justify-between shrink-0 bg-[#F5F0E8]/80 backdrop-blur-sm">
+      <div className="h-16 px-6 border-b border-border flex items-center justify-between shrink-0 bg-card/80 backdrop-blur-sm">
         <div>
           <h3 className="font-bold text-zinc-900 text-sm">Project Communications</h3>
           <p className="text-[10px] text-zinc-500 font-medium">#{projectId.slice(0, 8)}</p>
@@ -168,10 +168,10 @@ export function ProjectChat({ className, projectId, projectName, collapsed = fal
       </div>
 
       {/* Input Area */}
-      <div className="p-4 border-t border-[#E8E0D5] bg-zinc-50/30 shrink-0">
+      <div className="p-4 border-t border-border bg-muted/30 shrink-0">
         <form 
             onSubmit={handleSendMessage}
-            className="flex items-end gap-2 bg-white rounded-xl border border-[#E8E0D5] p-1.5 focus-within:ring-2 focus-within:ring-primary/10 focus-within:border-primary/30 transition-all shadow-sm"
+            className="flex items-end gap-2 bg-card rounded-xl border border-border p-1.5 focus-within:ring-2 focus-within:ring-primary/10 focus-within:border-primary/30 transition-all shadow-sm"
         >
             <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-zinc-400 hover:text-zinc-600 rounded-lg shrink-0">
                 <Paperclip className="h-4 w-4" />
