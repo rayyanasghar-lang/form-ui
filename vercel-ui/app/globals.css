@@ -1,41 +1,38 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-
-
 :root {
   color-scheme: light;
-  --background: oklch(93.496% 0.00734 80.578);
-  --foreground: oklch(0.25 0.04 45);
-  --card: oklch(0.96 0.01 75);
-  --card-foreground: oklch(0.25 0.04 45);
-  --popover: oklch(0.98 0.01 75);
-  --popover-foreground: oklch(0.25 0.04 45);
-  --primary: oklch(68.351% 0.19585 34.956);
-  --primary-foreground: oklch(0.98 0.01 75);
-  --secondary: oklch(0.78 0.16 65);
-  --secondary-foreground: oklch(0.25 0.04 45);
-  --muted: oklch(0.85 0.01 75);
-  --muted-foreground: oklch(0.45 0.04 45);
-  --accent: oklch(0.78 0.16 65 / 0.1);
-  --accent-foreground: oklch(68.351% 0.19585 34.956);
-  --destructive: oklch(0.55 0.22 25);
+  --background: oklch(0.98 0 0); /* #F9FAFB */
+  --foreground: oklch(0.21 0.006 285.885); /* #111827 */
+  --card: oklch(1 0 0); /* #FFFFFF */
+  --card-foreground: oklch(0.21 0.006 285.885); /* #111827 */
+  --popover: oklch(1 0 0); /* #FFFFFF */
+  --popover-foreground: oklch(0.21 0.006 285.885); /* #111827 */
+  --primary: oklch(0.63 0.22 270); /* #6366F1 Indigo */
+  --primary-foreground: oklch(1 0 0); /* #FFFFFF */
+  --secondary: oklch(0.28 0.07 263); /* #1E293B Deep Slate */
+  --secondary-foreground: oklch(0.98 0 0); /* #F9FAFB */
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.55 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.21 0.006 285.885);
+  --destructive: oklch(0.57 0.21 27);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.75 0.14 35 / 0.1);
-  --input: oklch(0.96 0.01 75);
-  --ring: oklch(68.351% 0.19585 34.956);
+  --border: oklch(0.92 0 0);
+  --input: oklch(0.92 0 0);
+  --ring: oklch(0.63 0.22 270); /* #6366F1 */
   --radius: 0.75rem;
-  --sidebar: oklch(0.96 0.01 75);
-  --sidebar-foreground: oklch(0.25 0.04 45);
-  --sidebar-primary: oklch(68.351% 0.19585 34.956);
-  --sidebar-primary-foreground: oklch(0.98 0.01 75);
-  --sidebar-accent: oklch(0.78 0.16 65 / 0.1);
-  --sidebar-accent-foreground: oklch(68.351% 0.19585 34.956);
-  --sidebar-border: oklch(0.85 0.01 75);
-  --sidebar-ring: oklch(68.351% 0.19585 34.956);
+  --sidebar: oklch(0.28 0.07 263); /* #1E293B Deep Slate */
+  --sidebar-foreground: oklch(0.98 0 0); /* #F9FAFB */
+  --sidebar-primary: oklch(0.63 0.22 270); /* #6366F1 */
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.35 0.07 263); /* Lighter Slate */
+  --sidebar-accent-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(0.28 0.07 263);
+  --sidebar-ring: oklch(0.63 0.22 270);
+  --success: oklch(0.65 0.18 150); /* #10B981 Emerald */
 }
-
-
 
 @theme inline {
   --variant-dark: null;

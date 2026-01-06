@@ -259,7 +259,7 @@ export default function ProjectContactStep({
                                 {formData.sources?.asce716 && (
                                     <div className="border rounded-md bg-card/50 p-3 shadow-sm group hover:border-primary/20 transition-all animate-in zoom-in-95 fill-mode-both">
                                         <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
-                                            <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/20 text-[10px] uppercase font-bold tracking-wider">ASCE 7-16</Badge>
+                                            <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[10px] uppercase font-bold tracking-wider">ASCE 7-16</Badge>
                                             <span className="text-[10px] text-muted-foreground ml-auto uppercase font-medium tracking-tighter">Loads</span>
                                         </div>
                                         <div className="space-y-2 text-sm">
@@ -282,7 +282,7 @@ export default function ProjectContactStep({
                                 {formData.sources?.asce && (
                                     <div className="border rounded-md bg-card/50 p-3 shadow-sm group hover:border-primary/20 transition-all animate-in zoom-in-95 fill-mode-both">
                                         <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
-                                            <Badge variant="outline" className="bg-orange-600/10 text-orange-600 border-orange-600/20 text-[10px] uppercase font-bold tracking-wider">ASCE 7-22</Badge>
+                                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] uppercase font-bold tracking-wider">ASCE 7-22</Badge>
                                             <span className="text-[10px] text-muted-foreground ml-auto uppercase font-medium tracking-tighter">Loads</span>
                                         </div>
                                         <div className="space-y-2 text-sm">
@@ -440,7 +440,7 @@ export default function ProjectContactStep({
                                     key={service.id}
                                     variant={formData.services.includes(service.name) ? "selected" : "selectable"}
                                     onClick={() => toggleService(service.name)}
-                                    className="px-4 py-2 text-sm border border-orange-500"
+                                    className="px-4 py-2 text-sm border border-primary/20 data-[state=selected]:border-primary"
                                 >
                                     {service.name}
                                 </Badge>

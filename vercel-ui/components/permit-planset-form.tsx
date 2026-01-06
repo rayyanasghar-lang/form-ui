@@ -30,6 +30,7 @@ import {
 import { fetchNearbyStations, geocodeAddress, WeatherStation } from "@/app/actions/weather-service"
 
 import { Component } from "./system-components-table"
+import { BackgroundGradient } from "@/components/ui/background-gradient"
 
 const QUICK_STEPS = ["Project & Contact", "System Summary", "Uploads", "Notes"]
 const DETAILED_STEPS = [
@@ -454,10 +455,11 @@ export default function PermitPlansetForm() {
 
   /* ---------------- Render ---------------- */
   return (
-    <form className="space-y-6 pb-32 md:pb-0">
+    <form className="space-y-6 pb-32 md:pb-0 relative">
+      <BackgroundGradient />
       
       {/* Sticky Stepper */}
-      <div className="sticky top-[64px] z-30 bg-background/80 backdrop-blur border-b md:static md:border-none">
+      <div className="sticky top-[64px] z-30 bg-transparent md:static">
         <Stepper steps={STEPS} currentStep={currentStep} />
       </div>
 
@@ -557,7 +559,7 @@ export default function PermitPlansetForm() {
       </div>
 
       {/* Sticky Mobile Buttons */}
-      <div className="fixed md:static bottom-0 left-0 right-0 z-40 bg-[#F5F0E8] md:bg-transparent border-t md:border-none px-4 py-3 md:pt-4 md:pb-0">
+      <div className="fixed md:static bottom-0 left-0 right-0 z-40 bg-background md:bg-transparent border-t md:border-none px-4 py-3 md:pt-4 md:pb-0">
         <div className="max-w-3xl mx-auto">
           <FormButtons
             onNext={handleNext}

@@ -48,7 +48,8 @@ import { ProjectStatus, Project } from "@/types/project"
 import { fetchProjectsAction } from "@/app/actions/project-service"
 import { Loader2 } from "lucide-react"
 import { ProjectsTable } from "@/components/projects/projects-table"
-import { useRouter } from "next/navigation"
+import { useRouter }
+ from "next/navigation"
 
 
 
@@ -74,11 +75,11 @@ const visitorChartData = [
 const chartConfig = {
   submissions: {
     label: "Submissions",
-    color: "oklch(68.351% 0.19585 34.956)",
+    color: "var(--primary)",
   },
   approvals: {
     label: "Approvals", 
-    color: "oklch(0.65 0.15 145)",
+    color: "var(--success)",
   },
 } satisfies ChartConfig
 
@@ -144,11 +145,11 @@ export default function ProjectsPage() {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-              className="fixed inset-y-0 left-0 z-50 w-64 bg-[#F5F0E8] shadow-xl lg:hidden"
+              className="fixed inset-y-0 left-0 z-50 w-64 bg-sidebar shadow-xl lg:hidden"
             >
               <div className="absolute top-4 right-4 z-50">
                  <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)}>
-                   <X className="h-5 w-5 text-zinc-500" />
+                   <X className="h-5 w-5 text-sidebar-foreground/50 hover:text-sidebar-foreground" />
                  </Button>
               </div>
               <Sidebar className="h-full border-none" />
@@ -169,12 +170,11 @@ export default function ProjectsPage() {
       {/* Main Content */}
       <main className="flex-1 overflow-auto">
         {/* Top Header Bar */}
-        <div className="border-b border-[#E8E0D5] bg-[#F5F0E8] sticky top-0 z-30">
+        <div className="sticky top-0 z-10 border-b border-border bg-background/80 supports-backdrop-filter:bg-background/60 backdrop-blur-md">
           <div className="flex items-center justify-between px-4 py-3 lg:px-6 lg:py-4">
             <div className="flex items-center gap-3 lg:gap-4">
               {/* Mobile Menu Trigger */}
               <button
-                onClick={() => setMobileMenuOpen(true)}
                 className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-black/5 text-zinc-600"
               >
                 <Menu className="h-6 w-6" />
@@ -205,16 +205,16 @@ export default function ProjectsPage() {
           >
             {/* Total Revenue */}
             <motion.div variants={item}>
-              <Card className="bg-white border-[#E8E0D5] shadow-sm hover:shadow-md transition-shadow">
+              <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-zinc-500">Total Revenue</span>
                     <div 
                       className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border"
                       style={{ 
-                        backgroundColor: "oklch(68.351% 0.19585 34.956 / 0.1)", 
-                        color: "oklch(68.351% 0.19585 34.956)",
-                        borderColor: "oklch(68.351% 0.19585 34.956 / 0.2)"
+                        backgroundColor: "oklch(from var(--primary) l c h / 0.1)", 
+                        color: "var(--primary)",
+                        borderColor: "oklch(from var(--primary) l c h / 0.2)"
                       }}
                     >
                       <ArrowUpRight className="h-3 w-3" />
@@ -226,8 +226,7 @@ export default function ProjectsPage() {
                   <div className="text-3xl font-bold text-zinc-900 tracking-tight">$12,450.00</div>
                   <div className="mt-4 space-y-1">
                     <div 
-                      className="flex items-center gap-1.5 text-[13px] font-bold"
-                      style={{ color: "oklch(68.351% 0.19585 34.956)" }}
+                      className="flex items-center gap-1.5 text-[13px] font-bold text-primary"
                     >
                       Trending up this month
                       <ArrowUpRight className="h-3.5 w-3.5" />
@@ -242,7 +241,7 @@ export default function ProjectsPage() {
 
             {/* Pending Reviews */}
             <motion.div variants={item}>
-              <Card className="bg-white border-[#E8E0D5] shadow-sm hover:shadow-md transition-shadow">
+              <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-zinc-500">In Process</span>
@@ -275,7 +274,7 @@ export default function ProjectsPage() {
 
             {/* Approved Projects */}
             <motion.div variants={item}>
-              <Card className="bg-white border-[#E8E0D5] shadow-sm hover:shadow-md transition-shadow">
+              <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-zinc-500">Done Projects</span>
@@ -308,16 +307,16 @@ export default function ProjectsPage() {
 
             {/* Total Capacity */}
             <motion.div variants={item}>
-              <Card className="bg-white border-[#E8E0D5] shadow-sm hover:shadow-md transition-shadow">
+              <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-zinc-500">Total Capacity</span>
                     <div 
                       className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border"
                       style={{ 
-                        backgroundColor: "oklch(68.351% 0.19585 34.956 / 0.1)", 
-                        color: "oklch(68.351% 0.19585 34.956)",
-                        borderColor: "oklch(68.351% 0.19585 34.956 / 0.2)"
+                        backgroundColor: "oklch(from var(--primary) l c h / 0.1)", 
+                        color: "var(--primary)",
+                        borderColor: "oklch(from var(--primary) l c h / 0.2)"
                       }}
                     >
                       <ArrowUpRight className="h-3 w-3" />
@@ -347,7 +346,7 @@ export default function ProjectsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25, duration: 0.4 }}
           >
-            <Card className="bg-white border-[#E8E0D5] shadow-sm">
+            <Card className="bg-card border-border shadow-sm">
               <CardHeader>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
@@ -380,8 +379,8 @@ export default function ProjectsPage() {
                   <AreaChart data={visitorChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="submissionsGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="oklch(68.351% 0.19585 34.956)" stopOpacity={0.3} />
-                        <stop offset="100%" stopColor="oklch(68.351% 0.19585 34.956)" stopOpacity={0.02} />
+                        <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.3} />
+                        <stop offset="100%" stopColor="var(--primary)" stopOpacity={0.02} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
@@ -409,7 +408,7 @@ export default function ProjectsPage() {
                     <Area 
                       type="monotone" 
                       dataKey="submissions" 
-                      stroke="oklch(68.351% 0.19585 34.956)" 
+                      stroke="var(--primary)" 
                       strokeWidth={2}
                       fill="url(#submissionsGradient)" 
                     />

@@ -45,6 +45,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { BackgroundGradient } from "@/components/ui/background-gradient";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -98,10 +99,12 @@ export default function ProfilePage() {
         onCollapsedChange={setSidebarCollapsed}
       />
       
+      <BackgroundGradient />
+
       {/* --- MAIN CONTENT --- */}
       <main className="flex-1 flex flex-col overflow-hidden relative">
         {/* Content Header */}
-        <header className="h-16 px-4 sm:px-6 border-b border-zinc-200 bg-[#F5F0E8] flex items-center justify-between shrink-0 sticky top-0 z-10">
+        <header className="h-16 px-4 sm:px-6 border-b border-border bg-background flex items-center justify-between shrink-0 sticky top-0 z-10">
           <div className="flex items-center gap-3 sm:gap-4">
             {/* Sidebar Toggle - visible when sidebar is collapsed */}
             {sidebarCollapsed && (
@@ -249,8 +252,8 @@ export default function ProfilePage() {
                     <Card>
                       <CardHeader className="pb-4">
                         <div className="flex items-center gap-4">
-                          <div className="h-10 w-10 bg-orange-500/10 rounded-lg flex items-center justify-center">
-                            <Activity className="h-5 w-5 text-orange-600" />
+                          <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <Activity className="h-5 w-5 text-primary" />
                           </div>
                           <div>
                             <CardTitle className="text-lg">Preferences</CardTitle>

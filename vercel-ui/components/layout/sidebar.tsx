@@ -105,7 +105,7 @@ export default function Sidebar({
 
   return (
     <aside 
-      className={`flex flex-col border-r border-[#E8E0D5] bg-[#F5F0E8] z-40 transition-all duration-300 ease-in-out h-screen sticky top-0 ${
+      className={`flex flex-col border-r border-sidebar-border bg-sidebar z-40 transition-all duration-300 ease-in-out h-screen sticky top-0 ${
         isCollapsed ? 'w-0 overflow-hidden opacity-0' : 'w-64'
       } ${className}`}
     >
@@ -119,7 +119,7 @@ export default function Sidebar({
       </button>
 
       {/* Header with Logo */}
-      <div className="px-5 h-16 flex items-center border-b border-[#E8E0D5]">
+      <div className="px-5 h-16 flex items-center border-b border-sidebar-border">
         <Link href="/projects" className="flex items-center gap-2 transition-opacity hover:opacity-80">
           <Image src="/logo.png" alt="SunPermit" width={120} height={40} className="h-10 w-auto" />
         </Link>
@@ -131,8 +131,7 @@ export default function Sidebar({
         <div className="px-3 mb-6">
           <Link href="/forms">
             <button 
-              className="w-full h-11 flex items-center justify-center gap-2 rounded-xl text-white font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
-              style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
+              className="w-full h-11 flex items-center justify-center gap-2 rounded-xl text-primary-foreground font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 bg-primary"
             >
               <Plus className="h-5 w-5" />
               Create Project
@@ -152,39 +151,35 @@ export default function Sidebar({
                   href={item.href}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${
                     pathname === item.href
-                      ? "bg-[#E8DED2] shadow-sm border border-[#D9CFC3]"
-                      : "text-zinc-600 hover:bg-[#EBE4DA] hover:text-zinc-900"
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                   }`}
-                  style={pathname === item.href ? { color: "oklch(68.351% 0.19585 34.956)" } : undefined}
                 >
-                  <item.icon className={`h-4 w-4 ${pathname === item.href ? "" : "text-zinc-400 group-hover:text-primary"} transition-colors`} />
+                    <item.icon className={`h-4 w-4 ${pathname === item.href ? "text-sidebar-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-primary"} transition-colors`} />
                   {item.label}
                 </Link>
               ) : (
-                <button
-                  key={item.id}
-                  onClick={() => onSettingsTabChange?.(item.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${
-                    activeSettingsTab === item.id
-                      ? "bg-[#E8DED2] shadow-sm border border-[#D9CFC3]"
-                      : "text-zinc-600 hover:bg-[#EBE4DA] hover:text-zinc-900"
-                  }`}
-                  style={activeSettingsTab === item.id ? { color: "oklch(68.351% 0.19585 34.956)" } : undefined}
-                >
-                  <item.icon 
-                    className={`h-4 w-4 transition-colors ${
-                      activeSettingsTab === item.id ? "" : "text-zinc-400 group-hover:text-primary"
+                  <button
+                    key={item.id}
+                    onClick={() => onSettingsTabChange?.(item.id)}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${
+                      activeSettingsTab === item.id
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                     }`}
-                    style={activeSettingsTab === item.id ? { color: "oklch(68.351% 0.19585 34.956)" } : undefined}
-                  />
-                  {item.label}
-                  {activeSettingsTab === item.id && (
-                    <motion.div
-                      layoutId="active-nav-indicator"
-                      className="ml-auto w-1 h-4 rounded-full"
-                      style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
+                  >
+                    <item.icon 
+                      className={`h-4 w-4 transition-colors ${
+                        activeSettingsTab === item.id ? "text-sidebar-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-primary"
+                      }`}
                     />
-                  )}
+                    {item.label}
+                    {activeSettingsTab === item.id && (
+                      <motion.div
+                        layoutId="active-nav-indicator"
+                        className="ml-auto w-1 h-4 rounded-full bg-sidebar-primary"
+                      />
+                    )}
                 </button>
               )
             )}
@@ -192,23 +187,22 @@ export default function Sidebar({
         ))}
       </div>
 
-      <div className="p-4 border-t border-[#E8E0D5]">
-        <div className="mb-4 bg-white p-3 rounded-xl border border-[#E8E0D5] flex items-center gap-3 group hover:bg-[#F5F0E8] transition-all">
+      <div className="p-4 border-t border-sidebar-border">
+        <div className="mb-4 bg-sidebar-accent/10 p-3 rounded-xl border border-sidebar-border flex items-center gap-3 group hover:bg-sidebar-accent/20 transition-all">
           <div 
-            className="h-9 w-9 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm border border-black/5 shrink-0"
-            style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
+            className="h-9 w-9 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm border border-white/10 shrink-0 bg-sidebar-primary"
           >
             JD
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-zinc-900 truncate">
+            <p className="text-xs font-bold text-sidebar-foreground truncate">
               Solar Solutions Inc.
             </p>
-            <p className="text-[10px] font-medium text-zinc-500 truncate uppercase tracking-wider">
+            <p className="text-[10px] font-medium text-sidebar-foreground/50 truncate uppercase tracking-wider">
               Admin
             </p>
           </div>
-          <button className="text-zinc-400 hover:text-destructive transition-colors p-1.5 rounded-lg hover:bg-destructive/5">
+          <button className="text-sidebar-foreground/40 hover:text-destructive transition-colors p-1.5 rounded-lg hover:bg-destructive/10">
             <LogOut className="h-4 w-4" />
           </button>
         </div>

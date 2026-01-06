@@ -300,8 +300,7 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                         <Link href={`/projects/${project.id}`}>
 
                               <Button
-                                className="w-full font-bold shadow-sm h-9 tracking-wide uppercase text-[10px]"
-                                style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
+                                className="w-full font-bold shadow-sm h-9 tracking-wide uppercase text-[10px] bg-primary hover:bg-primary/90 text-primary-foreground"
                                 >
                                 View Details
                               </Button>

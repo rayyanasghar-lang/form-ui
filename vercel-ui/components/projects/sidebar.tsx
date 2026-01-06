@@ -20,9 +20,9 @@ export default function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="w-60 bg-[#F5F0E8] border-r border-[#E8E0D5] flex flex-col h-screen sticky top-0">
+    <aside className="w-60 bg-sidebar border-r border-sidebar-border flex flex-col h-screen sticky top-0">
       {/* Logo */}
-      <div className="p-5 border-b border-[#E8E0D5]">
+      <div className="p-5 border-b border-sidebar-border">
         <Link href="/projects" className="flex items-center gap-2 transition-opacity hover:opacity-80">
           <Image src="/logo.png" alt="SunPermit" width={120} height={40} className="h-10 w-auto" />
         </Link>
@@ -32,7 +32,7 @@ export default function Sidebar() {
       <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
         {/* Home Section */}
         <div className="space-y-1">
-          <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider px-3 py-2">
+          <p className="text-xs font-bold text-sidebar-foreground/70 uppercase tracking-wider px-3 py-2">
             Home
           </p>
           <NavItem 
@@ -45,7 +45,7 @@ export default function Sidebar() {
 
         {/* Projects Section */}
         <div className="space-y-1">
-          <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider px-3 py-2">
+          <p className="text-xs font-bold text-sidebar-foreground/70 uppercase tracking-wider px-3 py-2">
             Workspace
           </p>
           <NavItem 
@@ -74,7 +74,7 @@ export default function Sidebar() {
 
         {/* Documents Section */}
         <div className="space-y-1">
-          <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider px-3 py-2">
+          <p className="text-xs font-bold text-sidebar-foreground/70 uppercase tracking-wider px-3 py-2">
             Resources
           </p>
           <NavItem icon={FileText} label="Documents" href="#" />
@@ -84,7 +84,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Bottom Section */}
-      <div className="p-4 border-t border-[#E8E0D5] space-y-1">
+      <div className="p-4 border-t border-sidebar-border space-y-1">
         <NavItem icon={Settings} label="Settings" href="/profile" />
         <NavItem icon={LogOut} label="Log Out" href="#" />
       </div>
@@ -108,10 +108,9 @@ function NavItem({
       href={href}
       className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
         active
-          ? "bg-white shadow-sm text-zinc-900"
-          : "text-zinc-600 hover:bg-white/60 hover:text-zinc-900"
+          ? "bg-sidebar-primary/10 text-sidebar-primary"
+          : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
       }`}
-      style={active ? { color: "oklch(68.351% 0.19585 34.956)" } : undefined}
     >
       <Icon className="w-4 h-4" />
       {label}

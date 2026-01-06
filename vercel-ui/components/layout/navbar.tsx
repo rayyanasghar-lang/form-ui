@@ -18,7 +18,7 @@ interface NavbarProps {
 
 export function Navbar({ title, backLink, children, actions }: NavbarProps) {
   return (
-    <header className="sticky top-0 z-50 bg-[#F5F0E8] border-b border-[#E8E0D5] h-16 shadow-sm select-none">
+    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border h-16 shadow-sm select-none">
       <div className="max-w-[1500px] mx-auto px-4 h-full flex items-center justify-between">
         {/* Left Section: Logo + Context */}
         <div className="flex items-center gap-3">

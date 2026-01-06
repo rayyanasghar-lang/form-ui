@@ -30,7 +30,7 @@ function TabsWithBadgeTrigger({ className, badge, children, ...props }: TabsWith
     <TabsPrimitive.Trigger
       data-slot="tabs-with-badge-trigger"
       className={cn(
-        "text-gray-500 data-[state=active]:text-zinc-900 data-[state=active]:border-b-2 data-[state=active]:border-[oklch(68.351%_0.19585_34.956)] px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-400 disabled:pointer-events-none disabled:opacity-50 group",
+        "text-muted-foreground data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 group",
         className,
       )}
       {...props}
@@ -38,7 +38,7 @@ function TabsWithBadgeTrigger({ className, badge, children, ...props }: TabsWith
       <span className="flex items-center gap-2">
         {children}
         {badge !== undefined && (
-          <span className="hidden md:inline-flex text-xs font-bold px-2 py-0.5 rounded-full border transition-colors bg-zinc-100 text-zinc-500 border-zinc-200 group-data-[state=active]:bg-[oklch(68.351%_0.19585_34.956/0.1)] group-data-[state=active]:text-[oklch(68.351%_0.19585_34.956)] group-data-[state=active]:border-[oklch(68.351%_0.19585_34.956/0.2)]">
+          <span className="hidden md:inline-flex text-xs font-bold px-2 py-0.5 rounded-full border transition-colors bg-muted text-muted-foreground border-border group-data-[state=active]:bg-primary/10 group-data-[state=active]:text-primary group-data-[state=active]:border-primary/20">
             {badge}
           </span>
         )}
