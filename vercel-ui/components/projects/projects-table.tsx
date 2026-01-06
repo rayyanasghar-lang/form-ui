@@ -3,7 +3,8 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { MoreHorizontal, Eye, Edit, Trash2, ExternalLink, Loader2 } from "lucide-react"
+import { MoreHorizontal, Eye, Edit, Trash2, ExternalLink, Loader2, Search } from "lucide-react"
+import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -35,12 +36,24 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
   const [activeTab, setActiveTab] = useState<TabFilter>("all")
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [currentPage, setCurrentPage] = useState(1)
+  const [searchQuery, setSearchQuery] = useState("")
   const itemsPerPage = 10
+
+  // Filter by search query first
+  const searchFilteredProjects = projects.filter((p) => {
+    if (!searchQuery.trim()) return true
+    const query = searchQuery.toLowerCase()
+    return (
+      p.name.toLowerCase().includes(query) ||
+      p.address.toLowerCase().includes(query) ||
+      p.status.toLowerCase().includes(query)
+    )
+  })
 
   const filteredProjects =
     activeTab === "all"
-      ? projects
-      : projects.filter((p) => {
+      ? searchFilteredProjects
+      : searchFilteredProjects.filter((p) => {
           if (activeTab === "in_process") {
             return p.status === "pending" || p.status === "in_review" || p.status === "in_process"
           }
@@ -118,8 +131,21 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
   return (
     <div className={` ${className}`}>
       <div className="pb-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <CardTitle className="text-xl font-bold text-zinc-900">Projects</CardTitle>
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+            <Input
+              type="text"
+              placeholder="Search projects..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                setCurrentPage(1) // Reset to first page on search
+              }}
+              className="pl-9 h-9 bg-white border-[#E8E0D5] focus:border-primary/30 focus:ring-primary/10"
+            />
+          </div>
         </div>
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabFilter)} className="mt-4">
           <TabsList className="overflow-x-auto md:overflow-x-visible w-full flex flex-nowrap md:flex-wrap gap-1 scrollbar-none ">
@@ -278,19 +304,19 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                         {/* Project Details */}
                         <div className="grid grid-cols-2 gap-1">
                           <div>
-                            <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider mb-0 leading-none">Project Progress</p>
-                            <p className="text-[11px] font-bold text-zinc-900 leading-tight">{CalculateProjectProgress(project)}%</p>
+                            <p className="text-[11px] font-bold text-zinc-700 uppercase tracking-wider mb-0.5 leading-none">Project Progress</p>
+                            <p className="text-[11px] font-normal text-zinc-500 leading-tight">{CalculateProjectProgress(project)}%</p>
                           </div>
                           <div>
-                            <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider mb-0 leading-none">Status</p>
+                            <p className="text-[11px] font-bold text-zinc-700 uppercase tracking-wider mb-0.5 leading-none">Status</p>
                             <StatusBadge {...statusConfig} />
                           </div>
                         </div>
 
                         <div>
-                          <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider mb-0 leading-none">Address</p>
-                          <div className="mt-1">
-                            <p className="font-bold text-zinc-900 leading-tight">{project.address}</p>
+                          <p className="text-[11px] font-bold text-zinc-700 uppercase tracking-wider mb-0.5 leading-none">Address</p>
+                          <div className="mt-0.5">
+                            <p className="font-normal text-zinc-500 text-[12px] leading-tight">{project.address}</p>
                           </div>
                         </div>
 
