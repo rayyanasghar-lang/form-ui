@@ -3,7 +3,7 @@
 
 :root {
   color-scheme: light;
-  --background: oklch(0.98 0 0); /* #F9FAFB */
+  --background: rgb(248, 248, 248); /* #F9FAFB */
   --foreground: oklch(0.21 0.006 285.885); /* #111827 */
   --card: oklch(1 0 0); /* #FFFFFF */
   --card-foreground: oklch(0.21 0.006 285.885); /* #111827 */
