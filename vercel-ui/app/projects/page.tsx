@@ -246,10 +246,11 @@ export default function ProjectsPage() {
                     <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-zinc-500">In Process</span>
                     <div 
-                      className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border border-zinc-200"
+                      className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border"
                       style={{ 
-                        backgroundColor: "oklch(0.55 0.12 75 / 0.1)", 
-                        color: "oklch(0.55 0.12 75)"
+                        backgroundColor: "oklch(from var(--primary) l c h / 0.1)", 
+                        color: "var(--primary)",
+                        borderColor: "oklch(from var(--primary) l c h / 0.2)"
                       }}
                     >
                       <ArrowDownRight className="h-3 w-3" />
@@ -260,7 +261,7 @@ export default function ProjectsPage() {
                 <CardContent className="pt-0">
                   <div className="text-3xl font-bold text-zinc-900 tracking-tight">{stats.inProcess}</div>
                   <div className="mt-4 space-y-1">
-                    <div className="flex items-center gap-1.5 text-[13px] font-bold text-amber-600 whitespace-nowrap">
+                    <div className="flex items-center gap-1.5 text-[13px] font-bold text-primary whitespace-nowrap">
                       Down {stats.inReview} this period
                       <ArrowDownRight className="h-3.5 w-3.5" />
                     </div>
@@ -279,10 +280,11 @@ export default function ProjectsPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-zinc-500">Done Projects</span>
                     <div 
-                      className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border border-zinc-200"
+                      className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border"
                       style={{ 
-                        backgroundColor: "oklch(0.65 0.15 145 / 0.1)", 
-                        color: "oklch(0.55 0.15 145)"
+                        backgroundColor: "oklch(from var(--primary) l c h / 0.1)", 
+                        color: "var(--primary)",
+                        borderColor: "oklch(from var(--primary) l c h / 0.2)"
                       }}
                     >
                       <ArrowUpRight className="h-3 w-3" />
@@ -293,7 +295,7 @@ export default function ProjectsPage() {
                 <CardContent className="pt-0">
                   <div className="text-3xl font-bold text-zinc-900 tracking-tight">{stats.done}</div>
                   <div className="mt-4 space-y-1">
-                    <div className="flex items-center gap-1.5 text-[13px] font-bold text-green-600">
+                    <div className="flex items-center gap-1.5 text-[13px] font-bold text-primary">
                       Strong user retention
                       <ArrowUpRight className="h-3.5 w-3.5" />
                     </div>
@@ -327,7 +329,7 @@ export default function ProjectsPage() {
                 <CardContent className="pt-0">
                   <div className="text-3xl font-bold text-zinc-900 tracking-tight">{stats.totalCapacityKW} kW</div>
                   <div className="mt-4 space-y-1">
-                    <div className="flex items-center gap-1.5 text-[13px] font-bold text-zinc-900">
+                    <div className="flex items-center gap-1.5 text-[13px] font-bold text-primary">
                       Steady performance increase
                       <ArrowUpRight className="h-3.5 w-3.5" />
                     </div>
