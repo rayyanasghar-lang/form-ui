@@ -3,13 +3,13 @@
 
 :root {
   color-scheme: light;
-  --background: rgb(248, 248, 248); /* #F9FAFB */
+  --background: rgb(255, 255, 255); /* #F9FAFB */
   --foreground: oklch(0.21 0.006 285.885); /* #111827 */
   --card: oklch(1 0 0); /* #FFFFFF */
   --card-foreground: oklch(0.21 0.006 285.885); /* #111827 */
   --popover: oklch(1 0 0); /* #FFFFFF */
   --popover-foreground: oklch(0.21 0.006 285.885); /* #111827 */
-  --primary: oklch(0.63 0.22 270); /* #6366F1 Indigo */
+  --primary: #FFD85F; /* #6366F1 Indigo */
   --primary-foreground: oklch(1 0 0); /* #FFFFFF */
   --secondary: oklch(0.28 0.07 263); /* #1E293B Deep Slate */
   --secondary-foreground: oklch(0.98 0 0); /* #F9FAFB */
