@@ -20,11 +20,11 @@ interface SubmissionsChartProps {
 const chartConfig = {
   submissions: {
     label: "Submissions",
-    color: "oklch(68.351% 0.19585 34.956)",
+    color: "#0061FF",
   },
   approvals: {
     label: "Approvals", 
-    color: "oklch(0.65 0.15 145)",
+    color: "#00D1FF",
   },
 } satisfies ChartConfig
 
@@ -34,7 +34,7 @@ export function SubmissionsChart({ data, className }: SubmissionsChartProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>("30d")
 
   return (
-    <Card className={`bg-[#F5F0E8] border-[#E8E0D5] shadow-lg ${className}`}>
+    <Card className={`bg-card border-border shadow-md ${className} rounded-2xl`}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div>
           <CardTitle className="text-xl font-bold text-zinc-900">
@@ -44,7 +44,7 @@ export function SubmissionsChart({ data, className }: SubmissionsChartProps) {
             Overview of submissions over time
           </p>
         </div>
-        <div className="flex items-center gap-1 bg-[#EDE8E0] rounded-lg p-1">
+        <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
           {(["30d", "90d", "1yr"] as const).map((range) => (
             <Button
               key={range}
@@ -72,19 +72,19 @@ export function SubmissionsChart({ data, className }: SubmissionsChartProps) {
               <linearGradient id="submissionsGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="0%"
-                  stopColor="oklch(68.351% 0.19585 34.956)"
-                  stopOpacity={0.4}
+                  stopColor="#0061FF"
+                  stopOpacity={0.2}
                 />
                 <stop
                   offset="100%"
-                  stopColor="oklch(68.351% 0.19585 34.956)"
-                  stopOpacity={0.05}
+                  stopColor="#0061FF"
+                  stopOpacity={0}
                 />
               </linearGradient>
             </defs>
             <CartesianGrid 
               strokeDasharray="3 3" 
-              stroke="#E8E0D5" 
+              stroke="var(--border)" 
               vertical={false}
             />
             <XAxis
@@ -92,18 +92,17 @@ export function SubmissionsChart({ data, className }: SubmissionsChartProps) {
               tickLine={false}
               axisLine={false}
               tickMargin={10}
-              tick={{ fill: "#71717a", fontSize: 12 }}
+              tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
             />
             <YAxis
               tickLine={false}
               axisLine={false}
               tickMargin={10}
-              tick={{ fill: "#71717a", fontSize: 12 }}
+              tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
             />
             <ChartTooltip
               content={
                 <ChartTooltipContent
-                  className="bg-[#F5F0E8] border-[#E8E0D5]"
                   indicator="dot"
                 />
               }
@@ -111,7 +110,7 @@ export function SubmissionsChart({ data, className }: SubmissionsChartProps) {
             <Area
               type="monotone"
               dataKey="submissions"
-              stroke="oklch(68.351% 0.19585 34.956)"
+              stroke="#0061FF"
               strokeWidth={2}
               fill="url(#submissionsGradient)"
             />

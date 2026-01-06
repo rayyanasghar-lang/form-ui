@@ -68,7 +68,7 @@ export function OverviewTab({ project }: { project: Project }) {
       {project.general_notes && (
         <div>
            <SectionTitle title="General Notes" icon={FileText} />
-           <div className="p-4 rounded-2xl bg-white border border-[#E8E0D5] text-sm text-zinc-700 leading-relaxed font-medium">
+           <div className="p-4 rounded-2xl bg-card border border-border text-sm text-zinc-700 leading-relaxed font-medium">
              {project.general_notes}
            </div>
         </div>
@@ -113,7 +113,7 @@ export function EquipmentTab({ project }: { project: Project }) {
       {(project.system_components && project.system_components.length > 0) ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {project.system_components.map((comp, idx) => (
-            <div key={idx} className="p-5 rounded-2xl bg-white border border-[#E8E0D5] flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow">
+            <div key={idx} className="p-5 rounded-2xl bg-card border border-border flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between">
                 <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 uppercase tracking-tighter text-[10px] font-black px-2 py-0.5">
                   {comp.type}
@@ -125,7 +125,7 @@ export function EquipmentTab({ project }: { project: Project }) {
               </div>
               <div className="font-bold text-zinc-900 text-lg leading-tight">{comp.make_model}</div>
               {comp.notes && (
-                <div className="text-xs text-muted-foreground font-medium bg-[#F5F0E8]/50 p-2.5 rounded-xl border border-[#E8E0D5]/50 italic">
+                <div className="text-xs text-muted-foreground font-medium bg-secondary/50 p-2.5 rounded-xl border border-border/50 italic">
                   "{comp.notes}"
                 </div>
               )}
@@ -133,7 +133,7 @@ export function EquipmentTab({ project }: { project: Project }) {
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-[#E8E0D5] rounded-3xl text-muted-foreground/40 font-bold italic">
+        <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-border rounded-3xl text-muted-foreground/40 font-bold italic">
            No specific components listed.
         </div>
       )}
@@ -148,7 +148,7 @@ export function FilesTab({ project }: { project: Project }) {
       {(project.uploads && project.uploads.length > 0) ? (
         <div className="space-y-3">
           {project.uploads.map((file, idx) => (
-            <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-white border border-[#E8E0D5] hover:border-primary/30 transition-shadow group shadow-sm">
+            <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-card border border-border hover:border-primary/30 transition-shadow group shadow-sm">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-2xl bg-primary/5 text-primary">
                   <FileText className="w-6 h-6" />
@@ -171,7 +171,7 @@ export function FilesTab({ project }: { project: Project }) {
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-[#E8E0D5] rounded-3xl text-muted-foreground/40 font-bold italic">
+        <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-border rounded-3xl text-muted-foreground/40 font-bold italic">
            No external Drive links provided for this project.
         </div>
       )}

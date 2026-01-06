@@ -16,7 +16,7 @@ const StatusBadge = React.forwardRef<HTMLDivElement, StatusBadgeProps>(
         case "rejected":
           return "text-red-600"
         case "in-process":
-          return "text-[oklch(68.351%_0.19585_34.956)]"
+          return "text-primary"
         case "draft":
           return "text-zinc-500"
         default:

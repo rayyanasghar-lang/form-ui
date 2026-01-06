@@ -17,9 +17,9 @@ const badgeVariants = cva(
         outline: 
           "text-foreground border-border hover:bg-accent hover:text-accent-foreground",
         selectable:
-          "border-border bg-card/50 text-muted-foreground hover:bg-accent/30 hover:text-foreground hover:border-primary/30 hover:scale-[1.02] active:scale-[0.98]",
+          "border-border bg-card/50 text-muted-foreground hover:bg-accent hover:text-foreground hover:border-primary/30 hover:scale-[1.02] active:scale-[0.98]",
         selected:
-          "border-primary/40 bg-primary/15 text-primary shadow-sm hover:bg-primary/20 ring-1 ring-primary/20",
+          "border-primary/40 bg-primary/10 text-primary shadow-sm hover:bg-primary/20 ring-1 ring-primary/20",
       },
     },
     defaultVariants: {

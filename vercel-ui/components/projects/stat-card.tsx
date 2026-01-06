@@ -19,28 +19,25 @@ export function StatCard({
   trend,
   trendLabel = "vs last month",
   icon: Icon,
-  accentColor = "oklch(68.351% 0.19585 34.956)"
+  accentColor = "#0061FF"
 }: StatCardProps) {
   const isPositive = trend && trend > 0
   const isNegative = trend && trend < 0
 
   return (
-    <Card className="relative overflow-hidden bg-[#F5F0E8] border-[#E8E0D5] shadow-lg hover:shadow-xl transition-all duration-300 group">
+    <Card className="relative overflow-hidden bg-card border-border shadow-md hover:shadow-lg transition-all duration-300 group rounded-2xl">
       {/* Decorative blob */}
       <div 
-        className="absolute top-0 right-0 w-24 h-24 rounded-bl-full -mr-6 -mt-6 opacity-10 transition-all duration-500 group-hover:scale-125 group-hover:opacity-15"
-        style={{ backgroundColor: accentColor }}
+        className="absolute top-0 right-0 w-24 h-24 rounded-bl-full -mr-6 -mt-6 bg-primary/5 transition-all duration-500 group-hover:scale-125 group-hover:bg-primary/10"
       />
       
       <CardContent className="p-6 relative">
         <div className="flex items-start justify-between mb-4">
           <div 
-            className="h-12 w-12 rounded-2xl flex items-center justify-center"
-            style={{ backgroundColor: `color-mix(in oklch, ${accentColor} 15%, transparent)` }}
+            className="h-12 w-12 rounded-2xl flex items-center justify-center bg-primary/10"
           >
             <Icon 
-              className="h-6 w-6" 
-              style={{ color: accentColor }}
+              className="h-6 w-6 text-primary" 
             />
           </div>
         </div>

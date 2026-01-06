@@ -108,8 +108,8 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
         return { status: "draft", label: "Draft" }
       case "pending":
       case "in_review":
-      case "in_process":
-        return { status: "in-process", label: "In Process" }
+        case "in-process":
+          return { status: "in-process", label: "In Process" }
       default:
         return { status: "draft", label: status }
     }
@@ -166,7 +166,7 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
         <div className="hidden md:block">
           <Table>
             <TableHeader>
-              <TableRow className="border-b border-zinc-200 hover:bg-transparent">
+              <TableRow className="border-b border-border hover:bg-transparent">
                 <TableHead className="w-12">
                   <Checkbox
                     checked={paginatedProjects.length > 0 && paginatedProjects.every((p) => selectedIds.has(p.id))}
@@ -205,7 +205,7 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                 </TableRow>
               ) : (
                 paginatedProjects.map((project) => (
-                  <TableRow key={project.id} className="hover:bg-zinc-50/50 transition-colors border-b border-zinc-100 last:border-0">
+                  <TableRow key={project.id} className="hover:bg-secondary/50 transition-colors border-b border-border last:border-0">
                     <TableCell>
                       <Checkbox
                         checked={selectedIds.has(project.id)}
@@ -251,7 +251,7 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
           ) : error ? (
             <div className="text-center py-12 text-red-500 font-medium">{error}</div>
           ) : filteredProjects.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground bg-white rounded-xl border border-[#E0D9CF]">
+            <div className="text-center py-12 text-muted-foreground bg-card rounded-xl border border-border">
               No projects found
             </div>
           ) : (
@@ -295,13 +295,12 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="pt-3 space-y-2 border-t border-[#E0D9CF]">
+                        <div className="pt-3 space-y-2 border-t border-border">
                         
                         <Link href={`/projects/${project.id}`}>
 
                               <Button
-                                className="w-full font-bold shadow-sm h-9 tracking-wide uppercase text-[10px]"
-                                style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
+                                className="w-full font-bold shadow-sm h-9 tracking-wide uppercase text-[10px] bg-primary"
                                 >
                                 View Details
                               </Button>
@@ -318,7 +317,7 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
       </div>
       {/* Pagination */}
       {!isLoading && !error && filteredProjects.length > 0 && (
-        <div className="flex items-center justify-between p-4 border-t border-zinc-200">
+        <div className="flex items-center justify-between p-4 border-t border-border">
           <p className="text-sm text-zinc-500">
             Showing {Math.min(filteredProjects.length, (currentPage - 1) * itemsPerPage + 1)}-
             {Math.min(filteredProjects.length, currentPage * itemsPerPage)} of {filteredProjects.length} projects
@@ -339,7 +338,7 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                 variant="outline"
                 size="sm"
                 className={`h-8 w-8 text-xs ${
-                  currentPage === page ? "bg-zinc-900 text-white hover:bg-zinc-800" : "bg-white text-zinc-600 hover:bg-zinc-50"
+                  currentPage === page ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-card text-muted-foreground hover:bg-secondary"
                 }`}
                 onClick={() => setCurrentPage(page)}
               >

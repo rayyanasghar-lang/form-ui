@@ -101,7 +101,7 @@ export default function ProfilePage() {
       {/* --- MAIN CONTENT --- */}
       <main className="flex-1 flex flex-col overflow-hidden relative">
         {/* Content Header */}
-        <header className="h-16 px-4 sm:px-6 border-b border-zinc-200 bg-[#F5F0E8] flex items-center justify-between shrink-0 sticky top-0 z-10">
+        <header className="h-16 px-4 sm:px-6 border-b border-border bg-background flex items-center justify-between shrink-0 sticky top-0 z-10">
           <div className="flex items-center gap-3 sm:gap-4">
             {/* Sidebar Toggle - visible when sidebar is collapsed */}
             {sidebarCollapsed && (
@@ -249,8 +249,8 @@ export default function ProfilePage() {
                     <Card>
                       <CardHeader className="pb-4">
                         <div className="flex items-center gap-4">
-                          <div className="h-10 w-10 bg-orange-500/10 rounded-lg flex items-center justify-center">
-                            <Activity className="h-5 w-5 text-orange-600" />
+                          <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <Activity className="h-5 w-5 text-primary" />
                           </div>
                           <div>
                             <CardTitle className="text-lg">Preferences</CardTitle>
@@ -315,23 +315,23 @@ export default function ProfilePage() {
                     </Card>
 
                      {/* Tips Widget */}
-                    <Card className="bg-amber-50/50 border-amber-100">
+                    <Card className="bg-secondary/50 border-border">
                       <CardHeader>
                         <div className="flex items-center gap-4">
-                          <div className="h-10 w-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                            <Zap className="h-5 w-5 text-amber-600" />
+                          <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <Zap className="h-5 w-5 text-primary" />
                           </div>
                           <div>
-                            <CardTitle className="text-base text-amber-900">Quick Tips</CardTitle>
-                            <CardDescription className="text-amber-700">Profile Guidance</CardDescription>
+                            <CardTitle className="text-base text-foreground">Quick Tips</CardTitle>
+                            <CardDescription className="text-muted-foreground">Profile Guidance</CardDescription>
                           </div>
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-3">
-                        <p className="text-xs text-amber-800 leading-relaxed">
+                        <p className="text-xs text-muted-foreground leading-relaxed">
                           💡 Your <strong>Identity</strong> section is used in automated stamp generation. Ensure your name matches your license exactly.
                         </p>
-                        <p className="text-xs text-amber-800 leading-relaxed">
+                        <p className="text-xs text-muted-foreground leading-relaxed">
                           🛠 Use the <strong>Preferences</strong> settings to align your workspace with your physical office location.
                         </p>
                       </CardContent>

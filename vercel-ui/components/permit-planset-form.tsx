@@ -557,7 +557,7 @@ export default function PermitPlansetForm() {
       </div>
 
       {/* Sticky Mobile Buttons */}
-      <div className="fixed md:static bottom-0 left-0 right-0 z-40 bg-[#F5F0E8] md:bg-transparent border-t md:border-none px-4 py-3 md:pt-4 md:pb-0">
+      <div className="fixed md:static bottom-0 left-0 right-0 z-40 bg-background md:bg-transparent border-t md:border-none px-4 py-3 md:pt-4 md:pb-0">
         <div className="max-w-3xl mx-auto">
           <FormButtons
             onNext={handleNext}

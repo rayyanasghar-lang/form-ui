@@ -51,10 +51,10 @@ export default function Stepper({ steps, currentStep }: StepperProps) {
       </div>
 
       {/* Progress bar track */}
-      <div className="relative w-full h-3 bg-zinc-200 border border-zinc-300 rounded-full overflow-hidden shadow-inner">
+      <div className="relative w-full h-3 bg-secondary border border-border rounded-full overflow-hidden">
         {/* Animated progress fill */}
         <div
-          className="absolute inset-y-0 left-0 bg-gradient-to-r from-secondary to-primary rounded-full transition-all duration-500 ease-out shadow-lg shadow-primary/20"
+          className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all duration-500 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>

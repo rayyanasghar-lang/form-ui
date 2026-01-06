@@ -138,7 +138,7 @@ export default function ProjectDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#F5F0E8]">
+      <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
           <p className="text-zinc-500 font-bold">Initialising Project Data Stream...</p>
@@ -149,8 +149,8 @@ export default function ProjectDetailsPage() {
 
   if (error || !project) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#F5F0E8] p-6">
-        <Card className="max-w-md w-full border-[#E8E0D5] rounded-3xl overflow-hidden shadow-xl">
+      <div className="flex h-screen items-center justify-center bg-background p-6">
+        <Card className="max-w-md w-full border-border rounded-3xl overflow-hidden shadow-xl bg-card">
           <CardHeader className="bg-white pb-6">
             <div className="flex items-center gap-2 text-red-600 mb-2">
               <AlertCircle className="h-6 w-6" />
@@ -169,7 +169,7 @@ export default function ProjectDetailsPage() {
   }
 
   return (
-    <div className="flex h-screen bg-[#F5F0E8] overflow-hidden">
+    <div className="flex h-screen bg-background overflow-hidden">
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {mobileMenuOpen && (
@@ -186,7 +186,7 @@ export default function ProjectDetailsPage() {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-              className="fixed inset-y-0 left-0 z-50 w-64 bg-[#F5F0E8] shadow-xl lg:hidden"
+              className="fixed inset-y-0 left-0 z-50 w-64 bg-sidebar shadow-xl lg:hidden"
             >
               <div className="absolute top-4 right-4 z-50">
                  <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)}>
@@ -209,7 +209,7 @@ export default function ProjectDetailsPage() {
 
       <div className="flex flex-1 overflow-hidden">
         <main className="flex-1 overflow-auto relative min-w-0">
-        <div className="sticky top-0 z-10 border-b border-[#E8E0D5] bg-[#F5F0E8]/80 backdrop-blur-md">
+        <div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-md">
           <div className="flex items-center justify-between px-4 py-3 lg:px-6 lg:py-4">
             <div className="flex items-center gap-3 lg:gap-4">
                {/* Mobile Menu Trigger */}
@@ -277,13 +277,13 @@ export default function ProjectDetailsPage() {
                     <circle 
                       cx="18" cy="18" r="15.9155" 
                       fill="none" 
-                      stroke="#E8E0D5" 
+                      stroke="var(--border)" 
                       strokeWidth="3"
                     />
                     <circle 
                       cx="18" cy="18" r="15.9155" 
                       fill="none" 
-                      stroke="oklch(68.351% 0.19585 34.956)" 
+                      stroke="#0061FF" 
                       strokeWidth="3"
                       strokeDasharray={`${progress}, 100`}
                       strokeLinecap="round"
@@ -299,7 +299,7 @@ export default function ProjectDetailsPage() {
               <Button 
                 variant="outline" 
                 size="icon"
-                className="hidden xl:flex bg-white hover:bg-white/50 border-orange-200 text-orange-600 hover:text-orange-700 h-10 w-10 rounded-xl shadow-sm"
+                className="hidden xl:flex bg-white hover:bg-white/50 border-border text-primary hover:text-primary/80 h-10 w-10 rounded-xl shadow-sm"
                 onClick={() => setChatCollapsed(prev => !prev)}
                 title="Toggle Project Chat"
               >
@@ -310,7 +310,7 @@ export default function ProjectDetailsPage() {
               <Button 
                 variant="outline" 
                 size="icon"
-                className="flex xl:hidden bg-white hover:bg-white/50 border-orange-200 text-orange-600 hover:text-orange-700 h-10 w-10 rounded-xl shadow-sm"
+                className="flex xl:hidden bg-white hover:bg-white/50 border-border text-primary hover:text-primary/80 h-10 w-10 rounded-xl shadow-sm"
                 onClick={() => setMobileChatOpen(true)}
                 title="Open Project Chat"
               >
@@ -321,7 +321,6 @@ export default function ProjectDetailsPage() {
                 onClick={handleSave} 
                 disabled={isSaving}
                 className="bg-primary hover:bg-primary/95 text-white font-black h-10 md:h-12 px-4 md:px-8 rounded-xl md:rounded-2xl shadow-xl shadow-primary/30 transition-all active:scale-95 flex items-center gap-2 md:gap-3 text-xs md:text-sm uppercase tracking-widest"
-                style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
               >
                 {isSaving ? (
                   <Loader2 className="h-4 w-4 md:h-5 md:w-5 animate-spin" />
@@ -340,11 +339,10 @@ export default function ProjectDetailsPage() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 md:space-y-8">
             <div className="hidden md:block">
               <div className="w-full overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:pb-0 hide-scrollbar">
-                <TabsList className="bg-zinc-200/30 backdrop-blur-md border border-[#E8E0D5] rounded-3xl p-1.5 md:p-2 h-auto justify-start gap-1 md:gap-2 w-full md:w-fit mb-4 md:mb-8 shadow-inner overflow-x-auto">
+                <TabsList className="bg-secondary/30 backdrop-blur-md border border-border rounded-3xl p-1.5 md:p-2 h-auto justify-start gap-1 md:gap-2 w-full md:w-fit mb-4 md:mb-8 shadow-inner overflow-x-auto">
                 <TabsTrigger 
                   value="overview" 
                   className="rounded-2xl px-3 md:px-10 py-2.5 md:py-3.5 text-[9px] md:text-xs font-black uppercase tracking-widest !text-zinc-700 data-[state=active]:!bg-primary data-[state=active]:!text-white data-[state=active]:!shadow-2xl transition-all duration-500 shadow-none hover:text-zinc-900 hover:bg-white/50 flex-1 md:flex-none"
-                  style={{ "--primary-active": "oklch(68.351% 0.19585 34.956)" } as any}
                 >
                   System Summary
                 </TabsTrigger>
@@ -372,7 +370,7 @@ export default function ProjectDetailsPage() {
 
             <TabsContent value="overview" className="space-y-8 mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <Card className="border-[#E8E0D5] bg-white rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden">
+                <Card className="border-border bg-card rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden">
                   <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 py-6">
                     <div className="flex items-center gap-3">
                        <div className="p-2 rounded-xl bg-primary/10 text-primary">
@@ -410,7 +408,7 @@ export default function ProjectDetailsPage() {
                           <SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold">
                             <SelectValue placeholder="System Type" />
                           </SelectTrigger>
-                          <SelectContent className="rounded-xl border-[#E8E0D5]">
+                          <SelectContent className="rounded-xl border-border bg-card">
                             <SelectItem value="roofmount">Roof Mount</SelectItem>
                             <SelectItem value="groundmount">Ground Mount</SelectItem>
                             <SelectItem value="other">Special Utility</SelectItem>
@@ -471,7 +469,7 @@ export default function ProjectDetailsPage() {
                   </CardContent>
                 </Card>
 
-                <Card className="border-[#E8E0D5] bg-white rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden">
+                <Card className="border-border bg-card rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden">
                   <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 py-6">
                     <div className="flex items-center gap-3">
                        <div className="p-2 rounded-xl bg-primary/10 text-primary">
@@ -531,7 +529,7 @@ export default function ProjectDetailsPage() {
                 </Card>
               </div>
 
-              <Card className="border-[#E8E0D5] bg-white rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden hover:border-primary/20">
+              <Card className="border-border bg-card rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden hover:border-primary/20">
                 <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 py-6">
                   <div className="flex items-center gap-3">
                      <div className="p-2 rounded-xl bg-zinc-900/5 text-zinc-900">
@@ -542,7 +540,7 @@ export default function ProjectDetailsPage() {
                 </CardHeader>
                 <CardContent className="p-8">
                   <textarea
-                    className="w-full min-h-[160px] p-4 rounded-2xl border border-zinc-200 bg-[#F5F0E8]/30 text-sm ring-offset-background placeholder:text-muted-foreground/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary/30 transition-all font-bold resize-none leading-relaxed"
+                    className="w-full min-h-[160px] p-4 rounded-2xl border border-border bg-background text-sm ring-offset-background placeholder:text-muted-foreground/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary/30 transition-all font-bold resize-none leading-relaxed"
                     placeholder="Document structural considerations, AHJ requirements, or field observations..."
                     value={project.general_notes || ""}
                     onChange={(e) => handleUpdateField('general_notes', e.target.value)}
@@ -553,7 +551,7 @@ export default function ProjectDetailsPage() {
 
             <TabsContent value="site" className="space-y-8 mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <Card className="border-[#E8E0D5] bg-white rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden">
+                <Card className="border-border bg-card rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden">
                   <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 py-6">
                     <div className="flex items-center gap-3">
                        <div className="p-2 rounded-xl bg-primary/10 text-primary">
@@ -570,7 +568,7 @@ export default function ProjectDetailsPage() {
                           <SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold">
                             <SelectValue placeholder="Material" />
                           </SelectTrigger>
-                          <SelectContent className="rounded-xl border-[#E8E0D5]">
+                          <SelectContent className="rounded-xl border-border bg-card">
                             <SelectItem value="asphalt">Asphalt Shingle</SelectItem>
                             <SelectItem value="tile">Tile</SelectItem>
                             <SelectItem value="metal">Metal</SelectItem>
@@ -585,7 +583,7 @@ export default function ProjectDetailsPage() {
                           <SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold">
                             <SelectValue placeholder="Pitch" />
                           </SelectTrigger>
-                          <SelectContent className="rounded-xl border-[#E8E0D5]">
+                          <SelectContent className="rounded-xl border-border bg-card">
                             <SelectItem value="15">15° Gradient</SelectItem>
                             <SelectItem value="20">20° Gradient</SelectItem>
                             <SelectItem value="25">25° Gradient</SelectItem>
@@ -657,7 +655,7 @@ export default function ProjectDetailsPage() {
                   </CardContent>
                 </Card>
 
-                <Card className="border-[#E8E0D5] bg-white rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden">
+                <Card className="border-border bg-card rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden">
                   <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 py-6">
                     <div className="flex items-center gap-3">
                        <div className="p-2 rounded-xl bg-zinc-900 text-white">
@@ -763,10 +761,10 @@ export default function ProjectDetailsPage() {
                 </Card>
               </div>
                 {/* Optional Extras Card */}
-                <Card className="border-[#E8E0D5] bg-white rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden col-span-1 lg:col-span-2">
+                <Card className="border-border bg-card rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden col-span-1 lg:col-span-2">
                    <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 py-6">
                     <div className="flex items-center gap-3">
-                       <div className="p-2 rounded-xl bg-orange-100 text-orange-600">
+                       <div className="p-2 rounded-xl bg-primary/10 text-primary">
                           <AlertCircle className="h-5 w-5" />
                        </div>
                        <CardTitle className="text-sm font-black uppercase tracking-[0.2em] text-zinc-900">Optional Extras & Constraints</CardTitle>
@@ -968,7 +966,7 @@ export default function ProjectDetailsPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center py-20 border-3 border-dashed border-[#E8E0D5] bg-[#F5F0E8]/20 rounded-4xl text-center group transition-colors hover:border-primary/20">
+                    <div className="flex flex-col items-center justify-center py-20 border-3 border-dashed border-border bg-secondary/20 rounded-4xl text-center group transition-colors hover:border-primary/20">
                       <div className="p-6 rounded-3xl bg-white shadow-xl mb-6 group-hover:scale-110 transition-transform">
                          <FileText className="h-10 w-10 text-zinc-300" />
                       </div>
@@ -984,11 +982,11 @@ export default function ProjectDetailsPage() {
               </Card>
             </TabsContent>
             {/* Mobile Bottom Tabs */}
-            <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#F5F0E8] border-t border-[#E8E0D5] md:hidden shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.05)]">
+            <div className="fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border md:hidden shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.05)]">
               <TabsList className="grid grid-cols-4 h-22 pb-safe rounded-none bg-transparent border-0 p-0">
                 <TabsTrigger
                   value="overview"
-                  className="flex flex-col items-center justify-center gap-1.5 text-[10px] font-bold uppercase text-zinc-500! data-[state=active]:text-[oklch(68.351%_0.19585_34.956)]! bg-transparent! shadow-none! rounded-none h-full border-b-0! border-t-4 border-transparent data-[state=active]:border-[oklch(68.351%_0.19585_34.956)] transition-all"
+                  className="flex flex-col items-center justify-center gap-1.5 text-[10px] font-bold uppercase text-zinc-500! data-[state=active]:text-primary! bg-transparent! shadow-none! rounded-none h-full border-b-0! border-t-4 border-transparent data-[state=active]:border-primary transition-all"
                 >
                   <Zap className="h-5 w-5" />
                   Summary
@@ -996,7 +994,7 @@ export default function ProjectDetailsPage() {
 
                 <TabsTrigger
                   value="site"
-                  className="flex flex-col items-center justify-center gap-1.5 text-[10px] font-bold uppercase text-zinc-500! data-[state=active]:text-[oklch(68.351%_0.19585_34.956)]! bg-transparent! shadow-none! rounded-none h-full border-b-0! border-t-4 border-transparent data-[state=active]:border-[oklch(68.351%_0.19585_34.956)] transition-all"
+                  className="flex flex-col items-center justify-center gap-1.5 text-[10px] font-bold uppercase text-zinc-500! data-[state=active]:text-primary! bg-transparent! shadow-none! rounded-none h-full border-b-0! border-t-4 border-transparent data-[state=active]:border-primary transition-all"
                 >
                   <Home className="h-5 w-5" />
                   Site
@@ -1004,7 +1002,7 @@ export default function ProjectDetailsPage() {
 
                 <TabsTrigger
                   value="components"
-                  className="flex flex-col items-center justify-center gap-1.5 text-[10px] font-bold uppercase text-zinc-500! data-[state=active]:text-[oklch(68.351%_0.19585_34.956)]! bg-transparent! shadow-none! rounded-none h-full border-b-0! border-t-4 border-transparent data-[state=active]:border-[oklch(68.351%_0.19585_34.956)] transition-all"
+                  className="flex flex-col items-center justify-center gap-1.5 text-[10px] font-bold uppercase text-zinc-500! data-[state=active]:text-primary! bg-transparent! shadow-none! rounded-none h-full border-b-0! border-t-4 border-transparent data-[state=active]:border-primary transition-all"
                 >
                   <Box className="h-5 w-5" />
                   Equipment
@@ -1012,7 +1010,7 @@ export default function ProjectDetailsPage() {
 
                 <TabsTrigger
                   value="uploads"
-                  className="flex flex-col items-center justify-center gap-1.5 text-[10px] font-bold uppercase text-zinc-500! data-[state=active]:text-[oklch(68.351%_0.19585_34.956)]! bg-transparent! shadow-none! rounded-none h-full border-b-0! border-t-4 border-transparent data-[state=active]:border-[oklch(68.351%_0.19585_34.956)] transition-all"
+                  className="flex flex-col items-center justify-center gap-1.5 text-[10px] font-bold uppercase text-zinc-500! data-[state=active]:text-primary! bg-transparent! shadow-none! rounded-none h-full border-b-0! border-t-4 border-transparent data-[state=active]:border-primary transition-all"
                 >
                   <FileText className="h-5 w-5" />
                   Uploads
