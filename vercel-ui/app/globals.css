@@ -9,7 +9,7 @@
   --card-foreground: oklch(0.21 0.006 285.885); /* #111827 */
   --popover: oklch(1 0 0); /* #FFFFFF */
   --popover-foreground: oklch(0.21 0.006 285.885); /* #111827 */
-  --primary: #FFD85F; /* #6366F1 Indigo */
+  --primary: #5367E9;
   --primary-foreground: oklch(1 0 0); /* #FFFFFF */
   --secondary: oklch(0.28 0.07 263); /* #1E293B Deep Slate */
   --secondary-foreground: oklch(0.98 0 0); /* #F9FAFB */
@@ -21,16 +21,16 @@
   --destructive-foreground: oklch(0.98 0 0);
   --border: oklch(0.92 0 0);
   --input: oklch(0.92 0 0);
-  --ring: oklch(0.63 0.22 270); /* #6366F1 */
+  --ring: #5367E9;
   --radius: 0.75rem;
-  --sidebar: oklch(0.28 0.07 263); /* #1E293B Deep Slate */
-  --sidebar-foreground: oklch(0.98 0 0); /* #F9FAFB */
-  --sidebar-primary: oklch(0.63 0.22 270); /* #6366F1 */
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: oklch(0.21 0.006 285.885);
+  --sidebar-primary: #5367E9;
   --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.35 0.07 263); /* Lighter Slate */
-  --sidebar-accent-foreground: oklch(1 0 0);
-  --sidebar-border: oklch(0.28 0.07 263);
-  --sidebar-ring: oklch(0.63 0.22 270);
+  --sidebar-accent: oklch(0.95 0 0); /* Subtle Greyush */
+  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
+  --sidebar-border: oklch(0.92 0 0);
+  --sidebar-ring: #5367E9;
   --success: oklch(0.65 0.18 150); /* #10B981 Emerald */
 }
 

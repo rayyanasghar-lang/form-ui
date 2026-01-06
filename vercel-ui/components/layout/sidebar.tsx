@@ -51,12 +51,12 @@ export default function Sidebar({
 
   // Dashboard navigation sections
   const dashboardSections = [
-    {
-      title: "Main",
-      items: [
-        { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/projects" },
-      ],
-    },
+    // {
+    //   title: "Main",
+    //   items: [
+    //     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/projects" },
+    //   ],
+    // },
     {
       title: "Workspace",
       items: [
@@ -149,37 +149,31 @@ export default function Sidebar({
                 <Link
                   key={item.id}
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group relative ${
                     pathname === item.href
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
-                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                      ? "text-primary bg-primary/5"
+                      : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900"
                   }`}
                 >
-                    <item.icon className={`h-4 w-4 ${pathname === item.href ? "text-sidebar-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-primary"} transition-colors`} />
+                    <item.icon className={`h-4 w-4 ${pathname === item.href ? "text-primary" : "text-zinc-400 group-hover:text-zinc-600"} transition-colors`} />
                   {item.label}
                 </Link>
               ) : (
                   <button
                     key={item.id}
                     onClick={() => onSettingsTabChange?.(item.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group relative ${
                       activeSettingsTab === item.id
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
-                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                        ? "text-primary bg-primary/5"
+                        : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900"
                     }`}
                   >
                     <item.icon 
                       className={`h-4 w-4 transition-colors ${
-                        activeSettingsTab === item.id ? "text-sidebar-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-primary"
+                        activeSettingsTab === item.id ? "text-primary" : "text-zinc-400 group-hover:text-zinc-600"
                       }`}
                     />
                     {item.label}
-                    {activeSettingsTab === item.id && (
-                      <motion.div
-                        layoutId="active-nav-indicator"
-                        className="ml-auto w-1 h-4 rounded-full bg-sidebar-primary"
-                      />
-                    )}
                 </button>
               )
             )}
