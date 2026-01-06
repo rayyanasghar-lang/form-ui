@@ -281,7 +281,7 @@ export default function ProjectsPage() {
                 <CardContent className="pt-0">
                   <div className="text-3xl font-bold text-zinc-900 tracking-tight">{stats.done}</div>
                   <div className="mt-4 space-y-1">
-                    <div className="flex items-center gap-1.5 text-[13px] font-bold text-green-600">
+                    <div className="flex items-center gap-1.5 text-[13px] font-bold text-primary">
                       Strong user retention
                       <ArrowUpRight className="h-3.5 w-3.5" />
                     </div>
@@ -310,7 +310,7 @@ export default function ProjectsPage() {
                 <CardContent className="pt-0">
                   <div className="text-3xl font-bold text-zinc-900 tracking-tight">{stats.totalCapacityKW} kW</div>
                   <div className="mt-4 space-y-1">
-                    <div className="flex items-center gap-1.5 text-[13px] font-bold text-zinc-900">
+                    <div className="flex items-center gap-1.5 text-[13px] font-bold text-primary">
                       Steady performance increase
                       <ArrowUpRight className="h-3.5 w-3.5" />
                     </div>
