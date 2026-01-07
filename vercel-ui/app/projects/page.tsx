@@ -48,6 +48,8 @@ import { ProjectStatus, Project } from "@/types/project"
 import { fetchProjectsAction } from "@/app/actions/project-service"
 import { Loader2 } from "lucide-react"
 import { ProjectsTable } from "@/components/projects/projects-table"
+import { BackgroundGradient } from "@/components/layout/background-gradient"
+
 import { useRouter }
  from "next/navigation"
 
@@ -128,28 +130,10 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background relative overflow-hidden">
       {/* Mobile Sidebar Overlay */}
-      {/* Enhanced Multi-directional Gradient Background */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Bottom to Top Gradient */}
-        <div 
-          className="absolute inset-x-0 bottom-0 h-[70vh]" 
-          style={{ 
-            background: 'linear-gradient(to top, var(--primary) 0%, transparent 100%)',
-            opacity: 0.30
-          }} 
-        />
-        {/* Right to Left Gradient */}
-        <div 
-          className="absolute inset-y-0 right-0 w-[50vw]" 
-          style={{ 
-            background: 'linear-gradient(to left, var(--primary) 0%, transparent 100%)',
-            opacity: 0.20
-          }} 
-        />
+      <BackgroundGradient />
 
-      </div>
       <AnimatePresence>
         {mobileMenuOpen && (
           <>

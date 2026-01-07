@@ -7,6 +7,8 @@ import { ChevronLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Navbar } from "@/components/layout/navbar"
 import PermitPlansetForm from "@/components/permit-planset-form"
+import { BackgroundGradient } from "@/components/layout/background-gradient"
+
 
 export default function FormsPage() {
   const [mounted, setMounted] = useState(false)
@@ -18,32 +20,14 @@ export default function FormsPage() {
   if (!mounted) return null
 
   return (
-    <div className="min-h-screen flex flex-col selection:bg-primary/20">
+    <div className="min-h-screen flex flex-col selection:bg-primary/20 relative overflow-hidden">
       <Navbar
         title="Forms"
         backLink={{ label: "Dashboard", href: "/projects" }}
       />
 
-      {/* Enhanced Multi-directional Gradient Background */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Bottom to Top Gradient */}
-        <div 
-          className="absolute inset-x-0 bottom-0 h-[70vh]" 
-          style={{ 
-            background: 'linear-gradient(to top, var(--primary) 0%, transparent 100%)',
-            opacity: 0.30
-          }} 
-        />
-        {/* Right to Left Gradient */}
-        <div 
-          className="absolute inset-y-0 right-0 w-[50vw]" 
-          style={{ 
-            background: 'linear-gradient(to left, var(--primary) 0%, transparent 100%)',
-            opacity: 0.20
-          }} 
-        />
+      <BackgroundGradient />
 
-      </div>
 
 
       <main className="flex-1 px-4 sm:px-6 lg:px-8 pt-6 pb-28 md:pb-12">

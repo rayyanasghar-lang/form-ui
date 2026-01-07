@@ -3,7 +3,20 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { MoreHorizontal, Eye, Edit, Trash2, ExternalLink, Loader2 } from "lucide-react"
+import { 
+  MoreHorizontal, 
+  Eye, 
+  Edit, 
+  Trash2, 
+  ExternalLink, 
+  Loader2,
+  LayoutGrid,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  FileText
+} from "lucide-react"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -122,10 +135,15 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
           <CardTitle className="text-xl font-bold text-zinc-900">Projects</CardTitle>
         </div>
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabFilter)} className="mt-4">
-          <TabsList className="overflow-x-auto md:overflow-x-visible w-full flex flex-nowrap md:flex-wrap gap-1 scrollbar-none ">
-            <TabsTrigger value="all" className="shrink-0 text-xs px-2 py-1 md:text-sm md:px-3 md:py-1.5">
+          <TabsList className="overflow-x-auto md:overflow-x-visible w-full flex flex-nowrap md:flex-wrap gap-2.5 scrollbar-none border-b-0 bg-transparent h-auto p-0">
+            <TabsTrigger 
+              value="all" 
+              className="shrink-0 text-[11px] px-5 py-2 md:text-xs md:px-6 md:py-2.5 rounded-full bg-zinc-100 text-zinc-600 data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-300 font-black uppercase tracking-widest shadow-sm hover:bg-zinc-200 data-[state=active]:shadow-md data-[state=active]:shadow-primary/20 border-0"
+            >
+              <LayoutGrid className="h-3.5 w-3.5 mr-2" />
               All
             </TabsTrigger>
+
             <TabsTrigger
               value="in_process"
               badge={
@@ -133,33 +151,43 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                   (p) => p.status === "pending" || p.status === "in_review" || p.status === "in_process",
                 ).length
               }
-              className="shrink-0 text-xs px-2 py-1 md:text-sm md:px-3 md:py-1.5"
+              className="shrink-0 text-[11px] px-5 py-2 md:text-xs md:px-6 md:py-2.5 rounded-full bg-zinc-100 text-zinc-600 data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-300 font-black uppercase tracking-widest shadow-sm hover:bg-zinc-200 data-[state=active]:shadow-md data-[state=active]:shadow-primary/20 border-0"
             >
+              <Clock className="h-3.5 w-3.5 mr-2" />
               In Process
             </TabsTrigger>
+
             <TabsTrigger
               value="done"
               badge={projects.filter((p) => p.status === "approved" || p.status === "done").length}
-              className="shrink-0 text-xs px-2 py-1 md:text-sm md:px-3 md:py-1.5"
+              className="shrink-0 text-[11px] px-5 py-2 md:text-xs md:px-6 md:py-2.5 rounded-full bg-zinc-100 text-zinc-600 data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-300 font-black uppercase tracking-widest shadow-sm hover:bg-zinc-200 data-[state=active]:shadow-md data-[state=active]:shadow-primary/20 border-0"
             >
+              <CheckCircle2 className="h-3.5 w-3.5 mr-2" />
               Done
             </TabsTrigger>
+
             <TabsTrigger
               value="rejected"
               badge={projects.filter((p) => p.status === "rejected").length}
-              className="shrink-0 text-xs px-2 py-1 md:text-sm md:px-3 md:py-1.5"
+              className="shrink-0 text-[11px] px-5 py-2 md:text-xs md:px-6 md:py-2.5 rounded-full bg-zinc-100 text-zinc-600 data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-300 font-black uppercase tracking-widest shadow-sm hover:bg-zinc-200 data-[state=active]:shadow-md data-[state=active]:shadow-primary/20 border-0"
             >
+              <XCircle className="h-3.5 w-3.5 mr-2" />
               Rejected
             </TabsTrigger>
+
             <TabsTrigger
               value="draft"
               badge={projects.filter((p) => p.status === "draft").length}
-              className="shrink-0 text-xs px-2 py-1 md:text-sm md:px-3 md:py-1.5"
+              className="shrink-0 text-[11px] px-5 py-2 md:text-xs md:px-6 md:py-2.5 rounded-full bg-zinc-100 text-zinc-600 data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-300 font-black uppercase tracking-widest shadow-sm hover:bg-zinc-200 data-[state=active]:shadow-md data-[state=active]:shadow-primary/20 border-0"
             >
+              <FileText className="h-3.5 w-3.5 mr-2" />
               Draft
             </TabsTrigger>
+
           </TabsList>
         </Tabs>
+
+
       </div>
       <div className="px-0">
         {/* Desktop Table */}

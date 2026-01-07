@@ -2,12 +2,25 @@
 
 export function BackgroundGradient() {
   return (
-    <div 
-      className="fixed inset-0 pointer-events-none"
-      style={{
-        background: 'linear-gradient(to top, rgba(83, 103, 233, 0.05) 0%, rgba(83, 103, 233, 0.03) 20%, rgba(83, 103, 233, 0.01) 40%, transparent 60%)',
-        zIndex: -1
-      }}
-    />
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Bottom to Top Gradient */}
+        <div 
+          className="absolute inset-x-0 bottom-0 h-[70vh]" 
+          style={{ 
+            background: 'linear-gradient(to top, var(--primary) 0%, transparent 100%)',
+            opacity: 0.08
+          }} 
+        />
+        {/* Right to Left Gradient */}
+        <div 
+          className="absolute inset-y-0 right-0 w-[50vw]" 
+          style={{ 
+            background: 'linear-gradient(to left, var(--primary) 0%, transparent 100%)',
+            opacity: 0.05
+          }} 
+        />
+
+      </div>
+
   )
 }

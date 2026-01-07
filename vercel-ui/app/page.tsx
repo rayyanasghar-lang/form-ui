@@ -96,25 +96,6 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4 selection:bg-primary/20">
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Bottom to Top Gradient */}
-        <div 
-          className="absolute inset-x-0 bottom-0 h-[70vh]" 
-          style={{ 
-            background: 'linear-gradient(to top, var(--primary) 0%, transparent 100%)',
-            opacity: 0.30
-          }} 
-        />
-        {/* Right to Left Gradient */}
-        <div 
-          className="absolute inset-y-0 right-0 w-[50vw]" 
-          style={{ 
-            background: 'linear-gradient(to left, var(--primary) 0%, transparent 100%)',
-            opacity: 0.20
-          }} 
-        />
-
-      </div>
       <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-12 items-center relative z-10">
         {/* Left Side - Branding */}
         <div className="hidden lg:flex flex-col space-y-8 animate-fade-in-up">

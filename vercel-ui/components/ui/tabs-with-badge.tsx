@@ -30,18 +30,20 @@ function TabsWithBadgeTrigger({ className, badge, children, ...props }: TabsWith
     <TabsPrimitive.Trigger
       data-slot="tabs-with-badge-trigger"
       className={cn(
-        "text-muted-foreground data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 group",
+        "text-muted-foreground data-[state=active]:text-primary px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 group",
         className,
       )}
       {...props}
     >
+
       <span className="flex items-center gap-2">
         {children}
         {badge !== undefined && (
-          <span className="hidden md:inline-flex text-xs font-bold px-2 py-0.5 rounded-full border transition-colors bg-muted text-muted-foreground border-border group-data-[state=active]:bg-primary/10 group-data-[state=active]:text-primary group-data-[state=active]:border-primary/20">
+          <span className="hidden md:inline-flex text-[10px] font-bold px-1.5 py-0 rounded-full border transition-colors bg-zinc-200/50 text-zinc-500 border-transparent group-data-[state=active]:bg-white/20 group-data-[state=active]:text-white group-data-[state=active]:border-white/20">
             {badge}
           </span>
         )}
+
       </span>
     </TabsPrimitive.Trigger>
   )
