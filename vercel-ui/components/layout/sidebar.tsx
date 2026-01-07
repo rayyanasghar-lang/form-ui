@@ -50,7 +50,7 @@ export default function Sidebar({
   const setCollapsed = onCollapsedChange || setInternalCollapsed
 
   // Dashboard navigation sections
-  const dashboardSections = [
+  const dashboardSections = [ 
     // {
     //   title: "Main",
     //   items: [
