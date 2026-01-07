@@ -95,7 +95,7 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
   const getStatusBadgeConfig = (
     status: ProjectStatus,
   ): {
-    status: "done" | "in-process" | "rejected" | "draft"
+    status: "done" | "in_process" | "rejected" | "draft"
     label: string
   } => {
     switch (status) {
@@ -108,8 +108,8 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
         return { status: "draft", label: "Draft" }
       case "pending":
       case "in_review":
-        case "in-process":
-          return { status: "in-process", label: "In Process" }
+      case "in_process":
+        return { status: "in_process", label: "In Process" }
       default:
         return { status: "draft", label: status }
     }
@@ -173,11 +173,11 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                     onCheckedChange={toggleAll}
                   />
                 </TableHead>
-                <TableHead className="font-semibold text-zinc-700">Project</TableHead>
-                <TableHead className="font-semibold text-zinc-700">Address</TableHead>
-                <TableHead className="font-semibold text-zinc-700">Status</TableHead>
-                <TableHead className="font-semibold text-zinc-700">Completion %</TableHead>
-                <TableHead className="font-semibold text-zinc-700">Created</TableHead>
+                <TableHead className="font-extrabold text-black">Project</TableHead>
+                <TableHead className="font-extrabold text-black">Address</TableHead>
+                <TableHead className="font-extrabold text-black">Status</TableHead>
+                <TableHead className="font-extrabold text-black">Completion %</TableHead>
+                <TableHead className="font-extrabold text-black">Created</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
@@ -187,7 +187,7 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                   <TableCell colSpan={7} className="text-center py-24">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                      <p className="text-sm font-medium text-zinc-500">Loading projects...</p>
+                      <p className="text-sm font-medium text-black">Loading projects...</p>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -205,20 +205,20 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                 </TableRow>
               ) : (
                 paginatedProjects.map((project) => (
-                  <TableRow key={project.id} className="hover:bg-secondary/50 transition-colors border-b border-border last:border-0">
+                  <TableRow key={project.id} className="hover:bg-muted transition-colors border-b border-border last:border-0">
                     <TableCell>
                       <Checkbox
                         checked={selectedIds.has(project.id)}
                         onCheckedChange={() => toggleSelect(project.id)}
                       />
                     </TableCell>
-                    <TableCell className="font-medium text-zinc-900">{project.name}</TableCell>
-                    <TableCell className="text-zinc-600 max-w-[200px] truncate">{project.address}</TableCell>
+                    <TableCell className="font-medium text-foreground">{project.name}</TableCell>
+                    <TableCell className="text-muted-foreground max-w-[200px] truncate">{project.address}</TableCell>
                     <TableCell>
                       <StatusBadge {...getStatusBadgeConfig(project.status)} />
                     </TableCell>
                     <TableCell className="font-normal">{CalculateProjectProgress(project)}%</TableCell>
-                    <TableCell className="text-zinc-600">{formatDate(project.createdAt)}</TableCell>
+                    <TableCell className="text-muted-foreground">{formatDate(project.createdAt)}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -262,15 +262,15 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                   <AccordionItem
                     key={project.id}
                     value={project.id}
-                    className="border-b border-zinc-100 last:border-b-0 rounded-none mb-0 overflow-hidden w-full"
+                    className="border-b border-border last:border-b-0 rounded-none mb-0 overflow-hidden w-full"
                   >
-                    <AccordionTrigger className="px-3 py-1.5 hover:bg-zinc-50/50 transition-colors hover:no-underline">
+                    <AccordionTrigger className="px-3 py-1.5 hover:bg-muted transition-colors hover:no-underline">
                       <div className="flex flex-col items-start gap-0 text-left w-full pr-1">
                         <div className="flex items-center justify-between w-full">
-                          <p className="font-bold text-zinc-900 text-sm truncate max-w-[180px] leading-tight">{project.name}</p>
+                          <p className="font-bold text-foreground text-sm truncate max-w-[180px] leading-tight">{project.name}</p>
                           
                         </div>
-                        <p className = "text-[10px] text-zinc-500 font-medium truncate w-full leading-tight">{formatDate(project.createdAt)}</p>
+                        <p className = "text-[10px] text-muted-foreground font-medium truncate w-full leading-tight">{formatDate(project.createdAt)}</p>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-2 pb-1.5">
@@ -278,19 +278,19 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                         {/* Project Details */}
                         <div className="grid grid-cols-2 gap-1">
                           <div>
-                            <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider mb-0 leading-none">Project Progress</p>
-                            <p className="text-[11px] font-bold text-zinc-900 leading-tight">{CalculateProjectProgress(project)}%</p>
+                            <p className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-wider mb-0 leading-none">Project Progress</p>
+                            <p className="text-[11px] font-bold text-foreground leading-tight">{CalculateProjectProgress(project)}%</p>
                           </div>
                           <div>
-                            <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider mb-0 leading-none">Status</p>
+                            <p className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-wider mb-0 leading-none">Status</p>
                             <StatusBadge {...statusConfig} />
                           </div>
                         </div>
 
                         <div>
-                          <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider mb-0 leading-none">Address</p>
+                          <p className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-wider mb-0 leading-none">Address</p>
                           <div className="mt-1">
-                            <p className="font-bold text-zinc-900 leading-tight">{project.address}</p>
+                            <p className="font-bold text-foreground leading-tight">{project.address}</p>
                           </div>
                         </div>
 

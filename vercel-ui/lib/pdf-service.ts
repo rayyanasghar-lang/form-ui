@@ -3,10 +3,11 @@ import { Project } from "@/types/project"
 
 export const generateProjectPDF = (project: Project) => {
   const doc = new jsPDF()
-  const primaryColor = [0, 97, 255] // Digital Blue #0061FF
+  const primaryColor = [255, 215, 0] // Gold #FFD700
+  const backgroundColor = [253, 251, 240] // Cream #FDFBF0
 
   // Header
-  doc.setFillColor(244, 247, 254) // Cool Ash Blue background #F4F7FE
+  doc.setFillColor(backgroundColor[0], backgroundColor[1], backgroundColor[2])
   doc.rect(0, 0, 210, 40, "F")
   
   doc.setFont("helvetica", "bold")

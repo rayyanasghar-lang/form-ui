@@ -110,7 +110,7 @@ export default function LandingPage() {
             />
           </div>
           <div className="space-y-4">
-            <h1 className="text-5xl lg:text-6xl font-extrabold tracking-tight text-balance leading-[1.1]" style={{ color: "#0061FF" }}>
+            <h1 className="text-5xl lg:text-6xl font-extrabold tracking-tight text-balance leading-[1.1]" style={{ color: "#FFD700" }}>
               Streamline Your <span className="text-foreground">Solar Permits</span>
             </h1>
             <p className="text-xl text-muted-foreground/80 font-medium max-w-md">
@@ -129,7 +129,7 @@ export default function LandingPage() {
                 className="bg-card rounded-2xl p-5 border border-border shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1"
                 style={{ animationDelay: stat.delay }}
               >
-                <div className="text-2xl font-bold mb-1" style={{ color: "#0061FF" }}>
+                <div className="text-2xl font-bold mb-1" style={{ color: "#FFD700" }}>
                   {stat.value}
                 </div>
                 <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">{stat.label}</div>
@@ -185,7 +185,7 @@ export default function LandingPage() {
                         type="email"
                         placeholder="you@company.com"
                         required
-                        className="h-11 rounded-xl bg-white border-border focus:bg-white transition-all focus:ring-4 focus:ring-primary/10"
+                        className="h-11 rounded-xl bg-background/50 border-border focus:bg-background transition-all focus:ring-4 focus:ring-primary/10"
                       />
                     </div>
                     <div className="space-y-2">
@@ -193,7 +193,7 @@ export default function LandingPage() {
                         <Label htmlFor="login-password">Password</Label>
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button variant="link" className="px-0 h-auto text-sm font-semibold hover:no-underline" style={{ color: "#0061FF" }}>
+                            <Button variant="link" className="px-0 h-auto text-sm font-semibold hover:no-underline" style={{ color: "#FFD700" }}>
                               Forgot password?
                             </Button>
                           </DialogTrigger>

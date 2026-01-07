@@ -141,7 +141,7 @@ export default function ProjectDetailsPage() {
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-zinc-500 font-bold">Initialising Project Data Stream...</p>
+          <p className="text-black font-bold">Initialising Project Data Stream...</p>
         </div>
       </div>
     )
@@ -271,7 +271,7 @@ export default function ProjectDetailsPage() {
             </div>
             <div className="flex items-center gap-3">
               {/* Circular Progress Indicator */}
-              <div className="hidden sm:flex items-center gap-2" title={`${progress}% complete`}>
+              <div className="hidden sm:flex items-center gap-2 text-black" title={`${progress}% complete`}>
                 <div className="relative w-10 h-10">
                   <svg className="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
                     <circle 
@@ -283,16 +283,16 @@ export default function ProjectDetailsPage() {
                     <circle 
                       cx="18" cy="18" r="15.9155" 
                       fill="none" 
-                      stroke="#0061FF" 
+                      stroke="var(--primary)" 
                       strokeWidth="3"
                       strokeDasharray={`${progress}, 100`}
                       strokeLinecap="round"
                       className="transition-all duration-500"
                     />
                   </svg>
-                  <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-zinc-700">{progress}%</span>
+                  <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-black">{progress}%</span>
                 </div>
-                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider hidden lg:block">Complete</span>
+                <span className="text-[10px] font-bold text-black uppercase tracking-wider hidden lg:block">Complete</span>
               </div>
 
               {/* Desktop Chat Toggle */}
@@ -320,7 +320,7 @@ export default function ProjectDetailsPage() {
               <Button 
                 onClick={handleSave} 
                 disabled={isSaving}
-                className="bg-primary hover:bg-primary/95 text-white font-black h-10 md:h-12 px-4 md:px-8 rounded-xl md:rounded-2xl shadow-xl shadow-primary/30 transition-all active:scale-95 flex items-center gap-2 md:gap-3 text-xs md:text-sm uppercase tracking-widest"
+                className="bg-primary hover:bg-primary/95 text-black font-black h-10 md:h-12 px-4 md:px-8 rounded-xl md:rounded-2xl shadow-xl shadow-primary/30 transition-all active:scale-95 flex items-center gap-2 md:gap-3 text-xs md:text-sm uppercase tracking-widest"
               >
                 {isSaving ? (
                   <Loader2 className="h-4 w-4 md:h-5 md:w-5 animate-spin" />
@@ -342,25 +342,25 @@ export default function ProjectDetailsPage() {
                 <TabsList className="bg-secondary/30 backdrop-blur-md border border-border rounded-3xl p-1.5 md:p-2 h-auto justify-start gap-1 md:gap-2 w-full md:w-fit mb-4 md:mb-8 shadow-inner overflow-x-auto">
                 <TabsTrigger 
                   value="overview" 
-                  className="rounded-2xl px-3 md:px-10 py-2.5 md:py-3.5 text-[9px] md:text-xs font-black uppercase tracking-widest !text-zinc-700 data-[state=active]:!bg-primary data-[state=active]:!text-white data-[state=active]:!shadow-2xl transition-all duration-500 shadow-none hover:text-zinc-900 hover:bg-white/50 flex-1 md:flex-none"
+                  className="rounded-2xl px-3 md:px-10 py-2.5 md:py-3.5 text-[9px] md:text-xs font-black uppercase tracking-widest !text-black data-[state=active]:!bg-primary data-[state=active]:!text-black data-[state=active]:!shadow-2xl transition-all duration-500 shadow-none hover:text-zinc-900 hover:bg-white/50 flex-1 md:flex-none"
                 >
                   System Summary
                 </TabsTrigger>
                 <TabsTrigger 
                   value="site" 
-                  className="rounded-2xl px-3 md:px-10 py-2.5 md:py-3.5 text-[9px] md:text-xs font-black uppercase tracking-widest !text-zinc-700 data-[state=active]:!bg-primary data-[state=active]:!text-white data-[state=active]:!shadow-2xl transition-all duration-500 shadow-none hover:text-zinc-900 hover:bg-white/50 flex-1 md:flex-none"
+                  className="rounded-2xl px-3 md:px-10 py-2.5 md:py-3.5 text-[9px] md:text-xs font-black uppercase tracking-widest !text-black data-[state=active]:!bg-primary data-[state=active]:!text-black data-[state=active]:!shadow-2xl transition-all duration-500 shadow-none hover:text-zinc-900 hover:bg-white/50 flex-1 md:flex-none"
                 >
                   Site & Electrical
                 </TabsTrigger>
                 <TabsTrigger 
                   value="components" 
-                  className="rounded-2xl px-3 md:px-10 py-2.5 md:py-3.5 text-[9px] md:text-xs font-black uppercase tracking-widest !text-zinc-700 data-[state=active]:!bg-primary data-[state=active]:!text-white data-[state=active]:!shadow-2xl transition-all duration-500 shadow-none hover:text-zinc-900 hover:bg-white/50 flex-1 md:flex-none"
+                  className="rounded-2xl px-3 md:px-10 py-2.5 md:py-3.5 text-[9px] md:text-xs font-black uppercase tracking-widest !text-black data-[state=active]:!bg-primary data-[state=active]:!text-black data-[state=active]:!shadow-2xl transition-all duration-500 shadow-none hover:text-zinc-900 hover:bg-white/50 flex-1 md:flex-none"
                 >
                   Equipment
                 </TabsTrigger>
                 <TabsTrigger 
                   value="uploads" 
-                  className="rounded-2xl px-3 md:px-10 py-2.5 md:py-3.5 text-[9px] md:text-xs font-black uppercase tracking-widest !text-zinc-700 data-[state=active]:!bg-primary data-[state=active]:!text-white data-[state=active]:!shadow-2xl transition-all duration-500 shadow-none hover:text-zinc-900 hover:bg-white/50 flex-1 md:flex-none"
+                  className="rounded-2xl px-3 md:px-10 py-2.5 md:py-3.5 text-[9px] md:text-xs font-black uppercase tracking-widest !text-black data-[state=active]:!bg-primary data-[state=active]:!text-black data-[state=active]:!shadow-2xl transition-all duration-500 shadow-none hover:text-zinc-900 hover:bg-white/50 flex-1 md:flex-none"
                 >
                   Uploads
                 </TabsTrigger>

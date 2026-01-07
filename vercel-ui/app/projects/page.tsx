@@ -74,11 +74,11 @@ const visitorChartData = [
 const chartConfig = {
   submissions: {
     label: "Submissions",
-    color: "#0061FF",
+    color: "#FFD700",
   },
   approvals: {
     label: "Approvals", 
-    color: "#00D1FF",
+    color: "#FFC107",
   },
 } satisfies ChartConfig
 
@@ -175,7 +175,7 @@ export default function ProjectsPage() {
               {/* Mobile Menu Trigger */}
               <button
                 onClick={() => setMobileMenuOpen(true)}
-                className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-black/5 text-zinc-600"
+                className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-muted text-muted-foreground"
               >
                 <Menu className="h-6 w-6" />
               </button>
@@ -183,13 +183,13 @@ export default function ProjectsPage() {
               {sidebarCollapsed && (
                 <button
                   onClick={() => setSidebarCollapsed(false)}
-                  className="p-2 rounded-lg hover:bg-black/5 transition-colors text-zinc-500 hover:text-zinc-900 -ml-2"
+                  className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground -ml-2"
                   title="Show sidebar"
                 >
                   <PanelLeft className="h-5 w-5" />
                 </button>
               )}
-              <h1 className="text-xl lg:text-2xl font-bold text-zinc-900">Project Dashboard</h1>
+              <h1 className="text-xl lg:text-2xl font-bold text-foreground">Project Dashboard</h1>
             </div>
             
           </div>
@@ -221,13 +221,12 @@ export default function ProjectsPage() {
                   <div className="text-3xl font-bold text-zinc-900 tracking-tight">$12,450.00</div>
                   <div className="mt-4 space-y-1">
                     <div 
-                      className="flex items-center gap-1.5 text-[13px] font-bold"
-                      style={{ color: "#0061FF" }}
+                      className="flex items-center gap-1.5 text-[13px] font-bold text-primary"
                     >
                       Trending up this month
                       <ArrowUpRight className="h-3.5 w-3.5" />
                     </div>
-                    <div className="text-[12px] text-zinc-500 font-medium">
+                    <div className="text-[12px] text-black font-medium">
                       Visitors for the last 6 months
                     </div>
                   </div>
@@ -256,7 +255,7 @@ export default function ProjectsPage() {
                       Down {stats.inReview} this period
                       <ArrowDownRight className="h-3.5 w-3.5" />
                     </div>
-                    <div className="text-[12px] text-zinc-500 font-medium">
+                    <div className="text-[12px] text-black font-medium">
                       Acquisition needs attention
                     </div>
                   </div>
@@ -269,9 +268,9 @@ export default function ProjectsPage() {
               <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow rounded-2xl">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-zinc-500">Done Projects</span>
+                    <span className="text-sm font-medium text-black">Done Projects</span>
                     <div 
-                      className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border border-primary/20 bg-primary/10 text-primary"
+                      className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border bo rder-primary/20 bg-primary/10 text-primary"
                     >
                       <ArrowUpRight className="h-3 w-3" />
                       +12.5%
@@ -285,7 +284,7 @@ export default function ProjectsPage() {
                       Strong user retention
                       <ArrowUpRight className="h-3.5 w-3.5" />
                     </div>
-                    <div className="text-[12px] text-zinc-500 font-medium">
+                    <div className="text-[12px] text-black font-medium">
                       Engagement exceed targets
                     </div>
                   </div>
@@ -298,7 +297,7 @@ export default function ProjectsPage() {
               <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow rounded-2xl">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-zinc-500">Total Capacity</span>
+                    <span className="text-sm font-medium text-black">Total Capacity</span>
                     <div 
                       className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border border-primary/20 bg-primary/10 text-primary"
                     >
@@ -314,7 +313,7 @@ export default function ProjectsPage() {
                       Steady performance increase
                       <ArrowUpRight className="h-3.5 w-3.5" />
                     </div>
-                    <div className="text-[12px] text-zinc-500 font-medium whitespace-nowrap">
+                    <div className="text-[12px] text-black font-medium whitespace-nowrap">
                       Meets growth projections
                     </div>
                   </div>
@@ -398,7 +397,7 @@ export default function ProjectsPage() {
                     <Area 
                       type="monotone"
                       dataKey="approvals"
-                      stroke="#00D1FF" 
+                      stroke="#000000" 
                       strokeWidth={2}
                       fill="none"
                     />

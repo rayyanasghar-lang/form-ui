@@ -30,7 +30,7 @@ function TabsWithBadgeTrigger({ className, badge, children, ...props }: TabsWith
     <TabsPrimitive.Trigger
       data-slot="tabs-with-badge-trigger"
       className={cn(
-        "text-muted-foreground data-[state=active]:text-zinc-900 data-[state=active]:border-b-2 data-[state=active]:border-primary px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-400 disabled:pointer-events-none disabled:opacity-50 group",
+        "text-muted-foreground data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-primary px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary/50 disabled:pointer-events-none disabled:opacity-50 group",
         className,
       )}
       {...props}

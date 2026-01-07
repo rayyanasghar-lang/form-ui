@@ -155,7 +155,7 @@ export function ProjectChat({ className, projectId, projectName, collapsed = fal
                     className={cn(
                         "rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm border", 
                         isMe 
-                            ? "bg-primary text-white border-primary/20 rounded-tr-sm" 
+                            ? "bg-primary text-black border-primary/20 rounded-tr-sm" 
                             : "bg-white text-zinc-600 border-zinc-100 rounded-tl-sm"
                     )}
                 >

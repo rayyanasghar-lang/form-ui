@@ -52,8 +52,8 @@ export default function ProjectContactStep({
                     <h3 className="text-xl font-bold text-foreground mb-4">Submission Type</h3>
                     <Tabs value={submissionMode} onValueChange={(v) => setSubmissionMode(v as "quick" | "provide details")} className="w-full">
                         <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="quick"><Zap className="mr-2 h-4 w-4" />Quick Upload (Recommended)</TabsTrigger>
-                            <TabsTrigger value="provide details"><NotebookIcon className="mr-2 h-4 w-4" /> Provide Full Details</TabsTrigger>
+                            <TabsTrigger value="quick"><Zap className="mr-2 h-4 w-4 text-black" /> <p className="text-black">Quick Upload (Recommended)</p></TabsTrigger>
+                            <TabsTrigger value="provide details"><NotebookIcon className="mr-2 h-4 w-4 text-black" /> <p className="text-black">Provide Full Details</p></TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="quick" className="mt-4">

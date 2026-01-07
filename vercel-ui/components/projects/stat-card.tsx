@@ -19,7 +19,7 @@ export function StatCard({
   trend,
   trendLabel = "vs last month",
   icon: Icon,
-  accentColor = "#0061FF"
+  accentColor = "#FFD700"
 }: StatCardProps) {
   const isPositive = trend && trend > 0
   const isNegative = trend && trend < 0
@@ -46,7 +46,7 @@ export function StatCard({
           <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
             {title}
           </p>
-          <p className="text-3xl font-bold text-zinc-900 tracking-tight">
+          <p className="text-3xl font-bold text-foreground tracking-tight">
             {value}
           </p>
         </div>

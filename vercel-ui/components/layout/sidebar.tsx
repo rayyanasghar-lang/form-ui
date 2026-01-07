@@ -51,12 +51,12 @@ export default function Sidebar({
 
   // Dashboard navigation sections
   const dashboardSections = [
-    {
-      title: "Main",
-      items: [
-        { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/projects" },
-      ],
-    },
+    // {
+    //   title: "Main",
+    //   items: [
+    //     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/projects" },
+    //   ],
+    // },
     {
       title: "Workspace",
       items: [
@@ -112,7 +112,7 @@ export default function Sidebar({
       {/* Toggle Button */}
       <button
         onClick={() => setCollapsed(true)}
-        className="absolute top-5 right-4 z-50 p-2 rounded-lg hover:bg-black/5 transition-colors text-zinc-500 hover:text-zinc-900"
+        className="absolute top-5 right-4 z-50 p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
         title="Hide sidebar"
       >
         <PanelLeftClose className="h-4 w-4" />
@@ -131,7 +131,7 @@ export default function Sidebar({
         <div className="px-3 mb-6">
           <Link href="/forms">
             <button 
-              className="w-full h-11 flex items-center justify-center gap-2 rounded-xl text-white font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+              className="w-full h-11 flex items-center justify-center gap-2 rounded-xl text-black font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
               style={{ backgroundColor: "var(--sidebar-primary)" }}
             >
               <Plus className="h-5 w-5" />
@@ -142,24 +142,24 @@ export default function Sidebar({
 
         {sections.map((section) => (
           <div key={section.title} className="space-y-1">
-            <h3 className="px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-400 mb-2">
+            <h3 className="px-3 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/60 mb-2">
               {section.title}
             </h3>
             {section.items.map((item: any) =>
               item.href ? (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${
-                    pathname === item.href
-                      ? "bg-sidebar-accent shadow-sm border border-sidebar-border"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                  }`}
-                  style={pathname === item.href ? { color: "var(--sidebar-primary)" } : undefined}
-                >
-                  <item.icon className={`h-4 w-4 ${pathname === item.href ? "" : "text-zinc-400 group-hover:text-primary"} transition-colors`} />
-                  {item.label}
-                </Link>
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${
+                      pathname === item.href
+                        ? "bg-sidebar-accent shadow-sm border border-sidebar-border"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    }`}
+                    style={pathname === item.href ? { color: "var(--foreground)" } : undefined}
+                  >
+                    <item.icon className={`h-4 w-4 ${pathname === item.href ? "text-primary" : "text-muted-foreground group-hover:text-primary"} transition-colors`} />
+                    {item.label}
+                  </Link>
               ) : (
                 <button
                   key={item.id}
@@ -169,13 +169,12 @@ export default function Sidebar({
                       ? "bg-sidebar-accent shadow-sm border border-sidebar-border"
                       : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   }`}
-                  style={activeSettingsTab === item.id ? { color: "var(--sidebar-primary)" } : undefined}
+                  style={activeSettingsTab === item.id ? { color: "var(--foreground)" } : undefined}
                 >
                   <item.icon 
                     className={`h-4 w-4 transition-colors ${
-                      activeSettingsTab === item.id ? "" : "text-sidebar-foreground/50 group-hover:text-sidebar-primary"
+                      activeSettingsTab === item.id ? "text-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-primary"
                     }`}
-                    style={activeSettingsTab === item.id ? { color: "var(--sidebar-primary)" } : undefined}
                   />
                   {item.label}
                   {activeSettingsTab === item.id && (
@@ -201,10 +200,10 @@ export default function Sidebar({
             JD
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-zinc-900 truncate">
+            <p className="text-xs font-bold text-foreground truncate">
               Solar Solutions Inc.
             </p>
-            <p className="text-[10px] font-medium text-zinc-500 truncate uppercase tracking-wider">
+            <p className="text-[10px] font-medium text-muted-foreground truncate uppercase tracking-wider">
               Admin
             </p>
           </div>
@@ -222,7 +221,7 @@ export function SidebarToggle({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="p-2 rounded-lg hover:bg-black/5 transition-colors text-zinc-500 hover:text-zinc-900"
+      className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
       title="Show sidebar"
     >
       <PanelLeft className="h-5 w-5" />

@@ -20,11 +20,11 @@ interface SubmissionsChartProps {
 const chartConfig = {
   submissions: {
     label: "Submissions",
-    color: "#0061FF",
+    color: "#FFD700",
   },
   approvals: {
     label: "Approvals", 
-    color: "#00D1FF",
+    color: "#FFC107",
   },
 } satisfies ChartConfig
 
@@ -37,7 +37,7 @@ export function SubmissionsChart({ data, className }: SubmissionsChartProps) {
     <Card className={`bg-card border-border shadow-md ${className} rounded-2xl`}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div>
-          <CardTitle className="text-xl font-bold text-zinc-900">
+          <CardTitle className="text-xl font-bold text-foreground">
             Project Submissions
           </CardTitle>
           <p className="text-sm text-muted-foreground mt-1">
@@ -53,8 +53,8 @@ export function SubmissionsChart({ data, className }: SubmissionsChartProps) {
               onClick={() => setTimeRange(range)}
               className={`h-8 px-3 text-xs font-medium ${
                 timeRange === range 
-                  ? "bg-white shadow-sm text-zinc-900" 
-                  : "text-zinc-600 hover:text-zinc-900 hover:bg-white/50"
+                  ? "bg-white shadow-sm text-foreground" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-white/50"
               }`}
             >
               {range === "30d" ? "30 days" : range === "90d" ? "90 days" : "1 year"}
@@ -72,12 +72,12 @@ export function SubmissionsChart({ data, className }: SubmissionsChartProps) {
               <linearGradient id="submissionsGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="0%"
-                  stopColor="#0061FF"
+                  stopColor="#FFD700"
                   stopOpacity={0.2}
                 />
                 <stop
                   offset="100%"
-                  stopColor="#0061FF"
+                  stopColor="#FFD700"
                   stopOpacity={0}
                 />
               </linearGradient>
