@@ -24,6 +24,28 @@ export default function FormsPage() {
         backLink={{ label: "Dashboard", href: "/projects" }}
       />
 
+      {/* Enhanced Multi-directional Gradient Background */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Bottom to Top Gradient */}
+        <div 
+          className="absolute inset-x-0 bottom-0 h-[70vh]" 
+          style={{ 
+            background: 'linear-gradient(to top, var(--primary) 0%, transparent 100%)',
+            opacity: 0.30
+          }} 
+        />
+        {/* Right to Left Gradient */}
+        <div 
+          className="absolute inset-y-0 right-0 w-[50vw]" 
+          style={{ 
+            background: 'linear-gradient(to left, var(--primary) 0%, transparent 100%)',
+            opacity: 0.20
+          }} 
+        />
+
+      </div>
+
+
       <main className="flex-1 px-4 sm:px-6 lg:px-8 pt-6 pb-28 md:pb-12">
         <div className="max-w-6xl mx-auto">
           
