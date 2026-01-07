@@ -22,11 +22,27 @@ import {
   ExternalLink,
   Menu,
   PanelLeft,
-  X
+  X,
+  LayoutDashboard,
+  Plus,
+  Map as MapIcon
 } from "lucide-react"
+
 import { cn } from "@/lib/utils"
 import Sidebar from "@/components/layout/sidebar"
 import { AnimatePresence, motion } from "framer-motion"
+
+import SystemSummaryStep from "@/components/permit-form/system-summary-step"
+import UploadsStep from "@/components/permit-form/uploads-step"
+import GeneralNotesStep from "@/components/permit-form/general-notes-step"
+import SiteDetails from "@/components/site-details"
+import ElectricalDetails from "@/components/electrical-details"
+import UtilityDetails from "@/components/utility-details"
+import OptionalExtras from "@/components/optional-extras"
+import FormCard from "@/components/form-card"
+import { Component } from "@/components/system-components-table"
+
+
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -56,6 +72,110 @@ export default function ProjectDetailsPage() {
   const [mobileChatOpen, setMobileChatOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("overview")
+  const [filesToUpload, setFilesToUpload] = useState<File[]>([])
+
+  // Adapter for form step components
+  const updateField = (name: string, value: any) => {
+    const fieldToPathMap: Record<string, string> = {
+      systemSize: 'system_summary.system_size',
+      systemType: 'system_summary.system_type',
+      pvModules: 'system_summary.pv_modules',
+      inverters: 'system_summary.inverters',
+      batteryQty: 'system_summary.battery_info.qty',
+      batteryModel: 'system_summary.battery_info.model',
+      batteryImage: 'system_summary.battery_info.image',
+      projectFiles: 'projectFiles', 
+      generalNotes: 'general_notes',
+      // Site
+      roofMaterial: 'site_details.roof_material',
+      roofPitch: 'site_details.roof_pitch',
+      numberOfArrays: 'site_details.number_of_arrays',
+      groundMountType: 'site_details.ground_mount_type',
+      foundationType: 'site_details.foundation_type',
+      lotSize: 'site_details.lot_size',
+      parcelNumber: 'site_details.parcel_number',
+      windSpeed: 'site_details.wind_speed',
+      snowLoad: 'site_details.snow_load',
+      // Electrical
+      mainPanelSize: 'electrical_details.main_panel_size',
+      busRating: 'electrical_details.bus_rating',
+      mainBreaker: 'electrical_details.main_breaker',
+      pvBreakerLocation: 'electrical_details.pv_breaker_location',
+      // Advanced Electrical
+      meterLocation: 'advanced_electrical_details.meter_location',
+      serviceEntranceType: 'advanced_electrical_details.service_entrance_type',
+      subpanelDetails: 'advanced_electrical_details.subpanel_details',
+      // Optional Extras
+      miracleWattRequired: 'optional_extra_details.miracle_watt_required',
+      miracleWattNotes: 'optional_extra_details.miracle_watt_notes',
+      derRlcRequired: 'optional_extra_details.der_rlc_required',
+      derRlcNotes: 'optional_extra_details.der_rlc_notes',
+      setbackConstraints: 'optional_extra_details.setback_constraints',
+      setbackNotes: 'optional_extra_details.setback_notes',
+      siteAccessRestrictions: 'optional_extra_details.site_access_restrictions',
+      siteAccessNotes: 'optional_extra_details.site_access_notes',
+      inspectionNotes: 'optional_extra_details.inspection_notes',
+      inspectionNotesText: 'optional_extra_details.inspection_notes_text',
+      batterySldRequested: 'optional_extra_details.battery_sld_requested',
+      batterySldNotes: 'optional_extra_details.battery_sld_notes',
+    }
+
+    const path = fieldToPathMap[name] || name
+    handleUpdateField(path, value)
+  }
+
+  const addComponent = () => {
+    const newId = Math.random().toString(36).substr(2, 9)
+    const newComponent: Component = { id: newId, type: "module", makeModel: "", qty: "1", attachment: [], notes: "" }
+    handleUpdateField('system_components', [...(project?.system_components || []), newComponent])
+  }
+
+  const updateComponent = (id: string, field: keyof Component, value: any) => {
+    const nextComponents = (project?.system_components || []).map((c: any) => 
+      c.id === id ? { ...c, [field]: value } : c
+    )
+    handleUpdateField('system_components', nextComponents)
+  }
+
+  const removeComponent = (id: string) => {
+    const nextComponents = (project?.system_components || []).filter((c: any) => c.id !== id)
+    handleUpdateField('system_components', nextComponents)
+  }
+
+  // Convert project components and data to form step expected formats
+  const formattedComponents: Component[] = (project?.system_components || []).map((c: any) => ({
+    id: c.id || Math.random().toString(36).substr(2, 9),
+    type: c.type || "module",
+    makeModel: c.make_model || "",
+    qty: c.qty?.toString() || "1",
+    attachment: c.attachment || [],
+    notes: c.notes || ""
+  }))
+
+  const formCompatibleData: any = project ? {
+    ...project,
+    ...project.system_summary,
+    ...project.site_details,
+    ...project.electrical_details,
+    ...project.advanced_electrical_details,
+    ...project.optional_extra_details,
+    companyName: project.user_profile?.company_name,
+    projectName: project.name,
+    contactName: project.user_profile?.contact_name,
+    email: project.user_profile?.email,
+    phone: project.user_profile?.phone,
+    projectAddress: project.address,
+    projectType: project.type,
+    systemType: project.system_summary?.system_type || "roofmount",
+    generalNotes: project.general_notes,
+    projectFiles: project.uploads?.map(u => u.url) || [],
+    batteryQty: project.system_summary?.battery_info?.qty,
+    batteryModel: project.system_summary?.battery_info?.model,
+    batteryImage: project.system_summary?.battery_info?.image || [],
+  } : {}
+
+
+
 
 
 
@@ -94,7 +214,7 @@ export default function ProjectDetailsPage() {
     })
   }
 
-  const handleSave = async () => {
+  const handleSave = async (newStatus?: ProjectStatus) => {
     if (!project) return
     setIsSaving(true)
     
@@ -103,6 +223,7 @@ export default function ProjectDetailsPage() {
       name: project.name,
       address: project.address,
       type: project.type,
+      status: newStatus || project.status,
       submission_type_id: project.submission_type?.id,
       services: project.services?.map(s => s.id),
       system_summary: project.system_summary,
@@ -116,7 +237,10 @@ export default function ProjectDetailsPage() {
 
     const result = await updateProjectAction(id, payload)
     if (result.success) {
-      toast.success("Project updated successfully")
+      toast.success(newStatus === 'pending' ? "Project submitted for review" : "Project updated successfully")
+      if (newStatus) {
+        setProject(prev => prev ? { ...prev, status: newStatus } : null)
+      }
     } else {
       toast.error("Failed to update project", {
         description: result.error
@@ -124,6 +248,7 @@ export default function ProjectDetailsPage() {
     }
     setIsSaving(false)
   }
+
 
   const getStatusBadgeConfig = (status: ProjectStatus): { status: "done" | "in-process" | "rejected" | "draft"; label: string } => {
     switch (status) {
@@ -311,8 +436,25 @@ export default function ProjectDetailsPage() {
                 <MessageSquare className="h-5 w-5" />
               </Button>
 
+              {project.status === 'draft' && (
+                <Button 
+                  onClick={() => handleSave('pending')} 
+                  disabled={isSaving}
+                  variant="outline"
+                  className="border-primary text-primary hover:bg-primary/5 font-black h-10 md:h-12 px-4 md:px-8 rounded-xl md:rounded-2xl shadow-sm transition-all active:scale-95 flex items-center gap-2 md:gap-3 text-xs md:text-sm uppercase tracking-widest"
+                >
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 md:h-5 md:w-5 animate-spin" />
+                  ) : (
+                    <Zap className="h-4 w-4 md:h-5 md:w-5" />
+                  )}
+                  <span className="hidden sm:inline">Submit for Review</span>
+                  <span className="sm:hidden">Submit</span>
+                </Button>
+              )}
+
               <Button 
-                onClick={handleSave} 
+                onClick={() => handleSave()} 
                 disabled={isSaving}
                 className="bg-primary hover:bg-primary/95 text-primary-foreground font-black h-10 md:h-12 px-4 md:px-8 rounded-xl md:rounded-2xl shadow-xl shadow-primary/30 transition-all active:scale-95 flex items-center gap-2 md:gap-3 text-xs md:text-sm uppercase tracking-widest"
               >
@@ -324,6 +466,7 @@ export default function ProjectDetailsPage() {
                 <span className="hidden sm:inline">Save Configuration</span>
                 <span className="sm:hidden">Save</span>
               </Button>
+
             </div>
           </div>
         </div>
@@ -365,106 +508,18 @@ export default function ProjectDetailsPage() {
 
             <TabsContent value="overview" className="space-y-8 mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <Card className="border-border bg-card rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden">
-                  <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 py-6">
-                    <div className="flex items-center gap-3">
-                       <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                          <Zap className="h-5 w-5" />
-                       </div>
-                       <CardTitle className="text-sm font-black uppercase tracking-[0.2em] text-zinc-900">System Summary</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-8 pt-8 space-y-6">
-                    <div className="grid grid-cols-2 gap-6">
-                      <div className="space-y-2.5">
-                        <Label htmlFor="systemSize" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                           System Size (kW DC)
-                        </Label>
-                        <Input 
-                          id="systemSize" 
-                          type="number"
-                          step="0.01"
-                          className="h-12 rounded-xl border-zinc-200 focus:ring-primary/20 font-bold"
-                          value={project.system_summary?.system_size || ""} 
-                          onChange={(e) => handleUpdateField('system_summary.system_size', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2.5">
-                        <Label htmlFor="systemType" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">
-                           System Type
-                        </Label>
-                        <Select 
-                          value={project.system_summary?.system_type || project.systemType || ""} 
-                          onValueChange={(v) => {
-                            handleUpdateField('system_summary.system_type', v);
-                            handleUpdateField('systemType', v);
-                          }}
-                        >
-                          <SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold">
-                            <SelectValue placeholder="System Type" />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-xl border-border">
-                            <SelectItem value="roofmount">Roof Mount</SelectItem>
-                            <SelectItem value="groundmount">Ground Mount</SelectItem>
-                            <SelectItem value="other">Special Utility</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2.5">
-                        <Label htmlFor="pvModules" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Number of PV Modules</Label>
-                        <Input 
-                          id="pvModules" 
-                          type="number"
-                          className="h-12 rounded-xl border-zinc-200 font-bold"
-                          value={project.system_summary?.pv_modules || ""} 
-                          onChange={(e) => handleUpdateField('system_summary.pv_modules', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2.5">
-                        <Label htmlFor="inverters" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Number of Inverters</Label>
-                        <Input 
-                          id="inverters" 
-                          type="number"
-                          className="h-12 rounded-xl border-zinc-200 font-bold"
-                          value={project.system_summary?.inverters || ""} 
-                          onChange={(e) => handleUpdateField('system_summary.inverters', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    
-                    <Separator className="bg-zinc-100" />
-                    
-                    <div className="space-y-4">
-                       <h3 className="text-xs font-black uppercase tracking-widest text-zinc-900 flex items-center gap-2">
-                          <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                          Battery Storage
-                       </h3>
-                       <div className="grid grid-cols-2 gap-6">
-                         <div className="space-y-2.5">
-                           <Label htmlFor="batteryQty" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Quantity</Label>
-                           <Input 
-                             id="batteryQty" 
-                             type="number"
-                             className="h-12 rounded-xl border-zinc-200 font-bold"
-                             value={project.system_summary?.battery_info?.qty || ""} 
-                             onChange={(e) => handleUpdateField('system_summary.battery_info.qty', e.target.value)}
-                           />
-                         </div>
-                         <div className="space-y-2.5">
-                           <Label htmlFor="batteryModel" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Model</Label>
-                           <Input 
-                             id="batteryModel" 
-                             className="h-12 rounded-xl border-zinc-200 font-bold"
-                             value={project.system_summary?.battery_info?.model || ""} 
-                             onChange={(e) => handleUpdateField('system_summary.battery_info.model', e.target.value)}
-                           />
-                         </div>
-                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <SystemSummaryStep
+                  formData={formCompatibleData}
+                  updateField={updateField}
+                  errors={{}}
+                  submissionMode={project.submission_type?.name as any || "quick"}
+                  components={formattedComponents}
+                  addComponent={addComponent}
+                  updateComponent={updateComponent}
+                  removeComponent={removeComponent}
+                />
 
-                <Card className="border-border bg-card rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden">
+                <Card className="border-border bg-card rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden self-start">
                   <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 py-6">
                     <div className="flex items-center gap-3">
                        <div className="p-2 rounded-xl bg-primary/10 text-primary">
@@ -524,492 +579,85 @@ export default function ProjectDetailsPage() {
                 </Card>
               </div>
 
-              <Card className="border-border bg-card rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden hover:border-primary/20">
-                <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 py-6">
-                  <div className="flex items-center gap-3">
-                     <div className="p-2 rounded-xl bg-zinc-900/5 text-zinc-900">
-                        <FileText className="h-5 w-5" />
-                     </div>
-                     <CardTitle className="text-sm font-black uppercase tracking-[0.2em] text-zinc-900">General Notes</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-8">
-                  <textarea
-                    className="w-full min-h-[160px] p-4 rounded-2xl border border-zinc-200 bg-secondary/30 text-sm ring-offset-background placeholder:text-muted-foreground/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary/30 transition-all font-bold resize-none leading-relaxed"
-                    placeholder="Document structural considerations, AHJ requirements, or field observations..."
-                    value={project.general_notes || ""}
-                    onChange={(e) => handleUpdateField('general_notes', e.target.value)}
-                  />
-                </CardContent>
-              </Card>
+              <GeneralNotesStep
+                formData={formCompatibleData}
+                updateField={updateField}
+              />
             </TabsContent>
+
 
             <TabsContent value="site" className="space-y-8 mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <Card className="border-border bg-card rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden">
-                  <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 py-6">
-                    <div className="flex items-center gap-3">
-                       <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                          <Home className="h-5 w-5" />
-                       </div>
-                       <CardTitle className="text-sm font-black uppercase tracking-[0.2em] text-zinc-900">Site Details</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-8 pt-8 space-y-6">
-                    <div className="grid grid-cols-2 gap-6">
-                      <div className="space-y-2.5 col-span-2 md:col-span-1">
-                        <Label htmlFor="roofMaterial" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Roof Material</Label>
-                        <Select value={project.site_details?.roof_material || ""} onValueChange={(v) => handleUpdateField('site_details.roof_material', v)}>
-                          <SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold">
-                            <SelectValue placeholder="Material" />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-xl border-border">
-                            <SelectItem value="asphalt">Asphalt Shingle</SelectItem>
-                            <SelectItem value="tile">Tile</SelectItem>
-                            <SelectItem value="metal">Metal</SelectItem>
-                            <SelectItem value="tpo">TPO</SelectItem>
-                            <SelectItem value="other">Other Substrate</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2.5 col-span-2 md:col-span-1">
-                        <Label htmlFor="roofPitch" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Roof Pitch</Label>
-                        <Select value={project.site_details?.roof_pitch || ""} onValueChange={(v) => handleUpdateField('site_details.roof_pitch', v)}>
-                          <SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold">
-                            <SelectValue placeholder="Pitch" />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-xl border-border">
-                            <SelectItem value="15">15° Gradient</SelectItem>
-                            <SelectItem value="20">20° Gradient</SelectItem>
-                            <SelectItem value="25">25° Gradient</SelectItem>
-                            <SelectItem value="30">30° Gradient</SelectItem>
-                            <SelectItem value="other">Custom Gradient</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2.5">
-                        <Label htmlFor="numberOfArrays" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Number of Arrays</Label>
-                        <Input 
-                          id="numberOfArrays" 
-                          type="number"
-                          className="h-12 rounded-xl border-zinc-200 font-bold"
-                          value={project.site_details?.number_of_arrays || ""} 
-                          onChange={(e) => handleUpdateField('site_details.number_of_arrays', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2.5">
-                        <Label htmlFor="utilityProvider" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Utility Provider</Label>
-                        <Input 
-                          id="utilityProvider" 
-                          className="h-12 rounded-xl border-zinc-200 font-bold"
-                          placeholder="e.g., PG&E"
-                          value={project.site_details?.utility_provider || ""} 
-                          onChange={(e) => handleUpdateField('site_details.utility_provider', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2.5 col-span-2 md:col-span-1">
-                         <Label htmlFor="jurisdiction" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Jurisdiction</Label>
-                         <Input 
-                          id="jurisdiction" 
-                          className="h-12 rounded-xl border-zinc-200 font-bold text-sm"
-                          placeholder="City/County Building Department"
-                          value={project.site_details?.jurisdiction || ""} 
-                          onChange={(e) => handleUpdateField('site_details.jurisdiction', e.target.value)}
-                        />
-                      </div>
-                      
-                      {/* New Site Fields */}
-                      <div className="space-y-2.5 col-span-2 md:col-span-1">
-                         <Label htmlFor="groundMountType" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Ground Mount Type</Label>
-                         <Input 
-                          id="groundMountType" 
-                          className="h-12 rounded-xl border-zinc-200 font-bold text-sm"
-                          value={project.site_details?.ground_mount_type?.toString() || ""} 
-                          onChange={(e) => handleUpdateField('site_details.ground_mount_type', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2.5 col-span-2 md:col-span-1">
-                         <Label htmlFor="foundationType" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Foundation Type</Label>
-                         <Input 
-                          id="foundationType" 
-                          className="h-12 rounded-xl border-zinc-200 font-bold text-sm"
-                          value={project.site_details?.foundation_type?.toString() || ""} 
-                          onChange={(e) => handleUpdateField('site_details.foundation_type', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2.5 col-span-2 md:col-span-1">
-                         <Label htmlFor="mainPanelSize" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Main Panel Size</Label>
-                         <Input 
-                          id="mainPanelSize" 
-                          className="h-12 rounded-xl border-zinc-200 font-bold text-sm"
-                          value={project.site_details?.main_panel_size?.toString() || ""} 
-                          onChange={(e) => handleUpdateField('site_details.main_panel_size', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <FormCard title="Site Details">
+                  <SiteDetails
+                    systemType={formCompatibleData.systemType}
+                    formData={formCompatibleData}
+                    onUpdateField={updateField}
+                    onFileUpload={updateField}
+                  />
+                </FormCard>
 
-                <Card className="border-border bg-card rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden">
-                  <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 py-6">
-                    <div className="flex items-center gap-3">
-                       <div className="p-2 rounded-xl bg-zinc-900 text-white">
-                          <Zap className="h-5 w-5" />
-                       </div>
-                       <CardTitle className="text-sm font-black uppercase tracking-[0.2em] text-zinc-900">Electrical Details</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-8 pt-8 space-y-6">
-                    <div className="grid grid-cols-2 gap-6">
-                      <div className="space-y-2.5">
-                        <Label htmlFor="mainPanel" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Main Panel Size (A)</Label>
-                        <Input 
-                          id="mainPanel" 
-                          type="number"
-                          className="h-12 rounded-xl border-zinc-200 font-bold"
-                          value={project.electrical_details?.main_panel_size || ""} 
-                          onChange={(e) => handleUpdateField('electrical_details.main_panel_size', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2.5">
-                        <Label htmlFor="busRating" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Bus Rating (A)</Label>
-                        <Input 
-                          id="busRating" 
-                          type="number"
-                          className="h-12 rounded-xl border-zinc-200 font-bold"
-                          value={project.electrical_details?.bus_rating || ""} 
-                          onChange={(e) => handleUpdateField('electrical_details.bus_rating', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2.5">
-                        <Label htmlFor="mainBreaker" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Main Breaker (A)</Label>
-                        <Input 
-                          id="mainBreaker" 
-                          type="number"
-                          className="h-12 rounded-xl border-zinc-200 font-bold"
-                          value={project.electrical_details?.main_breaker || ""} 
-                          onChange={(e) => handleUpdateField('electrical_details.main_breaker', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2.5">
-                        <Label htmlFor="pvBreaker" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">PV Breaker Location</Label>
-                        <Input 
-                          id="pvBreaker" 
-                          className="h-12 rounded-xl border-zinc-200 font-bold"
-                          placeholder="e.g., Opposite End / Center"
-                          value={project.electrical_details?.pv_breaker_location ? project.electrical_details.pv_breaker_location.toString() : ""} 
-                          onChange={(e) => handleUpdateField('electrical_details.pv_breaker_location', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2.5 col-span-2">
-                        <Label htmlFor="oneLineDiagram" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">One Line Diagram</Label>
-                        {project.electrical_details?.one_line_diagram && project.electrical_details.one_line_diagram.length > 0 ? (
-                           <div className="flex flex-wrap gap-2">
-                             {project.electrical_details.one_line_diagram.map((file, i) => (
-                               <div key={i} className="px-3 py-1 rounded-lg bg-zinc-100 border border-zinc-200 text-xs font-bold text-zinc-700 flex items-center gap-2">
-                                 <FileText className="w-3 h-3" />
-                                 File {i+1}
-                               </div>
-                             ))}
-                           </div>
-                        ) : (
-                          <div className="text-sm text-zinc-400 italic">No diagrams attached</div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <Separator className="bg-zinc-100" />
-                    
-                    <div className="space-y-4">
-                       <div className="space-y-2.5">
-                          <Label htmlFor="meterLocation" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Meter Location</Label>
-                          <Input 
-                            id="meterLocation" 
-                            className="h-12 rounded-xl border-zinc-200 font-bold"
-                            placeholder="e.g., SE exterior wall"
-                            value={project.advanced_electrical_details?.meter_location || ""} 
-                            onChange={(e) => handleUpdateField('advanced_electrical_details.meter_location', e.target.value)}
-                          />
-                        </div>
-                        <div className="space-y-2.5">
-                          <Label htmlFor="serviceType" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Service Entrance Type</Label>
-                          <Input 
-                            id="serviceType" 
-                            className="h-12 rounded-xl border-zinc-200 font-bold"
-                            placeholder="e.g., Underground 3-wire"
-                            value={project.advanced_electrical_details?.service_entrance_type || ""} 
-                            onChange={(e) => handleUpdateField('advanced_electrical_details.service_entrance_type', e.target.value)}
-                          />
-                        </div>
-                        <div className="space-y-2.5">
-                          <Label htmlFor="subpanelDetails" className="text-[11px] font-black uppercase tracking-wider text-muted-foreground">Subpanel Details</Label>
-                          <Input 
-                            id="subpanelDetails" 
-                            className="h-12 rounded-xl border-zinc-200 font-bold"
-                            placeholder="e.g., 100A subpanel in garage"
-                            value={project.advanced_electrical_details?.subpanel_details || ""} 
-                            onChange={(e) => handleUpdateField('advanced_electrical_details.subpanel_details', e.target.value)}
-                          />
-                        </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <FormCard title="Electrical Details">
+                  <ElectricalDetails
+                    formData={formCompatibleData}
+                    onUpdateField={updateField}
+                    onFileUpload={updateField}
+                  />
+                </FormCard>
+
+                <div className="col-span-1 lg:col-span-2 space-y-8">
+                  <FormCard title="Utility & Jurisdiction">
+                    <UtilityDetails
+                      formData={formCompatibleData}
+                      onUpdateField={updateField}
+                    />
+                  </FormCard>
+
+                  <FormCard title="Optional Extras">
+                    <OptionalExtras
+                      formData={formCompatibleData}
+                      onUpdateField={updateField}
+                    />
+                  </FormCard>
+                </div>
               </div>
-                {/* Optional Extras Card */}
-                <Card className="border-border bg-card rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden col-span-1 lg:col-span-2">
-                   <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 py-6">
-                    <div className="flex items-center gap-3">
-                       <div className="p-2 rounded-xl bg-amber-100 text-amber-600">
-                          <AlertCircle className="h-5 w-5" />
-                       </div>
-                       <CardTitle className="text-sm font-black uppercase tracking-[0.2em] text-zinc-900">Optional Extras & Constraints</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-8 pt-8 space-y-6">
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                       {/* Miracle Watt */}
-                       <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100 space-y-3">
-                          <div className="flex items-center justify-between">
-                             <Label className="font-bold text-zinc-700">Miracle Watt</Label>
-                             <div className={`px-2 py-0.5 rounded text-xs font-black uppercase ${project.optional_extra_details?.miracle_watt_required ? 'bg-green-100 text-green-700' : 'bg-zinc-200 text-zinc-500'}`}>
-                                {project.optional_extra_details?.miracle_watt_required ? 'Required' : 'Not Required'}
-                             </div>
-                          </div>
-                          <Input 
-                             placeholder="Notes..."
-                             className="bg-white"
-                             value={project.optional_extra_details?.miracle_watt_notes?.toString() || ""}
-                             onChange={(e) => handleUpdateField('optional_extra_details.miracle_watt_notes', e.target.value)}
-                          />
-                       </div>
-
-                       {/* DER/RLC */}
-                       <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100 space-y-3">
-                          <div className="flex items-center justify-between">
-                             <Label className="font-bold text-zinc-700">DER / RLC</Label>
-                             <div className={`px-2 py-0.5 rounded text-xs font-black uppercase ${project.optional_extra_details?.der_rlc_required ? 'bg-green-100 text-green-700' : 'bg-zinc-200 text-zinc-500'}`}>
-                                {project.optional_extra_details?.der_rlc_required ? 'Required' : 'Not Required'}
-                             </div>
-                          </div>
-                          <Input 
-                             placeholder="Notes..."
-                             className="bg-white"
-                             value={project.optional_extra_details?.der_rlc_notes || ""}
-                             onChange={(e) => handleUpdateField('optional_extra_details.der_rlc_notes', e.target.value)}
-                          />
-                       </div>
-
-                       {/* Setbacks */}
-                       <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100 space-y-3">
-                          <div className="flex items-center justify-between">
-                             <Label className="font-bold text-zinc-700">Setback Constraints</Label>
-                             <div className={`px-2 py-0.5 rounded text-xs font-black uppercase ${project.optional_extra_details?.setback_constraints ? 'bg-red-100 text-red-700' : 'bg-zinc-200 text-zinc-500'}`}>
-                                {project.optional_extra_details?.setback_constraints ? 'Active' : 'None'}
-                             </div>
-                          </div>
-                          <Input 
-                             placeholder="Notes..."
-                             className="bg-white"
-                             value={project.optional_extra_details?.setback_notes?.toString() || ""}
-                             onChange={(e) => handleUpdateField('optional_extra_details.setback_notes', e.target.value)}
-                          />
-                       </div>
-
-                        {/* Site Access */}
-                       <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100 space-y-3">
-                          <div className="flex items-center justify-between">
-                             <Label className="font-bold text-zinc-700">Site Access</Label>
-                             <div className={`px-2 py-0.5 rounded text-xs font-black uppercase ${project.optional_extra_details?.site_access_restrictions ? 'bg-red-100 text-red-700' : 'bg-zinc-200 text-zinc-500'}`}>
-                                {project.optional_extra_details?.site_access_restrictions ? 'Restricted' : 'Open'}
-                             </div>
-                          </div>
-                          <Input 
-                             placeholder="Notes..."
-                             className="bg-white"
-                             value={project.optional_extra_details?.site_access_notes?.toString() || ""}
-                             onChange={(e) => handleUpdateField('optional_extra_details.site_access_notes', e.target.value)}
-                          />
-                       </div>
-                       
-                       {/* Battery SLD */}
-                       <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100 space-y-3">
-                          <div className="flex items-center justify-between">
-                             <Label className="font-bold text-zinc-700">Battery SLD</Label>
-                             <div className={`px-2 py-0.5 rounded text-xs font-black uppercase ${project.optional_extra_details?.battery_sld_requested ? 'bg-green-100 text-green-700' : 'bg-zinc-200 text-zinc-500'}`}>
-                                {project.optional_extra_details?.battery_sld_requested ? 'Requested' : 'Standard'}
-                             </div>
-                          </div>
-                          <Input 
-                             placeholder="Notes..."
-                             className="bg-white"
-                             value={project.optional_extra_details?.battery_sld_notes?.toString() || ""}
-                             onChange={(e) => handleUpdateField('optional_extra_details.battery_sld_notes', e.target.value)}
-                          />
-                       </div>
-
-                        {/* Inspection Notes */}
-                       <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100 space-y-3">
-                          <div className="flex items-center justify-between">
-                             <Label className="font-bold text-zinc-700">Inspection Notes</Label>
-                             <div className={`px-2 py-0.5 rounded text-xs font-black uppercase ${project.optional_extra_details?.inspection_notes ? 'bg-blue-100 text-blue-700' : 'bg-zinc-200 text-zinc-500'}`}>
-                                {project.optional_extra_details?.inspection_notes ? 'Present' : 'None'}
-                             </div>
-                          </div>
-                          <Input 
-                             placeholder="Notes..."
-                             className="bg-white"
-                             value={project.optional_extra_details?.inspection_notes_text || ""}
-                             onChange={(e) => handleUpdateField('optional_extra_details.inspection_notes_text', e.target.value)}
-                          />
-                       </div>
-                     </div>
-                  </CardContent>
-                </Card>
             </TabsContent>
 
-            <TabsContent value="components" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <Card className="border-border bg-card rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden">
-                <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 py-6">
-                  <div className="flex items-center gap-3">
-                     <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                        <Box className="h-5 w-5" />
-                     </div>
-                     <CardTitle className="text-sm font-black uppercase tracking-[0.2em] text-zinc-900">System Components</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-8">
-                  {project.system_components && project.system_components.length > 0 ? (
-                    <div className="space-y-4">
-                      {project.system_components.map((component, idx) => (
-                        <div key={idx} className="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-3xl bg-card border border-border hover:border-primary/30 transition-all group shadow-sm hover:shadow-lg gap-4">
-                          <div className="flex items-start gap-4">
-                            <div className="p-3 rounded-2xl bg-zinc-100 text-zinc-600 group-hover:bg-primary group-hover:text-white transition-colors mt-1">
-                              <Box className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <div className="font-black text-zinc-900 text-sm tracking-tight">{component.make_model || "Unknown Component"}</div>
-                              <div className="flex flex-wrap gap-2 mt-1">
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-zinc-100 text-zinc-600 border border-zinc-200">
-                                  {component.type || "Component"}
-                                </span>
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-zinc-100 text-zinc-600 border border-zinc-200">
-                                  Qty: {component.qty || 1}
-                                </span>
-                              </div>
-                              {component.notes && (
-                                <div className="text-xs text-muted-foreground mt-2 bg-zinc-50 p-2 rounded-lg border border-zinc-100 italic">
-                                  {component.notes}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-20 border-3 border-dashed border-border bg-muted/20 rounded-4xl text-center group transition-colors hover:border-primary/20">
-                      <div className="p-6 rounded-3xl bg-white shadow-xl mb-6 group-hover:scale-110 transition-transform">
-                         <Box className="h-10 w-10 text-zinc-300" />
-                      </div>
-                      <div className="max-w-md space-y-2">
-                        <h4 className="text-xl font-black text-zinc-900 leading-tight">No Components Listed</h4>
-                        <p className="text-zinc-500 font-bold text-sm leading-relaxed px-4 italic">
-                          This project does not yet list specific system components.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
 
             <TabsContent value="uploads" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
-               <Card className="border-border bg-card rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden">
-                <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 py-6">
-                  <div className="flex items-center gap-3">
-                     <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                        <FileText className="h-5 w-5" />
-                     </div>
-                     <CardTitle className="text-sm font-black uppercase tracking-[0.2em] text-zinc-900">Uploads</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-8">
-                  {project.uploads && project.uploads.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {project.uploads.map((file, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-5 rounded-3xl bg-card border border-border hover:border-primary/30 transition-all group shadow-sm hover:shadow-xl">
-                          <div className="flex items-center gap-4">
-                            <div className="p-3 rounded-2xl bg-primary/5 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                              <FileText className="w-6 h-6" />
-                            </div>
-                            <div>
-                              <div className="font-black text-zinc-900 text-sm tracking-tight">{file.name}</div>
-                              <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 mt-0.5">{file.category || 'File'}</div>
-                            </div>
-                          </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            disabled={!file.url?.startsWith('http')}
-                            className="rounded-xl border-zinc-200 text-zinc-900 hover:bg-zinc-900 hover:text-white font-black h-10 px-6 group/btn transition-all disabled:opacity-30" 
-                            onClick={() => file.url?.startsWith('http') && window.open(file.url, '_blank')}
-                          >
-                            {file.url?.startsWith('http') ? 'Open' : 'Invalid Link'}
-                            <ExternalLink className="w-3.5 h-3.5 ml-2" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-20 border-3 border-dashed border-border bg-muted/20 rounded-4xl text-center group transition-colors hover:border-primary/20">
-                      <div className="p-6 rounded-3xl bg-white shadow-xl mb-6 group-hover:scale-110 transition-transform">
-                         <FileText className="h-10 w-10 text-zinc-300" />
-                      </div>
-                      <div className="max-w-md space-y-2">
-                        <h4 className="text-xl font-black text-zinc-900 leading-tight">No Uploads</h4>
-                        <p className="text-zinc-500 font-bold text-sm leading-relaxed px-4 italic">
-                          This project does not yet contain any uploaded files.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+               <UploadsStep
+                 formData={formCompatibleData}
+                 updateField={updateField}
+                 setFilesToUpload={setFilesToUpload}
+               />
             </TabsContent>
+
+
             {/* Mobile Bottom Tabs */}
             <div className="fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border md:hidden shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.05)]">
-              <TabsList className="grid grid-cols-4 h-22 pb-safe rounded-none bg-transparent border-0 p-0">
-                <TabsTrigger
-                  value="overview"
-                  className="flex flex-col items-center justify-center gap-1.5 text-[10px] font-bold uppercase text-zinc-500! data-[state=active]:text-[oklch(68.351%_0.19585_34.956)]! bg-transparent! shadow-none! rounded-none h-full border-b-0! border-t-4 border-transparent data-[state=active]:border-[oklch(68.351%_0.19585_34.956)] transition-all"
-                >
-                  <Zap className="h-5 w-5" />
-                  Summary
-                </TabsTrigger>
+              <TabsList className="grid grid-cols-3 h-22 pb-safe rounded-none bg-transparent border-0 p-0">
+                  <TabsTrigger
+                    value="overview"
+                    className="flex-1 flex items-center justify-center gap-2.5 h-full rounded-2xl data-[state=active]:bg-primary data-[state=active]:text-black text-zinc-500 font-black text-xs uppercase tracking-wider transition-all duration-300"
+                  >
+                    <LayoutDashboard className="w-4 h-4" />
+                    Overview
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="site"
+                    className="flex-1 flex items-center justify-center gap-2.5 h-full rounded-2xl data-[state=active]:bg-primary data-[state=active]:text-black text-zinc-500 font-black text-xs uppercase tracking-wider transition-all duration-300"
+                  >
+                    <MapIcon className="w-4 h-4" />
+                    Site & Electrical
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="uploads"
+                    className="flex-1 flex items-center justify-center gap-2.5 h-full rounded-2xl data-[state=active]:bg-primary data-[state=active]:text-black text-zinc-500 font-black text-xs uppercase tracking-wider transition-all duration-300"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Uploads
+                  </TabsTrigger>
 
-                <TabsTrigger
-                  value="site"
-                  className="flex flex-col items-center justify-center gap-1.5 text-[10px] font-bold uppercase text-zinc-500! data-[state=active]:text-[oklch(68.351%_0.19585_34.956)]! bg-transparent! shadow-none! rounded-none h-full border-b-0! border-t-4 border-transparent data-[state=active]:border-[oklch(68.351%_0.19585_34.956)] transition-all"
-                >
-                  <Home className="h-5 w-5" />
-                  Site
-                </TabsTrigger>
-
-                <TabsTrigger
-                  value="components"
-                  className="flex flex-col items-center justify-center gap-1.5 text-[10px] font-bold uppercase text-zinc-500! data-[state=active]:text-[oklch(68.351%_0.19585_34.956)]! bg-transparent! shadow-none! rounded-none h-full border-b-0! border-t-4 border-transparent data-[state=active]:border-[oklch(68.351%_0.19585_34.956)] transition-all"
-                >
-                  <Box className="h-5 w-5" />
-                  Equipment
-                </TabsTrigger>
-
-                <TabsTrigger
-                  value="uploads"
-                  className="flex flex-col items-center justify-center gap-1.5 text-[10px] font-bold uppercase text-zinc-500! data-[state=active]:text-primary! bg-transparent! shadow-none! rounded-none h-full border-b-0! border-t-4 border-transparent data-[state=active]:border-primary transition-all"
-                >
-                  <FileText className="h-5 w-5" />
-                  Uploads
-                </TabsTrigger>
               </TabsList>
             </div>
           </Tabs>
@@ -1022,11 +670,11 @@ export default function ProjectDetailsPage() {
           "shrink-0 z-40 shadow-[-5px_0_30px_-5px_rgba(0,0,0,0.05)]",
           // Desktop styles
           "hidden xl:flex",
-          // Mobile styles (if we were using className only, but we'll use a separate instance or condition for mobile)
         )}
         collapsed={chatCollapsed}
         onCollapsedChange={setChatCollapsed}
       />
+
 
        {/* Mobile Chat Overlay */}
        {mobileChatOpen && (
