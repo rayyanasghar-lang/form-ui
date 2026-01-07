@@ -91,6 +91,20 @@ export default function ProjectContactStep({
                         </div>
 
                         <div className="space-y-2">
+                            <Label htmlFor="homeOwnerName" className="flex items-center gap-2">
+                                <ClipboardList className="w-4 h-4 text-muted-foreground" />
+                                Home Owner Name
+                            </Label>
+                            <Input
+                                id="homeOwnerName"
+                                placeholder="Enter home owner name"
+                                // value={formData.homeOwnerName}
+                                onChange={(e) => updateField("homeOwnerName", e.target.value)}
+                            />
+                            {/* {errors.homeOwnerName && <p className="text-sm text-destructive">{errors.homeOwnerName}</p>} */}
+                        </div>
+
+                        <div className="space-y-2">
                             <Label htmlFor="companyName" className="flex items-center gap-2">
                                 <Building2 className="w-4 h-4 text-muted-foreground" />
                                 Company Name
