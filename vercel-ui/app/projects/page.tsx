@@ -128,6 +128,7 @@ export default function ProjectsPage() {
 
   return (
     <div className="flex h-screen bg-background">
+      
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {mobileMenuOpen && (

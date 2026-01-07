@@ -96,6 +96,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4 selection:bg-primary/20">
+      
       <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-12 items-center relative z-10">
         {/* Left Side - Branding */}
         <div className="hidden lg:flex flex-col space-y-8 animate-fade-in-up">
