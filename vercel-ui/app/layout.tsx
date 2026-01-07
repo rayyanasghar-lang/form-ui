@@ -1,15 +1,15 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Poppins } from "next/font/google"
+import { Inter } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "@/components/ui/sonner"
 import { BackgroundGradient } from "@/components/layout/background-gradient"
 
-const poppins = Poppins({
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-poppins"
+  variable: "--font-inter"
 })
+
 
 export const metadata: Metadata = {
   title: "Form Portal",
@@ -40,8 +40,9 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${poppins.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable}`} suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
+
         <BackgroundGradient />
         {children}
         <Toaster position="top-right" richColors />

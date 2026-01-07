@@ -131,11 +131,12 @@ export default function Sidebar({
         <div className="px-3 mb-6">
           <Link href="/forms">
             <button 
-              className="w-full h-11 flex items-center justify-center gap-2 rounded-xl text-primary-foreground font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 bg-primary"
+              className="w-full h-11 flex items-center justify-center gap-2 rounded-xl text-primary-foreground font-medium shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 bg-primary"
             >
               <Plus className="h-5 w-5" />
               Create Project
             </button>
+
           </Link>
         </div>
 
@@ -149,11 +150,12 @@ export default function Sidebar({
                 <Link
                   key={item.id}
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group relative ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-normal transition-all group relative ${
                     pathname === item.href
-                      ? "text-primary bg-primary/5"
+                      ? "text-primary bg-primary/5 font-semibold"
                       : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900"
                   }`}
+
                 >
                     <item.icon className={`h-4 w-4 ${pathname === item.href ? "text-primary" : "text-zinc-400 group-hover:text-zinc-600"} transition-colors`} />
                   {item.label}
@@ -162,11 +164,12 @@ export default function Sidebar({
                   <button
                     key={item.id}
                     onClick={() => onSettingsTabChange?.(item.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group relative ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-normal transition-all group relative ${
                       activeSettingsTab === item.id
-                        ? "text-primary bg-primary/5"
+                        ? "text-primary bg-primary/5 font-semibold"
                         : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900"
                     }`}
+
                   >
                     <item.icon 
                       className={`h-4 w-4 transition-colors ${

@@ -132,7 +132,8 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
     <div className={` ${className}`}>
       <div className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-bold text-zinc-900">Projects</CardTitle>
+          <CardTitle className="text-xl font-bold text-zinc-900 tracking-tight">Projects</CardTitle>
+
         </div>
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabFilter)} className="mt-4">
           <TabsList className="overflow-x-auto md:overflow-x-visible w-full flex flex-nowrap md:flex-wrap gap-2.5 scrollbar-none border-b-0 bg-transparent h-auto p-0">
@@ -240,13 +241,15 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                         onCheckedChange={() => toggleSelect(project.id)}
                       />
                     </TableCell>
-                    <TableCell className="font-medium text-zinc-900">{project.name}</TableCell>
-                    <TableCell className="text-zinc-600 max-w-[200px] truncate">{project.address}</TableCell>
+                    <TableCell className="font-semibold text-zinc-900">{project.name}</TableCell>
+                    <TableCell className="text-zinc-600 max-w-[200px] truncate font-medium">{project.address}</TableCell>
+
                     <TableCell>
                       <StatusBadge {...getStatusBadgeConfig(project.status)} />
                     </TableCell>
-                    <TableCell className="font-normal">{CalculateProjectProgress(project)}%</TableCell>
-                    <TableCell className="text-zinc-600">{formatDate(project.createdAt)}</TableCell>
+                    <TableCell className="font-semibold">{CalculateProjectProgress(project)}%</TableCell>
+                    <TableCell className="text-zinc-600 font-medium">{formatDate(project.createdAt)}</TableCell>
+
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -328,8 +331,9 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                         <Link href={`/projects/${project.id}`}>
 
                               <Button
-                                className="w-full font-bold shadow-sm h-9 tracking-wide uppercase text-[10px] bg-primary hover:bg-primary/90 text-primary-foreground"
+                                className="w-full font-medium shadow-sm h-9 tracking-wide uppercase text-[10px] bg-primary hover:bg-primary/90 text-primary-foreground"
                                 >
+
                                 View Details
                               </Button>
                         </Link>
