@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import usePlacesAutocomplete, { getGeocode, getLatLng } from "use-places-autocomplete"
-import axios from "axios"
 import { useJsApiLoader } from "@react-google-maps/api"
 import { Loader2, MapPin } from "lucide-react"
 
