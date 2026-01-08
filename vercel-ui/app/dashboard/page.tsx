@@ -1,7 +1,7 @@
 "use client"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { BackgroundGradient } from "@/components/ui/background-gradient"
+import { BackgroundGradient } from "@/components/layout/background-gradient"
 import { 
   PlusCircle, 
   LayoutDashboard, 

@@ -5,7 +5,7 @@
   color-scheme: light;
   --background: rgb(255, 255, 255); /* #F9FAFB */
   --foreground: oklch(0.21 0.006 285.885); /* #111827 */
-  --card: oklch(1 0 0); /* #FFFFFF */
+  --card:  #ffffff;
   --card-foreground: oklch(0.21 0.006 285.885); /* #111827 */
   --popover: oklch(1 0 0); /* #FFFFFF */
   --popover-foreground: oklch(0.21 0.006 285.885); /* #111827 */
