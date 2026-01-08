@@ -132,7 +132,7 @@ export default function ProjectsPage() {
   return (
     <div className="flex h-screen bg-background relative overflow-hidden">
       {/* Mobile Sidebar Overlay */}
-      {/* <BackgroundGradient /> */}
+      <BackgroundGradient />
 
       <AnimatePresence>
         {mobileMenuOpen && (

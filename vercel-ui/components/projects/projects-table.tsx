@@ -307,7 +307,7 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="px-3 pb-3 pt-1">
-                      <div className="space-y-3">
+                      <div className="space-y-3">     
                         {/* Project Details */}
                         <div className="grid grid-cols-2 gap-3">
                           <div>
