@@ -317,12 +317,12 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
       </div>
       {/* Pagination */}
       {!isLoading && !error && filteredProjects.length > 0 && (
-        <div className="flex items-center justify-between p-4 border-t border-border">
-          <p className="text-sm text-zinc-500">
+        <div className="flex flex-col md:flex-row items-center justify-between p-4 border-t border-border gap-4 md:gap-0">
+          <p className="text-sm text-zinc-500 text-center md:text-left">
             Showing {Math.min(filteredProjects.length, (currentPage - 1) * itemsPerPage + 1)}-
             {Math.min(filteredProjects.length, currentPage * itemsPerPage)} of {filteredProjects.length} projects
           </p>
-          <div className="flex items-center gap-1 ml-2">
+          <div className="flex items-center gap-1 md:ml-2">
             <Button
               variant="outline"
               size="sm"
