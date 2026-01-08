@@ -117,7 +117,7 @@ export default function ProjectsPage() {
   const container = {
     hidden: { opacity: 0 },
     show: {
-      opacity: 1,
+      opacity: 1  ,
       transition: {
         staggerChildren: 0.08
       }
@@ -132,7 +132,7 @@ export default function ProjectsPage() {
   return (
     <div className="flex h-screen bg-background relative overflow-hidden">
       {/* Mobile Sidebar Overlay */}
-      <BackgroundGradient />
+      {/* <BackgroundGradient /> */}
 
       <AnimatePresence>
         {mobileMenuOpen && (

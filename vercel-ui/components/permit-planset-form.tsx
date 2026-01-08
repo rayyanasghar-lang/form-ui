@@ -24,7 +24,7 @@ import {
 import { fetchNearbyStations, geocodeAddress, WeatherStation } from "@/app/actions/weather-service"
 
 import { Component } from "./system-components-table"
-import { BackgroundGradient } from "@/components/ui/background-gradient"
+import { BackgroundGradient } from "@/components/layout/background-gradient"
 
 const FORM_STEPS = ["Project & Contact"]
 
