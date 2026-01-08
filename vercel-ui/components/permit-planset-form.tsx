@@ -457,7 +457,7 @@ export default function PermitPlansetForm() {
     <form className="space-y-6 pb-32 md:pb-0">
       
       {/* Sticky Stepper */}
-      <div className="sticky top-[64px] z-30 bg-background/80 backdrop-blur border-b md:static md:border-none">
+      <div className="sticky top-[64px] z-30 bg-transparent backdrop-blur border-b md:static md:border-none">
         <Stepper steps={STEPS} currentStep={currentStep} />
       </div>
 
