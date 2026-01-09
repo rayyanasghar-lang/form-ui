@@ -19,19 +19,39 @@ export async function fetchProjectsAction(): Promise<ProjectsResponse | { error:
 
     const data: ProjectsResponse = await response.json()
     
-    const statuses: ProjectStatus[] = ["approved", "pending", "in_review", "rejected", "draft"]
+    const statuses: ProjectStatus[] = ["New Job Creation", "New Design", "Design internal review", "Design revision", "Awaiting Engineering", "Print and Ship", "On hold/challenge"]
     
     // Map the new API structure to our frontend Project type
     const mappedProjects: Project[] = data.data.map((item: any) => {
-      // Randomly assign a status for demonstration if needed, 
-      // but ideally we take it from the item if it exists.
-      const status = item.status || statuses[Math.floor(Math.random() * statuses.length)]
-      
+      // Helper to extract string from Odoo selection/M2O ([id, "Label"] or "Label")
+      const getStatusLabel = (val: any) => {
+        let label = val
+        if (Array.isArray(val) && val.length > 1) {
+             label = val[1]
+        }
+        
+        if (!label) return "New Job Creation"
+
+        // Normalize specific DB variations to our strict Frontend Enum
+        const normalized = String(label).trim()
+        
+        if (normalized === "Print & Ship") return "Print and Ship"
+        if (normalized === "Design-Internal Review") return "Design internal review"
+        if (normalized === "Design Revision") return "Design revision"
+        if (normalized === "Design Submitted") return "Design submitted"
+        if (normalized === "draft") return "New Job Creation" // Map legacy draft to New Job Creation
+        
+        return normalized
+      }
+
+      const rawStatus = item.stage || item.status
+      const statusLabel = getStatusLabel(rawStatus)
+
       return {
         id: item.id,
         name: item.name || "Untitled Project",
         address: item.address || "No Address Provided",
-        status: status,
+        status: statusLabel,
         systemSize: item.system_summary?.system_size ? `${item.system_summary.system_size} kW` : "N/A",
         systemType: item.system_summary?.system_type || "N/A",
         pvModules: item.system_summary?.pv_modules || 0,
@@ -166,5 +186,30 @@ export async function updateProjectAction(id: string, payload: any): Promise<{ s
   } catch (error: any) {
     console.error("Update Action Error:", error)
     return { success: false, error: error.message || "Failed to connect to backend" }
+  }
+}
+
+export async function fetchProjectUpdatesAction(id: string): Promise<any> {
+  try {
+    const response = await fetch(`http://localhost:8069/api/project-updates/${id}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch updates: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error(`Error fetching project updates ${id}:`, error)
+    return {
+      status: "error",
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    }
   }
 }

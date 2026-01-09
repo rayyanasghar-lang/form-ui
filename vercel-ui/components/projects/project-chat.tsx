@@ -24,41 +24,34 @@ interface ProjectChatProps {
   projectName: string
   collapsed?: boolean
   onCollapsedChange?: (collapsed: boolean) => void
+  initialMessages?: any[] // Using any[] for flexibility with API response mapping
 }
 
-export function ProjectChat({ className, projectId, projectName, collapsed = false, onCollapsedChange }: ProjectChatProps) {
+export function ProjectChat({ className, projectId, projectName, collapsed = false, onCollapsedChange, initialMessages = [] }: ProjectChatProps) {
   const [inputValue, setInputValue] = useState("")
   const scrollRef = useRef<HTMLDivElement>(null)
   
-  // Mock initial messages
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      content: `Project **${projectName}** created. Initial draft version saved.`,
-      sender: "system",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-    },
-    {
-      id: "2",
-      content: "I've uploaded the site photos to the uploads tab. Let me know if you need any additional angles.",
-      sender: "user",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-      user: {
-        name: "You",
-        avatar: "/avatars/user.png"
-      }
-    },
-    {
-      id: "3",
-      content: "Received. I'll review the structural connection points shortly.",
-      sender: "other",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 1.5), // 1.5 hours ago
-      user: {
-        name: "Sarah (Engineer)",
-        avatar: ""
-      }
+  // Transform API chat logs to internal Message format if needed, or stick to provided structure
+  const [messages, setMessages] = useState<Message[]>([])
+
+  useEffect(() => {
+    if (initialMessages && initialMessages.length > 0) {
+       // Convert API logs to Message interface
+       const formattedMessages: Message[] = initialMessages.map(log => ({
+          id: log.id.toString(),
+          content: log.subtype === "Stage Changed" 
+            ? log.tracking?.[0]?.description || log.body
+            : log.body || log.subtype, // Fallback to subtype if body is empty (common in notifications)
+          sender: "system" as const, // API logs are mostly system/notifications for now
+          timestamp: new Date(log.date),
+          user: {
+             name: log.author
+          }
+       })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
+       
+       setMessages(formattedMessages)
     }
-  ])
+  }, [initialMessages])
 
   const handleSendMessage = (e?: React.FormEvent) => {
     e?.preventDefault()

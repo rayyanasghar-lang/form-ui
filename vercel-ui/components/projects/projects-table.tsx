@@ -35,13 +35,11 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { StatusBadge } from "./status-badge"
-import type { Project, ProjectStatus,ProjectTableProps } from "@/types/project"
+import { Project, ProjectStatus, ProjectTableProps, PROJECT_STATUSES } from "@/types/project"
 import { CalculateProjectProgress } from "@/lib/calculate-progress"
 
 
-type TabFilter = "all" | "in_process" | "done" | "rejected" | "draft"
-
-
+type TabFilter = "all" | ProjectStatus
 
 export function ProjectsTable({ projects, isLoading = false, error = null, className }: ProjectTableProps) {
   const router = useRouter()
@@ -50,17 +48,16 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
+  const normalizeStatus = (status: string) => (status || "").toLowerCase().trim()
+
   const filteredProjects =
     activeTab === "all"
       ? projects
       : projects.filter((p) => {
-          if (activeTab === "in_process") {
-            return p.status === "pending" || p.status === "in_review" || p.status === "in_process"
-          }
-          if (activeTab === "done") {
-            return p.status === "approved" || p.status === "done"
-          }
-          return p.status === activeTab
+          const status = normalizeStatus(p.status)
+          const filter = normalizeStatus(activeTab)
+          
+          return status === filter
         })
 
   const totalPages = Math.ceil(filteredProjects.length / itemsPerPage)
@@ -106,26 +103,27 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
   }
 
   const getStatusBadgeConfig = (
-    status: ProjectStatus,
+    status: ProjectStatus | string,
   ): {
     status: "done" | "in-process" | "rejected" | "draft"
     label: string
   } => {
-    switch (status) {
-      case "approved":
-      case "done":
-        return { status: "done", label: "Done" }
-      case "rejected":
-        return { status: "rejected", label: "Rejected" }
-      case "draft":
-        return { status: "draft", label: "Draft" }
-      case "pending":
-      case "in_review":
-      case "in_process":
-        return { status: "in-process", label: "In Process" }
-      default:
-        return { status: "draft", label: status }
+    const normalized = normalizeStatus(status as string)
+    
+    let variant: "done" | "in-process" | "rejected" | "draft" = "in-process"
+    
+    // Strict mapping based on requested Enum
+    if (normalized === "print and ship") {
+      variant = "done" 
+    } else if (normalized === "on hold/challenge") {
+      variant = "rejected"
+    } else if (normalized === "new job creation") {
+        variant = "draft"
     }
+    
+    // Default others to in-process (New Design, Design Review, etc.)
+
+    return { status: variant, label: status as string }
   }
 
   return (
@@ -146,45 +144,20 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                 All
               </TabsTrigger>
 
-              <TabsTrigger
-                value="in_process"
-                badge={
-                  projects.filter(
-                    (p) => p.status === "pending" || p.status === "in_review" || p.status === "in_process",
-                  ).length
-                }
-                className="shrink-0 text-xs px-4 py-2 md:text-xs md:px-6 md:py-2.5 rounded-full bg-zinc-100 text-zinc-600 data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-300 font-bold uppercase tracking-wider shadow-sm hover:bg-zinc-200 data-[state=active]:shadow-md data-[state=active]:shadow-primary/20 border-0 flex items-center justify-center"
-              >
-                <Clock className="h-3.5 w-3.5 mr-2" />
-                In Process
-              </TabsTrigger>
-
-              <TabsTrigger
-                value="done"
-                badge={projects.filter((p) => p.status === "approved" || p.status === "done").length}
-                className="shrink-0 text-xs px-4 py-2 md:text-xs md:px-6 md:py-2.5 rounded-full bg-zinc-100 text-zinc-600 data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-300 font-bold uppercase tracking-wider shadow-sm hover:bg-zinc-200 data-[state=active]:shadow-md data-[state=active]:shadow-primary/20 border-0 flex items-center justify-center"
-              >
-                <CheckCircle2 className="h-3.5 w-3.5 mr-2" />
-                Done
-              </TabsTrigger>
-
-              <TabsTrigger
-                value="rejected"
-                badge={projects.filter((p) => p.status === "rejected").length}
-                className="shrink-0 text-xs px-4 py-2 md:text-xs md:px-6 md:py-2.5 rounded-full bg-zinc-100 text-zinc-600 data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-300 font-bold uppercase tracking-wider shadow-sm hover:bg-zinc-200 data-[state=active]:shadow-md data-[state=active]:shadow-primary/20 border-0 flex items-center justify-center"
-              >
-                <XCircle className="h-3.5 w-3.5 mr-2" />
-                Rejected
-              </TabsTrigger>
-
-              <TabsTrigger
-                value="draft"
-                badge={projects.filter((p) => p.status === "draft").length}
-                className="shrink-0 text-xs px-4 py-2 md:text-xs md:px-6 md:py-2.5 rounded-full bg-zinc-100 text-zinc-600 data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-300 font-bold uppercase tracking-wider shadow-sm hover:bg-zinc-200 data-[state=active]:shadow-md data-[state=active]:shadow-primary/20 border-0 flex items-center justify-center"
-              >
-                <FileText className="h-3.5 w-3.5 mr-2" />
-                Draft
-              </TabsTrigger>
+              {PROJECT_STATUSES.map((status) => (
+                <TabsTrigger
+                    key={status}
+                    value={status}
+                    badge={projects.filter((p) => normalizeStatus(p.status) === normalizeStatus(status)).length}
+                    className="shrink-0 text-xs px-4 py-2 md:text-xs md:px-6 md:py-2.5 rounded-full bg-zinc-100 text-zinc-600 data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-300 font-bold uppercase tracking-wider shadow-sm hover:bg-zinc-200 data-[state=active]:shadow-md data-[state=active]:shadow-primary/20 border-0 flex items-center justify-center"
+                >
+                    {status === "On hold/challenge" ? <XCircle className="h-3.5 w-3.5 mr-2" /> :
+                     status === "Print and Ship" ? <CheckCircle2 className="h-3.5 w-3.5 mr-2" /> :
+                     <Clock className="h-3.5 w-3.5 mr-2" />
+                    }
+                    {status}
+                </TabsTrigger>
+              ))}
 
             </TabsList>
           </div>

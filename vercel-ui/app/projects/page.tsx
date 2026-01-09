@@ -45,7 +45,7 @@ import {
   getProjectStats, 
 } from "@/lib/mock-projects"
 import { ProjectStatus, Project } from "@/types/project"
-import { fetchProjectsAction } from "@/app/actions/project-service"
+import { useProjectsList } from "@/hooks/use-projects-list"
 import { Loader2 } from "lucide-react"
 import { ProjectsTable } from "@/components/projects/projects-table"
 import { BackgroundGradient } from "@/components/layout/background-gradient"
@@ -94,25 +94,11 @@ export default function ProjectsPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const router = useRouter()
-  const [projects, setProjects] = useState<Project[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  
+  // Use the real-time hook
+  const { projects, isLoading, error } = useProjectsList()
   
   const stats = getProjectStats(projects)
-
-  useEffect(() => {
-    async function loadProjects() {
-      setIsLoading(true)
-      const result = await fetchProjectsAction()
-      if ("error" in result) {
-        setError(result.error)
-      } else {
-        setProjects(result.data)
-      }
-      setIsLoading(false)
-    }
-    loadProjects()
-  }, [])
 
   const container = {
     hidden: { opacity: 0 },
@@ -132,8 +118,7 @@ export default function ProjectsPage() {
   return (
     <div className="flex h-screen bg-background relative overflow-hidden">
       {/* Mobile Sidebar Overlay */}
-      <BackgroundGradient />
-
+    
       <AnimatePresence>
         {mobileMenuOpen && (
           <>
