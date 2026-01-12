@@ -8,7 +8,7 @@ export function BackgroundGradient() {
           className="absolute inset-x-0 bottom-0 h-[70vh]" 
           style={{ 
             background: 'linear-gradient(to top, var(--primary) 0%, transparent 100%)',
-            opacity: 0.08
+            opacity: 0.25
           }} 
         />
         {/* Right to Left Gradient */}
@@ -16,7 +16,7 @@ export function BackgroundGradient() {
           className="absolute inset-y-0 right-0 w-[50vw]" 
           style={{ 
             background: 'linear-gradient(to left, var(--primary) 0%, transparent 100%)',
-            opacity: 0.05
+            opacity: 0.25
           }} 
         />
 

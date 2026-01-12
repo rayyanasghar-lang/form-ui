@@ -3,25 +3,27 @@ import { cn } from "@/lib/utils"
 import { Check, Loader2, X, FileText , Loader, Clock} from "lucide-react"
 
 export interface StatusBadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-  status: "done" | "in-process" | "rejected" | "draft"
+  status: "done" | "in-process" | "rejected" | "draft" | string
   label: string
 }
 
 const StatusBadge = React.forwardRef<HTMLDivElement, StatusBadgeProps>(
   ({ status, label, className, ...props }, ref) => {
     const getIconColor = () => {
-      switch (status) {
-        case "done":
-          return "text-success"
-        case "rejected":
-          return "text-red-600"
-        case "in-process":
-          return "text-primary"
-        case "draft":
-          return "text-zinc-500"
-        default:
-          return "text-zinc-400"
+      // Normalize status to lowercase for comparison
+      const normalizedStatus = status.toLowerCase()
+      
+      if (normalizedStatus.includes("done") || normalizedStatus.includes("approved") || normalizedStatus.includes("submitted")) {
+        return "text-success"
       }
+      if (normalizedStatus.includes("rejected") || normalizedStatus.includes("hold") || normalizedStatus.includes("challenge")) {
+        return "text-red-600"
+      }
+      if (normalizedStatus.includes("draft")) {
+        return "text-zinc-500"
+      }
+      // Default for in-process states (New Design, Internal Review, Revision, Engineering, Print & Ship, etc.)
+      return "text-primary"
     }
 
     const iconColor = getIconColor()

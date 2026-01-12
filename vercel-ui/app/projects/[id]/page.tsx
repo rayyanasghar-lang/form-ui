@@ -57,6 +57,8 @@ import { Project, ProjectStatus } from "@/types/project"
 import { fetchProjectByIdAction, updateProjectAction } from "@/app/actions/project-service"
 import { toast } from "sonner"
 import { CalculateProjectProgress } from "@/lib/calculate-progress"
+import { useProjectUpdates } from "@/hooks/use-project-updates"
+import { CheckCircle2, Clock, Circle } from "lucide-react"
 
 export default function ProjectDetailsPage() {
   const params = useParams()
@@ -179,7 +181,17 @@ export default function ProjectDetailsPage() {
 
 
 
-  const progress = CalculateProjectProgress(project)
+  /* Real-time updates hook */
+  const { data: realtimeData } = useProjectUpdates(id)
+
+  // Use real-time data if available, otherwise fallback to static CalculateProjectProgress
+  const progress = realtimeData ? realtimeData.completion_percentage : CalculateProjectProgress(project)
+  
+  // Use real-time status if available, fallback to project.status
+  const currentStatus = realtimeData?.status || project?.status
+  
+  // Subtasks from real-time data
+  const subtasks = realtimeData?.subtasks || []
 
   useEffect(() => {
     async function loadProject() {
@@ -250,15 +262,21 @@ export default function ProjectDetailsPage() {
   }
 
 
-  const getStatusBadgeConfig = (status: ProjectStatus): { status: "done" | "in-process" | "rejected" | "draft"; label: string } => {
-    switch (status) {
-      case "approved": return { status: "done", label: "Approved" }
-      case "rejected": return { status: "rejected", label: "Rejected" }
-      case "draft": return { status: "draft", label: "Draft" }
-      case "pending": return { status: "in-process", label: "Pending" }
-      case "in_review": return { status: "in-process", label: "In Review" }
-      default: return { status: "draft", label: status }
-    }
+  const getStatusBadgeConfig = (status: ProjectStatus | string): { status: "done" | "in-process" | "rejected" | "draft"; label: string } => {
+    // Check if status matches one of the known ProjectStatus values first if needed, 
+    // but our new StatusBadge handles strings intelligently, so we can just pass it through 
+    // with a best-effort mapping for the "status" variant key.
+    
+    // Simple mapper for the config object required by page (though StatusBadge component takes string now, 
+    // the page might be using this config for other things or just passing it to StatusBadge)
+    const normalized = (status || "").toLowerCase()
+    
+    let variant: "done" | "in-process" | "rejected" | "draft" = "in-process"
+    if (normalized.includes("done") || normalized.includes("approved") || normalized.includes("submitted")) variant = "done"
+    else if (normalized.includes("rejected") || normalized.includes("hold") || normalized.includes("challenge")) variant = "rejected"
+    else if (normalized.includes("draft")) variant = "draft"
+    
+    return { status: variant, label: status as string }
   }
 
   if (isLoading) {
@@ -365,9 +383,9 @@ export default function ProjectDetailsPage() {
               </Button>
               <div>
                 <div className="flex items-center gap-3">
-                  <h1 className="text-xl font-black tracking-tight text-zinc-900 leading-none">{project.name}</h1>
+                  <h1 className="text-xl font-black tracking-tight text-zinc-900 leading-none">{realtimeData?.project_name || project.name}</h1>
                   <div className="hidden md:block">
-                    <StatusBadge {...getStatusBadgeConfig(project.status)} />
+                    <StatusBadge {...getStatusBadgeConfig(currentStatus!)} />
                   </div>
                 </div>
                 <div className="flex flex-col gap-1 mt-1.5">
@@ -579,6 +597,112 @@ export default function ProjectDetailsPage() {
                 </Card>
               </div>
 
+              {/* Project Status (Timeline) */}
+              {realtimeData?.chat_logs && realtimeData.chat_logs.length > 0 && (
+                <div className="grid grid-cols-1 gap-8 animate-in fade-in slide-in-from-bottom-5 duration-700 delay-100">
+                  <Card className="border-border bg-card rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden">
+                    <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 py-6">
+                      <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                               <ClipboardList className="h-5 w-5" />
+                            </div>
+                            <CardTitle className="text-sm font-black uppercase tracking-[0.2em] text-zinc-900">Project Status</CardTitle>
+                         </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <div className="relative pl-6 border-l-2 border-zinc-100 space-y-8">
+                        {realtimeData.chat_logs.map((log, index) => (
+                           <div key={log.id} className="relative group">
+                              {/* Timeline Dot */}
+                              <div className="absolute -left-[31px] top-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-zinc-300 group-hover:bg-primary transition-colors shadow-sm ring-4 ring-white" />
+                              
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider bg-zinc-50 px-2 py-0.5 rounded-md border border-zinc-100">
+                                    {new Date(log.date).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                                    {log.author}
+                                  </span>
+                                </div>
+                                
+                                <p className="text-sm font-medium text-zinc-900 leading-snug">
+                                  {log.subtype === "Stage Changed" 
+                                    ? log.tracking?.[0]?.description || log.body 
+                                    : log.body || log.subtype}
+                                </p>
+                                
+                                {log.tracking && log.tracking.length > 0 && log.subtype !== "Stage Changed" && (
+                                   <div className="mt-2 space-y-1">
+                                      {log.tracking.map((track, i) => (
+                                         <p key={i} className="text-xs text-zinc-500 italic bg-zinc-50/50 p-2 rounded-lg border border-zinc-100/50">
+                                            {track.description}
+                                         </p>
+                                      ))}
+                                   </div>
+                                )}
+                              </div>
+                           </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Subtasks Section */}
+              {subtasks.length > 0 && (
+                <div className="grid grid-cols-1 gap-8 animate-in fade-in slide-in-from-bottom-5 duration-700 delay-100">
+                  <Card className="border-border bg-card rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden">
+                    <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 py-6">
+                      <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                               <CheckCircle2 className="h-5 w-5" />
+                            </div>
+                            <CardTitle className="text-sm font-black uppercase tracking-[0.2em] text-zinc-900">Sub Tasks</CardTitle>
+                         </div>
+                         <div className="text-[10px] font-bold text-zinc-500 bg-zinc-100 px-3 py-1 rounded-full border border-zinc-200">
+                           {realtimeData?.subtasks_summary}
+                         </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <div className="divide-y divide-zinc-100">
+                        {subtasks.map((task) => (
+                          <div key={task.id} className="p-4 flex items-center gap-4 hover:bg-zinc-50/50 transition-colors group">
+                            <div className={cn(
+                              "h-6 w-6 rounded-full flex items-center justify-center border-2 shrink-0 transition-colors",
+                              task.is_closed 
+                                ? "bg-success/10 border-success text-success" 
+                                : "border-zinc-200 text-zinc-300 group-hover:border-primary/50"
+                            )}>
+                              {task.is_closed ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Circle className="h-3.5 w-3.5" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className={cn(
+                                "text-sm font-medium truncate",
+                                task.is_closed ? "text-zinc-500 line-through" : "text-zinc-900"
+                              )}>
+                                {task.stage}: {task.name}
+                              </p>
+                            </div>
+                             {task.deadline && (
+                               <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-400 bg-zinc-50 px-2 py-1 rounded-md">
+                                 <Clock className="h-3 w-3" />
+                                 {task.deadline}
+                               </div>
+                             )}
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
               <GeneralNotesStep
                 formData={formCompatibleData}
                 updateField={updateField}
@@ -665,7 +789,9 @@ export default function ProjectDetailsPage() {
       </main>
       <ProjectChat 
         projectId={id} 
-        projectName={project?.name || "Project"} 
+        projectName={realtimeData?.project_name || project?.name || "Project"} 
+        // initialMessages prop removed as requested
+        initialMessages={[]} 
         className={cn(
           "shrink-0 z-40 shadow-[-5px_0_30px_-5px_rgba(0,0,0,0.05)]",
           // Desktop styles
@@ -683,7 +809,9 @@ export default function ProjectDetailsPage() {
           <div className="absolute inset-y-0 right-0 w-full sm:w-[400px] bg-white shadow-2xl animate-in slide-in-from-right duration-300">
             <ProjectChat 
               projectId={id} 
-              projectName={project?.name || "Project"} 
+              projectName={realtimeData?.project_name || project?.name || "Project"} 
+              // initialMessages prop removed as requested
+              initialMessages={[]} 
               className="w-full h-full border-none"
               collapsed={false}
               onCollapsedChange={(collapsed) => {

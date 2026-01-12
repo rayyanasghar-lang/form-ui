@@ -1,172 +1,389 @@
 "use client"
-import { motion } from "framer-motion"
-import Link from "next/link"
-import { BackgroundGradient } from "@/components/ui/background-gradient"
+
+import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { 
-  PlusCircle, 
-  LayoutDashboard, 
-  UserCircle2, 
-  ChevronRight,
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+} from "recharts"
+import { 
+  ArrowUpRight, 
+  ArrowDownRight, 
+  Menu, 
+  PanelLeft,
+  X
 } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Navbar } from "@/components/layout/navbar"
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart"
+import Sidebar from "@/components/layout/sidebar"
+import { getProjectStats } from "@/lib/mock-projects"
+import { useProjectsList } from "@/hooks/use-projects-list"
+
+// Extended chart data for the visitors-style chart
+const visitorChartData = [
+  { date: "Apr 5", submissions: 4, approvals: 3 },
+  { date: "Apr 11", submissions: 5, approvals: 4 },
+  { date: "Apr 17", submissions: 4, approvals: 3 },
+  { date: "Apr 23", submissions: 6, approvals: 5 },
+  { date: "Apr 29", submissions: 5, approvals: 4 },
+  { date: "May 5", submissions: 7, approvals: 6 },
+  { date: "May 11", submissions: 6, approvals: 5 },
+  { date: "May 17", submissions: 5, approvals: 4 },
+  { date: "May 23", submissions: 6, approvals: 5 },
+  { date: "May 29", submissions: 5, approvals: 4 },
+  { date: "Jun 4", submissions: 7, approvals: 6 },
+  { date: "Jun 10", submissions: 6, approvals: 5 },
+  { date: "Jun 16", submissions: 8, approvals: 7 },
+  { date: "Jun 22", submissions: 7, approvals: 6 },
+  { date: "Jun 29", submissions: 6, approvals: 5 },
+]
+
+const chartConfig = {
+  submissions: {
+    label: "Submissions",
+    color: "var(--primary)",
+  },
+  approvals: {
+    label: "Approvals", 
+    color: "var(--success)",
+  },
+} satisfies ChartConfig
+
+type TimeRange = "3months" | "30days" | "7days"
 
 export default function DashboardPage() {
+  /* State */
+  const [timePeriod, setTimePeriod] = useState<TimeRange>("3months")
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  // Use the real-time hook
+  const { projects } = useProjectsList()
+  
+  const stats = getProjectStats(projects)
+
   const container = {
     hidden: { opacity: 0 },
     show: {
-      opacity: 1,
+      opacity: 1  ,
       transition: {
-        staggerChildren: 0.1
+        staggerChildren: 0.08
       }
     }
   }
 
   const item = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 15 },
     show: { opacity: 1, y: 0 }
   }
 
-  const navOptions = [
-    {
-      title: "Get Started with Project",
-      description: "Start a new permit planset request for your solar installation.",
-      icon: PlusCircle,
-      href: "/forms",
-      primary: true,
-      color: "#6366F1", // Indigo-500
-      blobClass: "top-0 right-0 rounded-bl-full -mr-8 -mt-8"
-    },
-    {
-      title: "View Projects",
-      description: "Track progress, download approved plans, and manage active submissions.",
-      icon: LayoutDashboard,
-      href: "/projects",
-      primary: false,
-      color: "#64748B", // Slate-500
-      blobClass: "bottom-0 left-0 rounded-tr-full -ml-8 -mb-8"
-    },
-    {
-      title: "User Profile",
-      description: "Manage your company details, licenses, and notification preferences.",
-      icon: UserCircle2,
-      href: "/profile",
-      primary: false,
-      color: "#10B981", // Emerald-500
-      blobClass: "top-0 left-0 rounded-br-full -ml-8 -mt-8"
-    }
-  ]
-
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      <BackgroundGradient />
-      <Navbar />
+    <div className="flex h-screen bg-background relative overflow-hidden">
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileMenuOpen(false)}
+              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm lg:hidden"
+            />
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+              className="fixed inset-y-0 left-0 z-50 w-64 bg-sidebar shadow-xl lg:hidden"
+            >
+              <div className="absolute top-4 right-4 z-50">
+                 <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)}>
+                   <X className="h-5 w-5 text-sidebar-foreground/50 hover:text-sidebar-foreground" />
+                 </Button>
+              </div>
+              <Sidebar className="h-full border-none" />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
-      <main className="container mx-auto px-4 py-8 relative z-10">
-        {/* Background Decorative Element */}
-        <div className="absolute top-1/4 -right-1/4 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] -z-10" />
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:flex h-screen sticky top-0 z-40">
+        <Sidebar 
+          variant="dashboard"
+          collapsed={sidebarCollapsed}
+          onCollapsedChange={setSidebarCollapsed}
+        />
+      </div>
 
-        <div className="max-w-3xl mb-16">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
-              Welcome back, <span className="text-primary">John</span>!
-            </h1>
-            <p className="text-xl text-muted-foreground/80 font-medium leading-relaxed">
-              What would you like to do today? Select an option below to manage your solar permit workflow.
-            </p>
-          </motion.div>
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto">
+        {/* Top Header Bar */}
+        <div className="sticky top-0 z-10 border-b border-border bg-background/80 supports-backdrop-filter:bg-background/60 backdrop-blur-md">
+          <div className="flex items-center justify-between px-4 py-3 lg:px-6 lg:py-4">
+            <div className="flex items-center gap-3 lg:gap-4">
+              {/* Mobile Menu Trigger */}
+              <button
+                onClick={() => setMobileMenuOpen(true)}
+                className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-black/5 text-zinc-600"
+              >
+                <Menu className="h-6 w-6" />
+              </button>
+
+              {sidebarCollapsed && (
+                <button
+                  onClick={() => setSidebarCollapsed(false)}
+                  className="p-2 rounded-lg hover:bg-black/5 transition-colors text-zinc-500 hover:text-zinc-900 -ml-2"
+                  title="Show sidebar"
+                >
+                  <PanelLeft className="h-5 w-5" />
+                </button>
+              )}
+              <h1 className="text-xl lg:text-2xl font-bold text-zinc-900">
+                Operations Dashboard
+              </h1>
+            </div>
+            
+          </div>
         </div>
 
-        <motion.div 
-          className="grid grid-cols-1 md:grid-cols-3 gap-8"
-          variants={container}
-          initial="hidden"
-          animate="show"
-        >
-          {navOptions.map((option, i) => (
-            <motion.div key={i} variants={item}>
-              <Link href={option.href} className="group block h-full">
-                <Card className={`h-full relative overflow-hidden bg-card border-border shadow-lg transition-all duration-500 hover:shadow-xl hover:-translate-y-3 rounded-[2.5rem] group ${option.primary ? 'border-primary/20' : ''}`}>
-                  <div 
-                    className={`absolute w-32 h-32 opacity-10 transition-all duration-500 group-hover:scale-150 group-hover:opacity-20 ${option.blobClass}`}
-                    style={{ backgroundColor: option.color }}
-                  />
-                  
-                  <CardHeader className="pt-10 pb-4">
-                    <div 
-                      className="w-16 h-16 rounded-3xl flex items-center justify-center mb-6 shadow-inner transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3"
-                      style={{ backgroundColor: `${option.color}15`, color: option.color }}
-                    >
-                      <option.icon className="w-8 h-8" />
+        <div className="p-4 lg:p-6 space-y-5 lg:space-y-6">
+              {/* Metric Cards - Corporate Style */}
+              <motion.div
+                variants={container}
+                initial="hidden"
+                animate="show"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
+              >
+                {/* Total Revenue */}
+                <motion.div variants={item}>
+                  <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-zinc-500">Total Revenue</span>
+                        <div 
+                          className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border"
+                          style={{ 
+                            backgroundColor: "oklch(from var(--primary) l c h / 0.1)", 
+                            color: "var(--primary)",
+                            borderColor: "oklch(from var(--primary) l c h / 0.2)"
+                          }}
+                        >
+                          <ArrowUpRight className="h-3 w-3" />
+                          +12.5%
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="text-3xl font-bold text-zinc-900 tracking-tight">$12,450.00</div>
+                      <div className="mt-4 space-y-1">
+                        <div 
+                          className="flex items-center gap-1.5 text-[13px] font-bold text-primary"
+                        >
+                          Trending up this month
+                          <ArrowUpRight className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="text-[12px] text-zinc-500 font-medium">
+                          Visitors for the last 6 months
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+
+                {/* Pending Reviews */}
+                <motion.div variants={item}>
+                  <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-zinc-500">In Process</span>
+                        <div 
+                          className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border"
+                          style={{ 
+                            backgroundColor: "oklch(from var(--primary) l c h / 0.1)", 
+                            color: "var(--primary)",
+                            borderColor: "oklch(from var(--primary) l c h / 0.2)"
+                          }}
+                        >
+                          <ArrowDownRight className="h-3 w-3" />
+                          -8.3%
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="text-3xl font-bold text-zinc-900 tracking-tight">{stats.inProcess}</div>
+                      <div className="mt-4 space-y-1">
+                        <div className="flex items-center gap-1.5 text-[13px] font-bold text-primary whitespace-nowrap">
+                          Down {stats.inReview} this period
+                          <ArrowDownRight className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="text-[12px] text-zinc-500 font-medium">
+                          Acquisition needs attention
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+
+                {/* Approved Projects */}
+                <motion.div variants={item}>
+                  <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-zinc-500">Done Projects</span>
+                        <div 
+                          className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border"
+                          style={{ 
+                            backgroundColor: "oklch(from var(--primary) l c h / 0.1)", 
+                            color: "var(--primary)",
+                            borderColor: "oklch(from var(--primary) l c h / 0.2)"
+                          }}
+                        >
+                          <ArrowUpRight className="h-3 w-3" />
+                          +12.5%
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="text-3xl font-bold text-zinc-900 tracking-tight">{stats.done}</div>
+                      <div className="mt-4 space-y-1">
+                        <div className="flex items-center gap-1.5 text-[13px] font-bold text-primary">
+                          Strong user retention
+                          <ArrowUpRight className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="text-[12px] text-zinc-500 font-medium">
+                          Engagement exceed targets
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+
+                {/* Total Capacity */}
+                <motion.div variants={item}>
+                  <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-zinc-500">Total Capacity</span>
+                        <div 
+                          className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border"
+                          style={{ 
+                            backgroundColor: "oklch(from var(--primary) l c h / 0.1)", 
+                            color: "var(--primary)",
+                            borderColor: "oklch(from var(--primary) l c h / 0.2)"
+                          }}
+                        >
+                          <ArrowUpRight className="h-3 w-3" />
+                          +4.5%
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="text-3xl font-bold text-zinc-900 tracking-tight">{stats.totalCapacityKW} kW</div>
+                      <div className="mt-4 space-y-1">
+                        <div className="flex items-center gap-1.5 text-[13px] font-bold text-primary">
+                          Steady performance increase
+                          <ArrowUpRight className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="text-[12px] text-zinc-500 font-medium whitespace-nowrap">
+                          Meets growth projections
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </motion.div>
+
+              {/* Chart Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25, duration: 0.4 }}
+              >
+                <Card className="bg-card border-border shadow-sm">
+                  <CardHeader>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <CardTitle className="text-lg font-bold text-zinc-900">Project Submissions</CardTitle>
+                        <CardDescription className="text-zinc-500">
+                          Overview for the last {timePeriod === "3months" ? "3 months" : timePeriod === "30days" ? "30 days" : "7 days"}
+                        </CardDescription>
+                      </div>
+                      <div className="flex items-center gap-1 bg-zinc-100 rounded-lg p-1">
+                        {(["3months", "30days", "7days"] as const).map((range) => (
+                          <Button
+                            key={range}
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setTimePeriod(range)}
+                            className={`h-8 px-3 text-xs font-medium rounded-md ${
+                              timePeriod === range 
+                                ? "bg-white shadow-sm text-zinc-900" 
+                                : "text-zinc-600 hover:text-zinc-900 hover:bg-white/50"
+                            }`}
+                          >
+                            {range === "3months" ? "3 months" : range === "30days" ? "30 days" : "7 days"}
+                          </Button>
+                        ))}
+                      </div>
                     </div>
-                    <CardTitle className="text-2xl font-bold tracking-tight mb-2 group-hover:text-primary transition-colors">
-                      {option.title}
-                    </CardTitle>
-                    <CardDescription className="text-base font-medium leading-relaxed min-h-16">
-                      {option.description}
-                    </CardDescription>
                   </CardHeader>
-                  
-                  <CardContent className="pb-10 pt-4 flex items-center text-sm font-bold tracking-wide uppercase">
-                    <span 
-                      className="inline-flex items-center gap-1 transition-all duration-300 group-hover:gap-3 text-primary"
-                    >
-                      Browse Option <ChevronRight className="w-4 h-4" />
-                    </span>
+                  <CardContent>
+                    <ChartContainer config={chartConfig} className="h-[280px] w-full">
+                      <AreaChart data={visitorChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="submissionsGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.3} />
+                            <stop offset="100%" stopColor="var(--primary)" stopOpacity={0.02} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+                        <XAxis 
+                          dataKey="date" 
+                          tickLine={false} 
+                          axisLine={false} 
+                          tickMargin={10}
+                          tick={{ fill: "#71717a", fontSize: 12 }}
+                        />
+                        <YAxis 
+                          tickLine={false} 
+                          axisLine={false} 
+                          tickMargin={10}
+                          tick={{ fill: "#71717a", fontSize: 12 }}
+                        />
+                        <ChartTooltip
+                          content={
+                            <ChartTooltipContent
+                              className="bg-white border-zinc-200"
+                              indicator="dot"
+                            />
+                          }
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="submissions" 
+                          stroke="var(--primary)" 
+                          strokeWidth={2}
+                          fill="url(#submissionsGradient)" 
+                        />
+                      </AreaChart>
+                    </ChartContainer>
                   </CardContent>
                 </Card>
-              </Link>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Recent Activity Mini-Section */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="mt-20 p-8 rounded-[2.5rem] border border-border bg-card shadow-lg"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold">Recent Updates</h2>
-            <Button variant="link" className="font-bold opacity-60 hover:opacity-100">View History</Button>
-          </div>
-          <div className="space-y-4">
-            {[1, 2].map((_, i) => (
-              <div key={i} className="flex items-center gap-6 p-4 rounded-[1.25rem] bg-muted border border-border hover:bg-muted/80 transition-colors">
-                <div className="h-12 w-12 rounded-xl bg-green-500/10 flex items-center justify-center text-green-600">
-                  <LayoutDashboard className="w-6 h-6" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-bold">Permit #SP-7729 Approved</p>
-                  <p className="text-sm text-muted-foreground">Ready for download & submission to AHJ</p>
-                </div>
-                <div className="text-right hidden sm:block">
-                  <p className="text-sm font-bold">2 hours ago</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      </main>
-
-      {/* Modern Footer Nav for Mobile */}
-      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-md h-16 bg-zinc-900 rounded-2xl flex items-center justify-around px-2 border border-white/10 shadow-2xl z-50 md:hidden">
-        <Button variant="ghost" size="icon" className="text-white/60 hover:text-white transition-colors">
-          <LayoutDashboard className="h-6 w-6" />
-        </Button>
-        <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-lg -translate-y-4 border-4 border-[#EBE5DA]">
-          <PlusCircle className="h-6 w-6 text-white" />
+              </motion.div>
+        
         </div>
-        <Button variant="ghost" size="icon" className="text-white/60 hover:text-white transition-colors">
-          <UserCircle2 className="h-6 w-6" />
-        </Button>
-      </nav>
+      </main>
     </div>
   )
 }

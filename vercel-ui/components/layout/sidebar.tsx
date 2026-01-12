@@ -60,6 +60,7 @@ export default function Sidebar({
     {
       title: "Workspace",
       items: [
+        { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
         { id: "projects", label: "My Projects", icon: FolderKanban, href: "/projects" },
         { id: "new-permit", label: "New Permit", icon: Zap, href: "/forms" },
         { id: "user-profile", label: "User Profile", icon: User2Icon, href: "/profile" },

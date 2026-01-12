@@ -45,7 +45,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { BackgroundGradient } from "@/components/ui/background-gradient";
+import { BackgroundGradient } from "@/components/layout/background-gradient";
 
 export default function ProfilePage() {
   const router = useRouter();

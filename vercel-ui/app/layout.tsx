@@ -41,9 +41,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable}`} suppressHydrationWarning>
-      <body className={`font-sans antialiased`}>
-
-        <BackgroundGradient />
+      <body className={`font-sans antialiased`} suppressHydrationWarning>
+        <BackgroundGradient/>
         {children}
         <Toaster position="top-right" richColors />
       </body>
