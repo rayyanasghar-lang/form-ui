@@ -1,7 +1,7 @@
 "use server"
 
 const API_BASE_URL = process.env.INTERNAL_API_URL || "http://localhost:8069"
-const ODOO_DB = process.env.ODOO_DB
+const ODOO_DB = process.env.ODOO_DB || "sunpermit"
 
 const getHeaders = () => {
   const headers: Record<string, string> = {
