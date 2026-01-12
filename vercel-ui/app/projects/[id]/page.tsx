@@ -40,7 +40,7 @@ import ElectricalDetails from "@/components/electrical-details"
 import UtilityDetails from "@/components/utility-details"
 import OptionalExtras from "@/components/optional-extras"
 import FormCard from "@/components/form-card"
-import { Component } from "@/components/system-components-table"
+import SystemComponentsTable, { Component } from "@/components/system-components-table"
 
 
 
@@ -120,6 +120,11 @@ export default function ProjectDetailsPage() {
       inspectionNotesText: 'optional_extra_details.inspection_notes_text',
       batterySldRequested: 'optional_extra_details.battery_sld_requested',
       batterySldNotes: 'optional_extra_details.battery_sld_notes',
+      // Utility & Jurisdiction
+      utilityProvider: 'site_details.utility_provider',
+      jurisdiction: 'site_details.jurisdiction',
+      // Battery toggle
+      batteryBackup: 'system_summary.battery_backup',
     }
 
     const path = fieldToPathMap[name] || name
@@ -169,11 +174,43 @@ export default function ProjectDetailsPage() {
     projectAddress: project.address,
     projectType: project.type,
     systemType: project.system_summary?.system_type || "roofmount",
+    systemSize: project.system_summary?.system_size || "",
+    pvModules: project.system_summary?.pv_modules || "",
+    inverters: project.system_summary?.inverters || "",
+    batteryBackup: project.system_summary?.battery_backup || false,
     generalNotes: project.general_notes,
     projectFiles: project.uploads?.map(u => u.url) || [],
     batteryQty: project.system_summary?.battery_info?.qty,
     batteryModel: project.system_summary?.battery_info?.model,
     batteryImage: project.system_summary?.battery_info?.image || [],
+    // Map snake_case from API to camelCase for components
+    utilityProvider: project.site_details?.utility_provider || "",
+    jurisdiction: project.site_details?.jurisdiction || "",
+    roofMaterial: project.site_details?.roof_material || "",
+    roofPitch: project.site_details?.roof_pitch || "",
+    numberOfArrays: project.site_details?.number_of_arrays || 0,
+    groundMountType: project.site_details?.ground_mount_type || "",
+    foundationType: project.site_details?.foundation_type || "",
+    mainPanelSize: project.electrical_details?.main_panel_size || "",
+    busRating: project.electrical_details?.bus_rating || "",
+    mainBreaker: project.electrical_details?.main_breaker || "",
+    pvBreakerLocation: project.electrical_details?.pv_breaker_location || "",
+    meterLocation: project.advanced_electrical_details?.meter_location || "",
+    serviceEntranceType: project.advanced_electrical_details?.service_entrance_type || "",
+    subpanelDetails: project.advanced_electrical_details?.subpanel_details || "",
+    // Optional Extra Details
+    miracleWattRequired: project.optional_extra_details?.miracle_watt_required || false,
+    miracleWattNotes: project.optional_extra_details?.miracle_watt_notes || "",
+    derRlcRequired: project.optional_extra_details?.der_rlc_required || false,
+    derRlcNotes: project.optional_extra_details?.der_rlc_notes || "",
+    setbackConstraints: project.optional_extra_details?.setback_constraints || false,
+    setbackNotes: project.optional_extra_details?.setback_notes || "",
+    siteAccessRestrictions: project.optional_extra_details?.site_access_restrictions || false,
+    siteAccessNotes: project.optional_extra_details?.site_access_notes || "",
+    inspectionNotes: project.optional_extra_details?.inspection_notes || false,
+    inspectionNotesText: project.optional_extra_details?.inspection_notes_text || "",
+    batterySldRequested: project.optional_extra_details?.battery_sld_requested || false,
+    batterySldNotes: project.optional_extra_details?.battery_sld_notes || "",
   } : {}
 
 
@@ -212,7 +249,11 @@ export default function ProjectDetailsPage() {
     
     setProject(prev => {
       if (!prev) return null
-      const next = { ...prev }
+      
+      // Perform a deep clone to ensure immutability
+      // Using JSON parse/stringify is a quick way for this structure, 
+      // but let's do a more robust manual clone for the path
+      const next = JSON.parse(JSON.stringify(prev))
       const keys = path.split('.')
       let current: any = next
       
@@ -747,6 +788,17 @@ export default function ProjectDetailsPage() {
               </div>
             </TabsContent>
 
+            {/* Equipment Tab - System Components */}
+            <TabsContent value="components" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <FormCard title="System Components">
+                <SystemComponentsTable
+                  components={formattedComponents}
+                  onAddComponent={addComponent}
+                  onUpdateComponent={updateComponent}
+                  onRemoveComponent={removeComponent}
+                />
+              </FormCard>
+            </TabsContent>
 
             <TabsContent value="uploads" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
                <UploadsStep
@@ -759,24 +811,31 @@ export default function ProjectDetailsPage() {
 
             {/* Mobile Bottom Tabs */}
             <div className="fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border md:hidden shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.05)]">
-              <TabsList className="grid grid-cols-3 h-22 pb-safe rounded-none bg-transparent border-0 p-0">
+              <TabsList className="grid grid-cols-4 h-22 pb-safe rounded-none bg-transparent border-0 p-0">
                   <TabsTrigger
                     value="overview"
-                    className="flex-1 flex items-center justify-center gap-2.5 h-full rounded-2xl data-[state=active]:bg-primary data-[state=active]:text-black text-zinc-500 font-black text-xs uppercase tracking-wider transition-all duration-300"
+                    className="flex-1 flex flex-col items-center justify-center gap-1 h-full rounded-2xl data-[state=active]:bg-primary data-[state=active]:text-black text-zinc-500 font-black text-[10px] uppercase tracking-wider transition-all duration-300"
                   >
                     <LayoutDashboard className="w-4 h-4" />
                     Overview
                   </TabsTrigger>
                   <TabsTrigger
                     value="site"
-                    className="flex-1 flex items-center justify-center gap-2.5 h-full rounded-2xl data-[state=active]:bg-primary data-[state=active]:text-black text-zinc-500 font-black text-xs uppercase tracking-wider transition-all duration-300"
+                    className="flex-1 flex flex-col items-center justify-center gap-1 h-full rounded-2xl data-[state=active]:bg-primary data-[state=active]:text-black text-zinc-500 font-black text-[10px] uppercase tracking-wider transition-all duration-300"
                   >
                     <MapIcon className="w-4 h-4" />
-                    Site & Electrical
+                    Site
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="components"
+                    className="flex-1 flex flex-col items-center justify-center gap-1 h-full rounded-2xl data-[state=active]:bg-primary data-[state=active]:text-black text-zinc-500 font-black text-[10px] uppercase tracking-wider transition-all duration-300"
+                  >
+                    <Box className="w-4 h-4" />
+                    Equipment
                   </TabsTrigger>
                   <TabsTrigger
                     value="uploads"
-                    className="flex-1 flex items-center justify-center gap-2.5 h-full rounded-2xl data-[state=active]:bg-primary data-[state=active]:text-black text-zinc-500 font-black text-xs uppercase tracking-wider transition-all duration-300"
+                    className="flex-1 flex flex-col items-center justify-center gap-1 h-full rounded-2xl data-[state=active]:bg-primary data-[state=active]:text-black text-zinc-500 font-black text-[10px] uppercase tracking-wider transition-all duration-300"
                   >
                     <Plus className="w-4 h-4" />
                     Uploads
