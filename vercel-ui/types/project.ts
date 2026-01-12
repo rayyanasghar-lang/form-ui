@@ -1,5 +1,13 @@
 // Project status types
-export type ProjectStatus = 'draft' | 'pending' | 'in_review' | 'approved' | 'rejected' | 'done' | 'in_process';
+export type ProjectStatus = 
+  | 'New Job Creation'
+  | 'New Design'
+  | 'Design internal review'
+  | 'Design revision'
+  | 'Design submitted'
+  | 'Awaiting Engineering'
+  | 'Print and Ship'
+  | 'On hold/challenge';
 
 // Project interface matching permit form data structure
 export interface Project {
@@ -156,3 +164,14 @@ export interface ProjectTableProps {
   error?: string | null
   className?: string
 }
+
+export const PROJECT_STATUSES: ProjectStatus[] = [
+  'New Job Creation',
+  'New Design',
+  'Design internal review',
+  'Design revision',
+  'Design submitted',
+  'Awaiting Engineering',
+  'Print and Ship',
+  'On hold/challenge'
+];
