@@ -52,8 +52,8 @@ export default function ProjectContactStep({
                     <h3 className="text-xl font-bold text-foreground mb-4">Submission Type</h3>
                     <Tabs value={submissionMode} onValueChange={(v) => setSubmissionMode(v as "quick" | "provide details")} className="w-full">
                         <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="quick" className="!text-zinc-700 data-[state=active]:!text-white"><Zap className="mr-2 h-4 w-4" />Quick Upload (Recommended)</TabsTrigger>
-                            <TabsTrigger value="provide details" className="!text-zinc-700 data-[state=active]:!text-white"><NotebookIcon className="mr-2 h-4 w-4" /> Provide Full Details</TabsTrigger>
+                            <TabsTrigger value="quick" className="text-zinc-700! data-[state=active]:text-white!"><Zap className="mr-2 h-4 w-4" />Quick Upload (Recommended)</TabsTrigger>
+                            <TabsTrigger value="provide details" className="text-zinc-700! data-[state=active]:text-white!"><NotebookIcon className="mr-2 h-4 w-4" /> Provide Full Details</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="quick" className="mt-4">
@@ -88,20 +88,6 @@ export default function ProjectContactStep({
                                 onChange={(e) => updateField("projectName", e.target.value)}
                             />
                             {errors.projectName && <p className="text-sm text-destructive">{errors.projectName}</p>}
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="homeOwnerName" className="flex items-center gap-2">
-                                <ClipboardList className="w-4 h-4 text-muted-foreground" />
-                                Home Owner Name
-                            </Label>
-                            <Input
-                                id="homeOwnerName"
-                                placeholder="Enter home owner name"
-                                // value={formData.homeOwnerName}
-                                onChange={(e) => updateField("homeOwnerName", e.target.value)}
-                            />
-                            {/* {errors.homeOwnerName && <p className="text-sm text-destructive">{errors.homeOwnerName}</p>} */}
                         </div>
 
                         <div className="space-y-2">

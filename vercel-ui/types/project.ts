@@ -1,5 +1,7 @@
 // Project status types
 export type ProjectStatus = 
+  | 'draft'
+  | 'pending'
   | 'New Job Creation'
   | 'New Design'
   | 'Design internal review'
@@ -10,6 +12,8 @@ export type ProjectStatus =
   | 'On hold/challenge';
 
 export const PROJECT_STATUSES: ProjectStatus[] = [
+  'draft',
+  'pending',
   'New Job Creation',
   'New Design',
   'Design internal review',
@@ -62,6 +66,7 @@ export interface Project {
     system_type?: string;
     pv_modules?: number | string;
     inverters?: number | string;
+    battery_backup?: boolean;
     battery_info?: {
       id?: string;
       qty: number;
