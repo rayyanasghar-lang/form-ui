@@ -7,17 +7,40 @@ export interface ProjectsResponse {
   data: Project[]
 }
 
+const API_BASE_URL = process.env.INTERNAL_API_URL || "http://localhost:8069"
+const ODOO_DB = process.env.ODOO_DB
+
+const getHeaders = () => {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  }
+  if (ODOO_DB) {
+    headers["X-Odoo-Database"] = ODOO_DB
+  }
+  return headers
+}
+
 export async function fetchProjectsAction(): Promise<ProjectsResponse | { error: string }> {
   try {
-    const response = await fetch("http://localhost:8069/api/projects", {
+    const response = await fetch(`${API_BASE_URL}/api/projects`, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getHeaders(),
       cache: "no-store", // Ensure fresh data
     })
 
-    const data: ProjectsResponse = await response.json()
+    const text = await response.text()
+    
+    if (!response.ok) {
+        return { error: `Server error (${response.status}): ${text.slice(0, 100)}` }
+    }
+
+    let data: ProjectsResponse
+    try {
+        data = JSON.parse(text)
+    } catch (e) {
+        console.error("Failed to parse JSON:", text.slice(0, 500))
+        return { error: "Backend returned invalid JSON. Check Odoo logs or database selection." }
+    }
     
     const statuses: ProjectStatus[] = ["New Job Creation", "New Design", "Design internal review", "Design revision", "Awaiting Engineering", "Print and Ship", "On hold/challenge"]
     
@@ -51,7 +74,7 @@ export async function fetchProjectsAction(): Promise<ProjectsResponse | { error:
         id: item.id,
         name: item.name || "Untitled Project",
         address: item.address || "No Address Provided",
-        status: statusLabel,
+        status: statusLabel as ProjectStatus,
         systemSize: item.system_summary?.system_size ? `${item.system_summary.system_size} kW` : "N/A",
         systemType: item.system_summary?.system_type || "N/A",
         pvModules: item.system_summary?.pv_modules || 0,
@@ -93,19 +116,24 @@ export async function fetchProjectsAction(): Promise<ProjectsResponse | { error:
 
 export async function fetchProjectByIdAction(id: string): Promise<{ data?: Project; error?: string }> {
   try {
-    const response = await fetch(`http://localhost:8069/api/projects/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/projects/${id}`, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getHeaders(),
       cache: "no-store",
     })
 
+    const text = await response.text()
+    
     if (!response.ok) {
-      throw new Error(`Failed to fetch project: ${response.statusText}`)
+      throw new Error(`Failed to fetch project: ${response.status} ${text.slice(0, 100)}`)
     }
 
-    const result = await response.json()
+    let result
+    try {
+        result = JSON.parse(text)
+    } catch (e) {
+        throw new Error("Backend returned invalid JSON.")
+    }
     const item = result.data
 
     if (!item) {
@@ -155,11 +183,9 @@ export async function fetchProjectByIdAction(id: string): Promise<{ data?: Proje
 
 export async function updateProjectAction(id: string, payload: any): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    const response = await fetch(`http://localhost:8069/api/projects/update`, {
+    const response = await fetch(`${API_BASE_URL}/api/projects/update`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getHeaders(),
       body: JSON.stringify({
         id: id,
         ...payload
@@ -191,11 +217,9 @@ export async function updateProjectAction(id: string, payload: any): Promise<{ s
 
 export async function fetchProjectUpdatesAction(id: string): Promise<any> {
   try {
-    const response = await fetch(`http://localhost:8069/api/project-updates/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/project-updates/${id}`, {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getHeaders(),
       cache: "no-store",
     })
 

@@ -1,12 +1,23 @@
 "use server"
 
+const API_BASE_URL = process.env.INTERNAL_API_URL || "http://localhost:8069"
+const ODOO_DB = process.env.ODOO_DB
+
+const getHeaders = () => {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  }
+  if (ODOO_DB) {
+    headers["X-Odoo-Database"] = ODOO_DB
+  }
+  return headers
+}
+
 export async function submitProjectAction(payload: any): Promise<{ success: boolean; data?: any; error?: any; status?: number }> {
     try {
-        const response = await fetch("http://localhost:8069/api/create-project", {
+        const response = await fetch(`${API_BASE_URL}/api/create-project`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers: getHeaders(),
             body: JSON.stringify(payload),
         })
 
