@@ -36,6 +36,20 @@ export default function LandingPage() {
   const [signupStep, setSignupStep] = useState(1)
   const [licenses, setLicenses] = useState<License[]>([{ id: "1", number: "", type: "", state: "" }])
   const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [signupFormData, setSignupFormData] = useState({
+    fullname: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    company: "",
+    phone: "",
+    address: "",
+  })
+
+  const handleSignupInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target
+    setSignupFormData((prev) => ({ ...prev, [id]: value }))
+  }
 
   const addLicense = () => {
     setLicenses([
@@ -101,13 +115,8 @@ export default function LandingPage() {
     e.preventDefault()
     
     // Collect data from form
-    const form = e.target as HTMLFormElement
-    const name = (form.elements.namedItem("fullname") as HTMLInputElement).value
-    const email = (form.elements.namedItem("email") as HTMLInputElement).value
-    const password = (form.elements.namedItem("password") as HTMLInputElement).value
-    const company_name = (form.elements.namedItem("company") as HTMLInputElement).value
-    const phone = (form.elements.namedItem("phone") as HTMLInputElement).value
-    const address = (form.elements.namedItem("address") as HTMLTextAreaElement)?.value || ""
+    // Use state instead of searching for elements that might be unmounted
+    const { fullname, email, password, company, phone, address } = signupFormData
     
     // Licenses from state
     const formattedLicenses = licenses.map(l => ({
@@ -118,10 +127,10 @@ export default function LandingPage() {
 
     try {
       const res = await signupAction({
-        name,
+        name: fullname,
         email,
         password,
-        company_name,
+        company_name: company,
         phone,
         address,
         logo_url: logoFile ? "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxSEAMY_JvOZYIDqE06GBzt0PCjOtoSNNBew&s" : "",
@@ -313,29 +322,73 @@ export default function LandingPage() {
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                               <Label htmlFor="fullname">Full Name *</Label>
-                              <Input id="fullname" placeholder="John Doe" required className="h-11 rounded-xl bg-white" />
+                              <Input 
+                                id="fullname" 
+                                placeholder="John Doe" 
+                                required 
+                                className="h-11 rounded-xl bg-white" 
+                                value={signupFormData.fullname}
+                                onChange={handleSignupInputChange}
+                              />
                             </div>
                             <div className="space-y-2">
                               <Label htmlFor="company">Company *</Label>
-                              <Input id="company" placeholder="Solar Solutions Inc." required className="h-11 rounded-xl bg-white" />
+                              <Input 
+                                id="company" 
+                                placeholder="Solar Solutions Inc." 
+                                required 
+                                className="h-11 rounded-xl bg-white" 
+                                value={signupFormData.company}
+                                onChange={handleSignupInputChange}
+                              />
                             </div>
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="email">Email Address *</Label>
-                            <Input id="email" type="email" placeholder="you@company.com" required className="h-11 rounded-xl bg-white" />
+                            <Input 
+                              id="email" 
+                              type="email" 
+                              placeholder="you@company.com" 
+                              required 
+                              className="h-11 rounded-xl bg-white" 
+                              value={signupFormData.email}
+                              onChange={handleSignupInputChange}
+                            />
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="phone">Phone Number *</Label>
-                            <Input id="phone" type="tel" placeholder="(555) 123-4567" required className="h-11 rounded-xl bg-white" />
+                            <Input 
+                              id="phone" 
+                              type="tel" 
+                              placeholder="(555) 123-4567" 
+                              required 
+                              className="h-11 rounded-xl bg-white" 
+                              value={signupFormData.phone}
+                              onChange={handleSignupInputChange}
+                            />
                           </div>
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                               <Label htmlFor="password">Password *</Label>
-                              <Input id="password" type="password" required className="h-11 rounded-xl bg-white" />
+                              <Input 
+                                id="password" 
+                                type="password" 
+                                required 
+                                className="h-11 rounded-xl bg-white" 
+                                value={signupFormData.password}
+                                onChange={handleSignupInputChange}
+                              />
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="confirm-password">Confirm *</Label>
-                              <Input id="confirm-password" type="password" required className="h-11 rounded-xl bg-white" />
+                              <Label htmlFor="confirmPassword">Confirm *</Label>
+                              <Input 
+                                id="confirmPassword" 
+                                type="password" 
+                                required 
+                                className="h-11 rounded-xl bg-white" 
+                                value={signupFormData.confirmPassword}
+                                onChange={handleSignupInputChange}
+                              />
                             </div>
                           </div>
                           <Button
@@ -372,6 +425,8 @@ export default function LandingPage() {
                               placeholder="123 Main St&#10;Suite 100&#10;City, State 12345"
                               rows={4}
                               className="rounded-xl bg-white resize-none pt-3"
+                              value={signupFormData.address}
+                              onChange={handleSignupInputChange}
                             />
                           </div>
                           <div className="space-y-2">
