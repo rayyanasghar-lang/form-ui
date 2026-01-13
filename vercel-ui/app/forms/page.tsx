@@ -7,8 +7,6 @@ import { ChevronLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Navbar } from "@/components/layout/navbar"
 import PermitPlansetForm from "@/components/permit-planset-form"
-import { BackgroundGradient } from "@/components/layout/background-gradient"
-
 
 export default function FormsPage() {
   const [mounted, setMounted] = useState(false)
@@ -25,9 +23,6 @@ export default function FormsPage() {
         title="Forms"
         backLink={{ label: "Dashboard", href: "/projects" }}
       />
-
-      <BackgroundGradient />
-
 
 
       <main className="flex-1 px-4 sm:px-6 lg:px-8 pt-6 pb-28 md:pb-12">
