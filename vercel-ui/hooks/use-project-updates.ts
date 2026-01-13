@@ -35,12 +35,24 @@ export function useProjectUpdates(projectId: string | undefined) {
     // Initial fetch
     fetchData()
 
-    // Poll every 5 seconds
-    const intervalId = setInterval(fetchData, 5000)
+    // Poll every 3 seconds
+    const intervalId = setInterval(fetchData, 3000)
 
     return () => clearInterval(intervalId)
   }, [projectId])
 
-  return { data, isLoading, error }
+  const refresh = async () => {
+    if (!projectId) return
+    try {
+      const json = await fetchProjectUpdatesAction(projectId)
+      if (json.status === 'success') {
+        setData(json.data)
+      }
+    } catch (err) {
+      console.error('Error refreshing project updates:', err)
+    }
+  }
+
+  return { data, isLoading, error, refresh }
 }
 

@@ -25,7 +25,9 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { signoutAction, getContractorProfileAction } from "@/app/actions/auth-service"
+import { useEffect } from "react"
 
 interface SidebarProps {
   variant?: "dashboard" | "settings"
@@ -44,13 +46,41 @@ export default function Sidebar({
   className
 }: SidebarProps & { className?: string }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [internalCollapsed, setInternalCollapsed] = useState(false)
+  const [contractor, setContractor] = useState<any>(null)
   
   const isCollapsed = onCollapsedChange ? collapsed : internalCollapsed
   const setCollapsed = onCollapsedChange || setInternalCollapsed
 
+  useEffect(() => {
+    async function loadContractor() {
+      const result = await getContractorProfileAction()
+      if (result.success && result.data) {
+        setContractor(result.data)
+      } else {
+        if (typeof window !== "undefined") {
+          const stored = localStorage.getItem("contractor")
+          if (stored) {
+            try {
+              setContractor(JSON.parse(stored))
+            } catch (e) {}
+          }
+        }
+      }
+    }
+    loadContractor()
+  }, [])
+
+  const handleLogout = async () => {
+    await signoutAction()
+    localStorage.removeItem("contractor")
+    router.push("/")
+  }
+
   // Dashboard navigation sections
   const dashboardSections = [ 
+    // ... (rest of dashboardSections)
     // {
     //   title: "Main",
     //   items: [
@@ -188,19 +218,22 @@ export default function Sidebar({
       <div className="p-4 border-t border-sidebar-border">
         <div className="mb-4 bg-sidebar-accent/10 p-3 rounded-xl border border-sidebar-border flex items-center gap-3 group hover:bg-sidebar-accent/20 transition-all">
           <div 
-            className="h-9 w-9 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm border border-white/10 shrink-0 bg-sidebar-primary"
+            className="h-9 w-9 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm border border-white/10 shrink-0 bg-sidebar-primary uppercase"
           >
-            JD
+            {contractor?.name?.substring(0, 2) || "JD"}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-bold text-sidebar-foreground truncate">
-              Solar Solutions Inc.
+              {contractor?.company_name || "Solar Solutions Inc."}
             </p>
             <p className="text-[10px] font-medium text-sidebar-foreground/50 truncate uppercase tracking-wider">
-              Admin
+              {contractor?.name || "Admin"}
             </p>
           </div>
-          <button className="text-sidebar-foreground/40 hover:text-destructive transition-colors p-1.5 rounded-lg hover:bg-destructive/10">
+          <button 
+            onClick={handleLogout}
+            className="text-sidebar-foreground/40 hover:text-destructive transition-colors p-1.5 rounded-lg hover:bg-destructive/10"
+          >
             <LogOut className="h-4 w-4" />
           </button>
         </div>

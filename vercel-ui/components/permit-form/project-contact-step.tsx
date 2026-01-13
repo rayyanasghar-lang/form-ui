@@ -91,17 +91,21 @@ export default function ProjectContactStep({
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="companyName" className="flex items-center gap-2">
-                                <Building2 className="w-4 h-4 text-muted-foreground" />
-                                Company Name
+                             <Label htmlFor="systemType" className="flex items-center gap-2">
+                                <Zap className="w-4 h-4 text-muted-foreground" />
+                                System Type
                             </Label>
-                            <Input
-                                id="companyName"
-                                placeholder="Enter company name"
-                                value={formData.companyName}
-                                onChange={(e) => updateField("companyName", e.target.value)}
-                            />
-                            {errors.companyName && <p className="text-sm text-destructive">{errors.companyName}</p>}
+                            <Select value={formData.systemType || undefined} onValueChange={(v) => updateField("systemType", v)}>
+                                <SelectTrigger id="systemType" className="w-full h-12 rounded-xl border-zinc-200">
+                                    <SelectValue placeholder={<span className="text-zinc-400 font-normal italic">Select system type</span>} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="roof_mount">Roof Mount</SelectItem>
+                                    <SelectItem value="ground_mount">Ground Mount</SelectItem>
+                                    <SelectItem value="car_pool">Car Pool</SelectItem>
+                                    <SelectItem value="both">Both Roof and Ground</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
 
                         <div className="space-y-2">

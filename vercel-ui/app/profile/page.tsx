@@ -45,29 +45,56 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { BackgroundGradient } from "@/components/layout/background-gradient";
+import AuthGuard from "@/components/auth/auth-guard";
+import { useEffect } from "react";
+import { getContractorProfileAction } from "@/app/actions/auth-service";
 
 export default function ProfilePage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("account");
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [contractor, setContractor] = useState<any>(null);
 
-  // Mock Licenses State
-  const [licenses, setLicenses] = useState([
-    {
-      id: 1,
-      type: "Electrical Engineer",
-      state: "California",
-      number: "EE-99201",
-    },
-    {
-      id: 2,
-      type: "Contractor (C-10)",
-      state: "Arizona",
-      number: "ROC-332145",
-    },
-  ]);
+  useEffect(() => {
+    async function loadProfile() {
+      setIsLoading(true);
+      const result = await getContractorProfileAction();
+      if (result.success && result.data) {
+        setContractor(result.data);
+        if (result.data.licenses && Array.isArray(result.data.licenses)) {
+          setLicenses(result.data.licenses.map((l: any, idx: number) => ({
+            id: idx + 1,
+            type: l.license_type,
+            state: l.state,
+            number: l.license_no
+          })));
+        }
+      } else {
+        const stored = localStorage.getItem("contractor");
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            setContractor(parsed);
+            if (parsed.licenses && Array.isArray(parsed.licenses)) {
+              setLicenses(parsed.licenses.map((l: any, idx: number) => ({
+                id: idx + 1,
+                type: l.license_type,
+                state: l.state,
+                number: l.license_no
+              })));
+            }
+          } catch (e) {}
+        }
+      }
+      setIsLoading(false);
+    }
+    loadProfile();
+  }, []);
+
+  // Licenses State
+  const [licenses, setLicenses] = useState<any[]>([]);
 
   const handleSave = () => {
     setIsSaving(true);
@@ -88,8 +115,22 @@ export default function ProfilePage() {
     setLicenses(licenses.filter((l) => l.id !== id));
   };
 
+  if (isLoading) {
+    return (
+      <AuthGuard>
+        <div className="flex h-screen items-center justify-center bg-background">
+          <div className="flex flex-col items-center gap-4">
+            <Activity className="h-10 w-10 animate-spin text-primary" />
+            <p className="text-zinc-500 font-bold">Downloading Identity Profile...</p>
+          </div>
+        </div>
+      </AuthGuard>
+    )
+  }
+
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <AuthGuard>
+      <div className="flex h-screen overflow-hidden bg-background">
       {/* --- SIDEBAR --- */}
       <Sidebar 
         variant="settings"
@@ -99,7 +140,6 @@ export default function ProfilePage() {
         onCollapsedChange={setSidebarCollapsed}
       />
       
-      <BackgroundGradient />
 
       {/* --- MAIN CONTENT --- */}
       <main className="flex-1 flex flex-col overflow-hidden relative">
@@ -195,8 +235,10 @@ export default function ProfilePage() {
                         <div className="flex flex-col sm:flex-row items-start gap-6">
                           <div className="shrink-0 relative group">
                             <Avatar className="h-24 w-24 border-2 border-zinc-100 shadow-sm">
-                              <AvatarImage src="/avatar-placeholder.png" />
-                              <AvatarFallback className="text-2xl font-bold bg-zinc-50 text-zinc-400">JD</AvatarFallback>
+                              <AvatarImage src={contractor?.logo_url || "/avatar-placeholder.png"} />
+                              <AvatarFallback className="text-2xl font-bold bg-zinc-50 text-zinc-400">
+                                {contractor?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || "JD"}
+                              </AvatarFallback>
                             </Avatar>
                             <label className="absolute -bottom-1 -right-1 h-8 w-8 bg-white text-zinc-600 rounded-full flex items-center justify-center cursor-pointer shadow-md hover:bg-zinc-50 border border-zinc-200 transition-colors">
                               <Camera className="h-4 w-4" />
@@ -206,7 +248,7 @@ export default function ProfilePage() {
                           <div className="flex-1 w-full space-y-4">
                             <div className="grid gap-2">
                               <Label htmlFor="fullName">Full Name</Label>
-                              <Input id="fullName" defaultValue="John Doe" />
+                              <Input id="fullName" defaultValue={contractor?.name || ""} key={contractor?.name} />
                             </div>
                             <div className="grid gap-2">
                               <Label htmlFor="headline">Professional Headline</Label>
@@ -231,20 +273,20 @@ export default function ProfilePage() {
                         </div>
                       </CardHeader>
                       <CardContent className="grid sm:grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                          <Label>Work Email</Label>
-                          <div className="relative">
-                            <Mail className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
-                            <Input defaultValue="j.doe@solarsolutions.com" className="pl-9" />
+                          <div className="grid gap-2">
+                            <Label>Work Email</Label>
+                            <div className="relative">
+                              <Mail className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
+                              <Input defaultValue={contractor?.email || ""} className="pl-9" key={contractor?.email} />
+                            </div>
                           </div>
-                        </div>
-                        <div className="grid gap-2">
-                          <Label>Direct Line</Label>
-                          <div className="relative">
-                            <Phone className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
-                            <Input defaultValue="+1 (555) 902-1234" className="pl-9" />
+                          <div className="grid gap-2">
+                            <Label>Direct Line</Label>
+                            <div className="relative">
+                              <Phone className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
+                              <Input defaultValue={contractor?.phone || ""} className="pl-9" key={contractor?.phone} />
+                            </div>
                           </div>
-                        </div>
                       </CardContent>
                     </Card>
 
@@ -362,7 +404,7 @@ export default function ProfilePage() {
                       <div className="flex flex-col sm:flex-row items-start gap-8">
                         <div className="shrink-0 space-y-3">
                           <div className="w-32 h-32 bg-zinc-50 border-2 border-dashed border-zinc-200 rounded-lg flex flex-col items-center justify-center relative group cursor-pointer hover:bg-zinc-100 transition-colors">
-                            <Image src="/logo.png" alt="Logo" width={100} height={40} className="h-8 w-auto opacity-50 group-hover:opacity-100 transition-opacity" />
+                            <Image src={contractor?.logo_url || "/logo.png"} alt="Logo" width={100} height={40} className="h-8 w-auto opacity-50 group-hover:opacity-100 transition-opacity" />
                              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                 <span className="text-xs font-semibold text-zinc-600 bg-white/80 px-2 py-1 rounded shadow-sm">Update</span>
                              </div>
@@ -371,7 +413,7 @@ export default function ProfilePage() {
                         <div className="flex-1 w-full grid gap-4">
                           <div className="grid gap-2">
                              <Label>Legal Company Name</Label>
-                             <Input defaultValue="Solar Solutions Inc." />
+                             <Input defaultValue={contractor?.company_name || ""} key={contractor?.company_name} />
                           </div>
                           <div className="grid gap-2">
                              <Label>Tax ID</Label>
@@ -399,7 +441,7 @@ export default function ProfilePage() {
                        <div className="grid sm:grid-cols-2 gap-4">
                           <div className="grid gap-2">
                              <Label>Street Address</Label>
-                             <Input defaultValue="123 Solar Way" />
+                             <Input defaultValue={contractor?.address || ""} key={contractor?.address} />
                           </div>
                           <div className="grid gap-2">
                              <Label>Suite / Floor</Label>
@@ -610,5 +652,6 @@ export default function ProfilePage() {
         </div>
       </main>
     </div>
+    </AuthGuard>
   );
 }

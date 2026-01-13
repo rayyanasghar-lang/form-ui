@@ -7,16 +7,25 @@ export interface ProjectsResponse {
   data: Project[]
 }
 
+import { cookies } from "next/headers"
+
 const API_BASE_URL = process.env.INTERNAL_API_URL || "http://localhost:8069"
 const ODOO_DB = process.env.ODOO_DB 
 
-const getHeaders = () => {
+const getHeaders = async () => {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   }
   if (ODOO_DB) {
     headers["X-Odoo-Database"] = ODOO_DB
   }
+  
+  const cookieStore = await cookies()
+  const token = cookieStore.get("auth_token")?.value
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`
+  }
+  
   return headers
 }
 
@@ -24,7 +33,7 @@ export async function fetchProjectsAction(): Promise<ProjectsResponse | { error:
   try {
     const response = await fetch(`${API_BASE_URL}/api/projects`, {
       method: "GET",
-      headers: getHeaders(),
+      headers: await getHeaders(),
       cache: "no-store", // Ensure fresh data
     })
 
@@ -62,37 +71,55 @@ export async function fetchProjectsAction(): Promise<ProjectsResponse | { error:
         if (normalized === "Design-Internal Review") return "Design internal review"
         if (normalized === "Design Revision") return "Design revision"
         if (normalized === "Design Submitted") return "Design submitted"
-        if (normalized === "draft") return "New Job Creation" // Map legacy draft to New Job Creation
+        if (normalized === "draft" || normalized === "New") return "New Job Creation" // Map legacy draft/New to New Job Creation
         
         return normalized
+      }
+
+      // Helper to extract One2many/Many2one data
+      const extractRelation = (val: any) => {
+          if (!val) return undefined;
+          if (Array.isArray(val)) {
+              return val.length > 0 ? val[0] : undefined;
+          }
+          return val; // It's already an object
       }
 
       const rawStatus = item.stage || item.status
       const statusLabel = getStatusLabel(rawStatus)
 
+      const systemSummary = extractRelation(item.system_summary_id || item.system_summary);
+      const siteDetails = extractRelation(item.site_detail_id || item.site_details);
+      const electricalDetails = extractRelation(item.electrical_detail_id || item.electrical_details);
+      const advElectricalDetails = extractRelation(item.advanced_electrical_detail_id || item.advanced_electrical_details);
+      const optionalExtras = extractRelation(item.optional_extra_detail_id || item.optional_extra_details);
+      
+      const systemComponents = item.system_component_ids || item.system_components || [];
+      const uploads = item.upload_ids || item.uploads || [];
+
       return {
-        id: item.id,
+        id: item.uuid || item.id, // Prefer UUID
         name: item.name || "Untitled Project",
         address: item.address || "No Address Provided",
         status: statusLabel as ProjectStatus,
-        systemSize: item.system_summary?.system_size ? `${item.system_summary.system_size} kW` : "N/A",
-        systemType: item.system_summary?.system_type || "N/A",
-        pvModules: item.system_summary?.pv_modules || 0,
-        inverters: item.system_summary?.inverters || 0,
-        batteryBackup: !!item.system_summary?.battery_info,
+        systemSize: systemSummary?.system_size ? `${systemSummary.system_size} kW` : "N/A",
+        systemType: systemSummary?.system_type || "N/A",
+        pvModules: systemSummary?.pv_modules || 0,
+        inverters: systemSummary?.inverters || 0,
+        batteryBackup: !!systemSummary?.battery_info,
         createdAt: item.created_at ? new Date(item.created_at) : new Date(),
         updatedAt: item.updated_at ? new Date(item.updated_at) : new Date(),
-        type: item.type || item.system_summary?.system_type || "residential", // Fallback for type
+        type: item.type || systemSummary?.system_type || "residential", // Fallback for type
         
         // Detailed Nested Fields
         user_profile: item.user_profile,
-        system_summary: item.system_summary,
-        site_details: item.site_details,
-        electrical_details: item.electrical_details,
-        advanced_electrical_details: item.advanced_electrical_details,
-        optional_extra_details: item.optional_extra_details,
-        system_components: item.system_components,
-        uploads: item.uploads,
+        system_summary: systemSummary,
+        site_details: siteDetails,
+        electrical_details: electricalDetails,
+        advanced_electrical_details: advElectricalDetails,
+        optional_extra_details: optionalExtras,
+        system_components: systemComponents,
+        uploads: uploads,
         general_notes: item.general_notes,
 
         // Legacy matching
@@ -118,7 +145,7 @@ export async function fetchProjectByIdAction(id: string): Promise<{ data?: Proje
   try {
     const response = await fetch(`${API_BASE_URL}/api/projects/${id}`, {
       method: "GET",
-      headers: getHeaders(),
+      headers: await getHeaders(),
       cache: "no-store",
     })
 
@@ -140,30 +167,55 @@ export async function fetchProjectByIdAction(id: string): Promise<{ data?: Proje
       throw new Error("Project not found")
     }
 
+    // Helper to safely extract One2many/Many2one data
+    const extractRelation = (val: any) => {
+        if (!val) return undefined;
+        if (Array.isArray(val)) {
+            return val.length > 0 ? val[0] : undefined;
+        }
+        return val; // It's already an object
+    }
+
     // Map to frontend Project type
+    const systemSummary = extractRelation(item.system_summary_id || item.system_summary);
+    const siteDetails = extractRelation(item.site_detail_id || item.site_details);
+    const electricalDetails = extractRelation(item.electrical_detail_id || item.electrical_details);
+    const advElectricalDetails = extractRelation(item.advanced_electrical_detail_id || item.advanced_electrical_details);
+    const optionalExtras = extractRelation(item.optional_extra_detail_id || item.optional_extra_details);
+    
+    // Components and Uploads are true Lists
+    const systemComponents = item.system_component_ids || item.system_components || [];
+    const uploads = item.upload_ids || item.uploads || [];
+
     const project: Project = {
-      id: item.id,
+      id: item.uuid || item.id, // Prefer UUID if avail
       name: item.name || "Untitled Project",
       address: item.address || "No Address Provided",
       status: item.status || "draft",
-      systemSize: item.system_summary?.system_size ? `${item.system_summary.system_size} kW` : "N/A",
-      systemType: item.system_summary?.system_type || "N/A",
-      pvModules: item.system_summary?.pv_modules || 0,
-      inverters: item.system_summary?.inverters || 0,
-      batteryBackup: !!item.system_summary?.battery_info,
+      systemSize: systemSummary?.system_size ? `${systemSummary.system_size} kW` : "N/A",
+      systemType: systemSummary?.system_type || "N/A",
+      pvModules: systemSummary?.pv_modules || 0,
+      inverters: systemSummary?.inverters || 0,
+      batteryBackup: !!systemSummary?.battery_info,
       createdAt: item.created_at ? new Date(item.created_at) : new Date(),
       updatedAt: item.updated_at ? new Date(item.updated_at) : new Date(),
-      type: item.type || item.system_summary?.system_type || "residential",
+      type: item.type || systemSummary?.system_type || "residential",
       
       // Detailed Nested Fields
-      user_profile: item.user_profile,
-      system_summary: item.system_summary,
-      site_details: item.site_details,
-      electrical_details: item.electrical_details,
-      advanced_electrical_details: item.advanced_electrical_details,
-      optional_extra_details: item.optional_extra_details,
-      system_components: item.system_components,
-      uploads: item.uploads,
+      user_profile: item.user_profile || { // Fallback if user_profile is flattened or different
+        contact_name: item.user_profile_id, // If simplistic
+        // ...
+      },
+      // Better to check if item.user_profile is object
+      ...((item.user_profile && typeof item.user_profile === 'object') ? { user_profile: item.user_profile } : {}),
+
+      system_summary: systemSummary,
+      site_details: siteDetails,
+      electrical_details: electricalDetails,
+      advanced_electrical_details: advElectricalDetails,
+      optional_extra_details: optionalExtras,
+      system_components: systemComponents,
+      uploads: uploads,
       general_notes: item.general_notes,
 
       // Legacy matching
@@ -185,7 +237,7 @@ export async function updateProjectAction(id: string, payload: any): Promise<{ s
   try {
     const response = await fetch(`${API_BASE_URL}/api/projects/update`, {
       method: "POST",
-      headers: getHeaders(),
+      headers: await getHeaders(),
       body: JSON.stringify({
         id: id,
         ...payload
@@ -219,7 +271,7 @@ export async function fetchProjectUpdatesAction(id: string): Promise<any> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/project-updates/${id}`, {
       method: "GET",
-      headers: getHeaders(),
+      headers: await getHeaders(),
       cache: "no-store",
     })
 
@@ -235,5 +287,35 @@ export async function fetchProjectUpdatesAction(id: string): Promise<any> {
       status: "error",
       error: error instanceof Error ? error.message : "Unknown error occurred",
     }
+  }
+}
+export async function sendProjectMessageAction(projectId: string, message: string, authorName: string = "Frontend User"): Promise<{ success: boolean; error?: string }> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/project/${projectId}/message`, {
+      method: "POST",
+      headers: await getHeaders(),
+      body: JSON.stringify({
+        body: message,
+        author_name: authorName
+      }),
+    })
+
+    const text = await response.text()
+    if (!response.ok) {
+      return { success: false, error: `Failed to send message: ${response.status} ${text.slice(0, 100)}` }
+    }
+
+    try {
+      const data = JSON.parse(text)
+      if (data.status === "success") {
+        return { success: true }
+      }
+      return { success: false, error: data.message || "Unknown error from backend" }
+    } catch (e) {
+      return { success: true } // Some APIs return 200 with non-JSON success
+    }
+  } catch (error: any) {
+    console.error("Send Message Action Error:", error)
+    return { success: false, error: error.message || "Failed to connect to backend" }
   }
 }
