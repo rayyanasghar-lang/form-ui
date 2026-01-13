@@ -16,6 +16,7 @@ import { uploadWithRcloneAction } from "@/app/actions/upload-rclone"
 
 import { submitProjectAction } from "@/app/actions/submit-project"
 import { fetchServicesAction, Service } from "@/app/actions/fetch-services"
+import { getContractorProfileAction } from "@/app/actions/auth-service"
 import { 
   scrapeZillowAction, 
   scrapeASCE722Action, 
@@ -24,7 +25,6 @@ import {
 import { fetchNearbyStations, geocodeAddress, WeatherStation } from "@/app/actions/weather-service"
 
 import { Component } from "./system-components-table"
-import { BackgroundGradient } from "@/components/layout/background-gradient"
 
 const FORM_STEPS = ["Project & Contact"]
 
@@ -52,14 +52,14 @@ export default function PermitPlansetForm() {
   const [formData, setFormData] = useState({
     companyName: "",
     projectName: "",
-    contactName: "Solar Professional",
-    email: "solar@example.com",
-    phone: "555-0199",
+    contactName: "", // Default empty, fill from profile
+    email: "", // Default empty, fill from profile
+    phone: "", // Default empty, fill from profile
     projectAddress: "",
     projectType: "",
     services: [] as string[],
     systemSize: "",
-    systemType: "",
+    systemType: "", // Ensure this is present
     pvModules: "",
     inverters: "",
     batteryBackup: false,
@@ -112,13 +112,45 @@ export default function PermitPlansetForm() {
   })
 
   /* ---------------- Fetch Services ---------------- */
+  /* ---------------- Fetch Services & Contractor ---------------- */
   useEffect(() => {
+    // Fetch Services
     fetchServicesAction().then((res) => {
       if ("data" in res && res.data) {
         setAvailableServices(res.data)
       }
       setServicesLoading(false)
     })
+
+    // Fetch Contractor Profile for Auto-fill
+    async function loadContractor() {
+      const result = await getContractorProfileAction()
+      if (result.success && result.data) {
+        setFormData(prev => ({
+          ...prev,
+          companyName: result.data.company_name || prev.companyName,
+          contactName: result.data.name || prev.contactName,
+          email: result.data.email || prev.email,
+          phone: result.data.phone || prev.phone,
+        }))
+      } else {
+        // Fallback to localStorage
+        const stored = localStorage.getItem("contractor")
+        if (stored) {
+            try {
+                const c = JSON.parse(stored)
+                setFormData(prev => ({
+                    ...prev,
+                    companyName: c.company_name || prev.companyName,
+                    contactName: c.name || prev.contactName,
+                    email: c.email || prev.email,
+                    phone: c.phone || prev.phone,
+                }))
+            } catch (e) {}
+        }
+      }
+    }
+    loadContractor()
   }, [])
 
   /* ---------------- Save Draft ---------------- */
@@ -138,15 +170,17 @@ export default function PermitPlansetForm() {
     try {
       const payload = prepareProjectPayload(formData, [], "draft")
       const res = await submitProjectAction(payload)
-      if (res.success && res.data?.id) {
+      const projectId = res.data?.id || res.data?.result?.id || res.data?.result || (typeof res.data === 'number' || typeof res.data === 'string' ? res.data : undefined)
+
+      if (res.success && projectId) {
         setLastSaved(new Date())
         setSaveStatus("saved")
         toast.success("Draft saved. Redirecting to details...")
-        router.push(`/projects/${res.data.id}`)
+        router.push(`/projects/${projectId}`)
       } else {
         setSaveStatus("idle")
-        const errorMsg = typeof res.error === 'object' ? (res.error as any).message || (res.error as any).status : res.error;
-        toast.error(errorMsg || "Failed to save draft")
+        const errorMsg = res.error ? (typeof res.error === 'object' ? (res.error as any).message || (res.error as any).status : String(res.error)) : "Draft saved but ID missing";
+        toast.error(errorMsg)
       }
     } catch (error) {
       setSaveStatus("idle")
@@ -179,6 +213,16 @@ export default function PermitPlansetForm() {
   }
 
   const prepareProjectPayload = (data: typeof formData, _components: any[], status: string) => {
+    // Get contractor_id from local storage
+    const contractorStr = typeof window !== 'undefined' ? localStorage.getItem('contractor') : null
+    let contractorId = null
+    if (contractorStr) {
+      try {
+        const contractor = JSON.parse(contractorStr)
+        contractorId = contractor.id
+      } catch (e) {}
+    }
+
     return {
       user_profile: {
         company_name: data.companyName,
@@ -191,20 +235,24 @@ export default function PermitPlansetForm() {
         address: data.projectAddress,
         type: data.projectType,
         general_notes: data.generalNotes,
+        system_type: data.systemType, // Added system_type
         submission_type_name: submissionMode,
       },
       services: data.services,
-      status: status
+      status: status,
+      contractor_id: contractorId // Added contractor_id linkage
     }
   }
 
   const handleSubmit = async () => {
     // Initial submission validation
-    if (!formData.projectName || !formData.projectAddress || !formData.companyName) {
+    if (!formData.projectName || !formData.projectAddress || !formData.companyName || !formData.projectType || !formData.systemType) {
       setErrors({
         projectName: !formData.projectName ? "Project name is required" : "",
         companyName: !formData.companyName ? "Company name is required" : "",
         projectAddress: !formData.projectAddress ? "Project address is required" : "",
+        projectType: !formData.projectType ? "Project type is required" : "",
+        systemType: !formData.systemType ? "System type is required" : "",
       })
       toast.error("Please fill in required fields")
       return
@@ -214,12 +262,22 @@ export default function PermitPlansetForm() {
     try {
       const payload = prepareProjectPayload(formData, [], "draft")
       const res = await submitProjectAction(payload)
-      if (res.success && res.data?.id) {
+      // Check for project_id (from new backend format), id, or other variations
+      const projectId = res.data?.project_id || res.data?.id || res.data?.result?.id || res.data?.result || (typeof res.data === 'number' || typeof res.data === 'string' ? res.data : undefined)
+
+      if (res.success && projectId) {
         toast.success("Project created! Now provide more details.")
-        router.push(`/projects/${res.data.id}`)
+        router.push(`/projects/${projectId}`)
       } else {
-        const errorMsg = typeof res.error === 'object' ? (res.error as any).message || (res.error as any).status : res.error;
-        toast.error(errorMsg || "Submission failed")
+        // Handle specific duplicate address error
+        const errorMsg = res.error ? (typeof res.error === 'object' ? (res.error as any).message || (res.error as any).status : String(res.error)) : "Project created but ID missing";
+        
+        if (errorMsg.toLowerCase().includes("address")) {
+           toast.error("This address is already registered with another project. Please verify the address.")
+           setErrors(prev => ({ ...prev, projectAddress: "Address already in use" }))
+        } else {
+           toast.error(errorMsg)
+        }
       }
     } catch (error) {
       console.error("Submission error:", error)
@@ -297,7 +355,6 @@ export default function PermitPlansetForm() {
   /* ---------------- Render ---------------- */
   return (
     <form className="space-y-6 pb-32 md:pb-0 relative">
-      <BackgroundGradient />
       
       <div className="sticky top-[64px] z-30 bg-transparent md:static">
         <Stepper steps={STEPS} currentStep={currentStep} />
@@ -331,7 +388,7 @@ export default function PermitPlansetForm() {
             isLoading={isSubmitting}
             saveStatus={saveStatus}
             lastSaved={lastSaved}
-            onSaveDraft={handleSaveDraft}
+            nextLabel="Create"
           />
         </div>
       </div>

@@ -51,18 +51,31 @@ export default function SystemSummaryStep({
 
                         <div className="space-y-2">
                             <Label htmlFor="systemType">System Type *</Label>
-                            <Select value={formData.systemType} onValueChange={(v) => updateField("systemType", v)}>
-                                <SelectTrigger id="systemType">
-                                    <SelectValue placeholder="Select system type" />
+                            
+                            <Select
+                                value={formData.systemType || undefined}
+                                onValueChange={(v) => updateField("systemType", v)}
+                            >
+                                <SelectTrigger
+                                    id="systemType"
+                                    className="w-full h-12 rounded-xl border-zinc-200"
+                                >
+                                    <SelectValue placeholder={<span className="text-zinc-400 font-normal italic">Select system type</span>} />
                                 </SelectTrigger>
+
                                 <SelectContent>
-                                    <SelectItem value="roofmount">Roof Mount</SelectItem>
-                                    <SelectItem value="groundmount">Ground Mount</SelectItem>
-                                    <SelectItem value="other">Other</SelectItem>
+                                    <SelectItem value="roof_mount">Roof Mount</SelectItem>
+                                    <SelectItem value="ground_mount">Ground Mount</SelectItem>
+                                    <SelectItem value="car_pool">Car Pool</SelectItem>
+                                    <SelectItem value="both">Both Roof and Ground</SelectItem>
                                 </SelectContent>
                             </Select>
-                            {errors.systemType && <p className="text-sm text-destructive">{errors.systemType}</p>}
+
+                            {errors.systemType && (
+                                <p className="text-sm text-destructive">{errors.systemType}</p>
+                            )}
                         </div>
+
 
                         <div className="space-y-2">
                             <Label htmlFor="pvModules">Number of PV Modules (optional)</Label>
@@ -106,7 +119,7 @@ export default function SystemSummaryStep({
                         {formData.batteryBackup && (
                             <div className="space-y-4 pl-4 border-l-2 border-primary/20">
                                 <div className="flex items-start gap-2 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                                    <Info className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                                    <Info className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
                                     <p className="text-sm text-green-700 dark:text-green-400">
                                         Battery engineering add-on ($100) required.
                                     </p>

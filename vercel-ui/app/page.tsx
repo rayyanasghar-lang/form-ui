@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
 import { Upload, Plus, Trash2 } from "lucide-react"
+import { loginAction, signupAction } from "@/app/actions/auth-service"
 
 type License = {
   id: string
@@ -54,14 +55,34 @@ export default function LandingPage() {
     }
   }
 
-  const handleLogin = (e: React.FormEvent) => {
+  const updateLicense = (id: string, field: keyof License, value: string) => {
+    setLicenses(licenses.map(l => l.id === id ? { ...l, [field]: value } : l))
+  }
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    toast.success("Login successful", {
-      description: "Redirecting to your dashboard...",
-    })
-    setTimeout(() => {
-      router.push("/projects")
-    }, 1500)
+    const form = e.target as HTMLFormElement
+    const email = (form.elements.namedItem("login-email") as HTMLInputElement).value
+    const password = (form.elements.namedItem("login-password") as HTMLInputElement).value
+
+    try {
+      const res = await loginAction({ email, password })
+      if (res.success && res.data?.contractor) {
+        // Store contractor data in localStorage
+        localStorage.setItem("contractor", JSON.stringify(res.data.contractor))
+        
+        toast.success("Login successful", {
+          description: "Redirecting to your dashboard...",
+        })
+        setTimeout(() => {
+          router.push("/projects")
+        }, 1500)
+      } else {
+        toast.error(res.error || "Login failed")
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred")
+    }
   }
 
   const handleNextStep = () => {
@@ -76,14 +97,53 @@ export default function LandingPage() {
     }
   }
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
-    toast.success("Account created!", {
-      description: "Welcome to Solar Permit Portal. Redirecting...",
-    })
-    setTimeout(() => {
-      router.push("/projects")
-    }, 1500)
+    
+    // Collect data from form
+    const form = e.target as HTMLFormElement
+    const name = (form.elements.namedItem("fullname") as HTMLInputElement).value
+    const email = (form.elements.namedItem("email") as HTMLInputElement).value
+    const password = (form.elements.namedItem("password") as HTMLInputElement).value
+    const company_name = (form.elements.namedItem("company") as HTMLInputElement).value
+    const phone = (form.elements.namedItem("phone") as HTMLInputElement).value
+    const address = (form.elements.namedItem("address") as HTMLTextAreaElement)?.value || ""
+    
+    // Licenses from state
+    const formattedLicenses = licenses.map(l => ({
+        license_no: l.number,
+        license_type: l.type,
+        state: l.state
+    }))
+
+    try {
+      const res = await signupAction({
+        name,
+        email,
+        password,
+        company_name,
+        phone,
+        address,
+        logo_url: logoFile ? "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxSEAMY_JvOZYIDqE06GBzt0PCjOtoSNNBew&s" : "",
+        licenses: formattedLicenses
+      })
+
+      if (res.success && res.data?.contractor) {
+        // Store contractor data in localStorage
+        localStorage.setItem("contractor", JSON.stringify(res.data.contractor))
+        
+        toast.success("Account created!", {
+          description: "Welcome to Sunpermit Portal. Redirecting...",
+        })
+        setTimeout(() => {
+          router.push("/projects")
+        }, 1500)
+      } else {
+        toast.error(res.error || "Signup failed")
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred")
+    }
   }
 
   const handleDrop = (e: React.DragEvent) => {
@@ -395,31 +455,47 @@ export default function LandingPage() {
                                 </div>
                                 <div className="space-y-2">
                                   <Label htmlFor={`license-number-${license.id}`}>License Number</Label>
-                                  <Input id={`license-number-${license.id}`} placeholder="ABC123456" required className="h-10 rounded-lg bg-white" />
+                                  <Input 
+                                    id={`license-number-${license.id}`} 
+                                    placeholder="ABC123456" 
+                                    required 
+                                    className="h-10 rounded-lg bg-white" 
+                                    value={license.number}
+                                    onChange={(e) => updateLicense(license.id, 'number', e.target.value)}
+                                  />
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                   <div className="space-y-2">
                                     <Label htmlFor={`license-type-${license.id}`}>Type</Label>
-                                    <Select required>
+                                    <Select 
+                                      required 
+                                      value={license.type}
+                                      onValueChange={(val) => updateLicense(license.id, 'type', val)}
+                                    >
                                       <SelectTrigger id={`license-type-${license.id}`} className="h-10 rounded-lg bg-white">
                                         <SelectValue placeholder="Select" />
                                       </SelectTrigger>
                                       <SelectContent className="rounded-xl border-white/40">
-                                        <SelectItem value="electrical">Electrical</SelectItem>
-                                        <SelectItem value="general">General</SelectItem>
-                                        <SelectItem value="solar">Solar</SelectItem>
-                                        <SelectItem value="roofing">Roofing</SelectItem>
+                                        <SelectItem value="Electrical">Electrical</SelectItem>
+                                        <SelectItem value="General">General</SelectItem>
+                                        <SelectItem value="Solar">Solar</SelectItem>
+                                        <SelectItem value="Roofing">Roofing</SelectItem>
                                       </SelectContent>
                                     </Select>
                                   </div>
                                   <div className="space-y-2">
                                     <Label htmlFor={`license-state-${license.id}`}>State</Label>
-                                    <Select required>
+                                    <Select 
+                                      required 
+                                      value={license.state}
+                                      onValueChange={(val) => updateLicense(license.id, 'state', val)}
+                                    >
                                       <SelectTrigger id={`license-state-${license.id}`} className="h-10 rounded-lg bg-white">
                                         <SelectValue placeholder="State" />
                                       </SelectTrigger>
                                       <SelectContent className="rounded-xl border-white/40">
                                         <SelectItem value="CA">California</SelectItem>
+                                        <SelectItem value="NY">New York</SelectItem>
                                         <SelectItem value="TX">Texas</SelectItem>
                                         <SelectItem value="FL">Florida</SelectItem>
                                         <SelectItem value="AZ">Arizona</SelectItem>

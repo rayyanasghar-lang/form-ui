@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Send, User, Bot, Paperclip, MoreHorizontal, Smile, X } from "lucide-react"
+import { Send, User, Bot, Paperclip, MoreHorizontal, Smile, X, Loader2 } from "lucide-react"
+import { sendProjectMessageAction } from "@/app/actions/project-service"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -27,58 +28,136 @@ interface ProjectChatProps {
   initialMessages?: any[] // Using any[] for flexibility with API response mapping
 }
 
-export function ProjectChat({ className, projectId, projectName, collapsed = false, onCollapsedChange, initialMessages = [] }: ProjectChatProps) {
+export function ProjectChat({ 
+  className, 
+  projectId, 
+  projectName, 
+  collapsed = false, 
+  onCollapsedChange, 
+  initialMessages = [] 
+}: ProjectChatProps) {
   const [inputValue, setInputValue] = useState("")
+  const [isSending, setIsSending] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   
-  // Transform API chat logs to internal Message format if needed, or stick to provided structure
+  // Transform API chat logs to internal Message format
   const [messages, setMessages] = useState<Message[]>([])
 
   useEffect(() => {
-    if (initialMessages && initialMessages.length > 0) {
+    if (initialMessages) {
+       // Helper to unescape common HTML entities
+       const unescape = (str: string) => {
+         return str
+           .replace(/&lt;/g, '<')
+           .replace(/&gt;/g, '>')
+           .replace(/&amp;/g, '&')
+           .replace(/&quot;/g, '"')
+           .replace(/&#39;/g, "'")
+           .replace(/&apos;/g, "'");
+       }
+
        // Convert API logs to Message interface
-       const formattedMessages: Message[] = initialMessages.map(log => ({
-          id: log.id.toString(),
-          content: log.subtype === "Stage Changed" 
-            ? log.tracking?.[0]?.description || log.body
-            : log.body || log.subtype, // Fallback to subtype if body is empty (common in notifications)
-          sender: "system" as const, // API logs are mostly system/notifications for now
-          timestamp: new Date(log.date),
-          user: {
-             name: log.author
+       const formattedMessages: Message[] = initialMessages.map(log => {
+          let body = String(log.body || log.message || log.content || "").trim()
+          if (!body && log.subtype) body = String(log.subtype)
+          
+          // Unescape if it looks like it has entities
+          if (body.includes("&lt;")) body = unescape(body)
+          
+          let author = "Unknown"
+          const authorRaw = log.author
+          if (typeof authorRaw === 'string') {
+              author = authorRaw
+          } else if (Array.isArray(authorRaw) && authorRaw.length > 1) {
+              author = String(authorRaw[1])
+          } else if (authorRaw && typeof authorRaw === 'object') {
+              author = String(authorRaw.name || authorRaw.display_name || "Unknown")
           }
-       })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
+
+          const authorLower = author.toLowerCase()
+          
+          // Regex for the portal header added by Odoo - very aggressive matching
+          const portalHeaderRegex = /<p><strong>.*?\(via Portal\):<\/strong><\/p>|<strong>.*?\(via Portal\):<\/strong>/gi
+          const hasPortalHeader = portalHeaderRegex.test(body)
+          
+          const isPortal = authorLower.includes("public user") || 
+                           authorLower.includes("frontend user") || 
+                           authorLower.includes("public") ||
+                           authorLower.includes("portal") ||
+                           body.includes("(via Portal):") ||
+                           hasPortalHeader
+          
+          let sender: "user" | "system" | "other" = (log.tracking?.length > 0 || log.subtype === "Stage Changed") ? "system" : "other"
+          
+          if (isPortal) {
+              sender = "user"
+              author = "You"
+              // Remove the redundant portal header from the body
+              body = body.replace(portalHeaderRegex, "").trim()
+              
+              // Clean up redundant wrappers
+              body = body.replace(/^<p><\/p>\s*/i, "").trim()
+              if (body.startsWith("<p>") && body.endsWith("</p>")) {
+                  // If it's the only thing left, we keep it, otherwise we might have triple nested <p>
+              }
+          } else if (authorLower === "you" || authorLower === "me") {
+              sender = "user"
+          }
+          
+          // Force UTC parsing to fix the 5-hour offset (Odoo sends UTC strings without Z)
+          let dateStr = String(log.date)
+          if (dateStr.includes(" ") && !dateStr.includes("Z") && !dateStr.includes("T")) {
+              dateStr = dateStr.replace(" ", "T") + "Z"
+          }
+          
+          return {
+            id: log.id.toString(),
+            content: body || "(No content)",
+            sender: sender,
+            timestamp: new Date(dateStr),
+            user: {
+               name: author
+            }
+          }
+       }).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
        
        setMessages(formattedMessages)
     }
   }, [initialMessages])
 
-  const handleSendMessage = (e?: React.FormEvent) => {
+  const handleSendMessage = async (e?: React.FormEvent) => {
     e?.preventDefault()
-    if (!inputValue.trim()) return
+    if (!inputValue.trim() || isSending) return
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      content: inputValue,
+    setIsSending(true)
+    const currentMessage = inputValue
+    setInputValue("")
+
+    // Optimistic update
+    const optimisticMsg: Message = {
+      id: `temp-${Date.now()}`,
+      content: currentMessage,
       sender: "user",
       timestamp: new Date(),
-      user: {
-        name: "You"
-      }
+      user: { name: "You" }
     }
+    setMessages(prev => [...prev, optimisticMsg])
 
-    setMessages([...messages, newMessage])
-    setInputValue("")
-    
-    // Simulate automated response
-    setTimeout(() => {
-        setMessages(prev => [...prev, {
-            id: Date.now().toString(),
-            content: "This is an automated demo response.",
-            sender: "system",
-            timestamp: new Date()
-        }])
-    }, 1000)
+    try {
+      const result = await sendProjectMessageAction(projectId, currentMessage)
+      if (!result.success) {
+        // Rollback or show error
+        setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id))
+        console.error("Failed to send message:", result.error)
+      }
+      // The polling will pick up the real message and replace the optimistic one 
+      // since formattedMessages will have the real ID from Odoo.
+    } catch (error) {
+      setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id))
+      console.error("Error sending message:", error)
+    } finally {
+      setIsSending(false)
+    }
   }
 
   // Auto-scroll to bottom
@@ -126,7 +205,7 @@ export function ProjectChat({ className, projectId, projectName, collapsed = fal
               <div key={msg.id} className="flex justify-center my-4">
                  <div className="bg-zinc-50 border border-zinc-100 rounded-full px-4 py-1.5 text-[10px] text-zinc-500 font-medium flex items-center gap-2">
                     <Bot className="h-3 w-3" />
-                    {msg.content}
+                    <div dangerouslySetInnerHTML={{ __html: msg.content }} />
                  </div>
               </div>
             )
@@ -136,12 +215,12 @@ export function ProjectChat({ className, projectId, projectName, collapsed = fal
             <div key={msg.id} className={cn("flex gap-3 max-w-[90%]", isMe ? "ml-auto flex-row-reverse" : "")}>
               <Avatar className="h-8 w-8 border border-zinc-100 shrink-0">
                 <AvatarFallback className={cn("text-[10px] font-bold", isMe ? "bg-primary/10 text-primary" : "bg-zinc-100 text-zinc-600")}>
-                    {msg.user?.name.charAt(0)}
+                    {msg.user?.name?.charAt(0) || <User className="h-3 w-3" />}
                 </AvatarFallback>
               </Avatar>
               <div className={cn("space-y-1", isMe ? "items-end flex flex-col" : "")}>
                 <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-zinc-700">{msg.user?.name}</span>
+                    {!isMe && <span className="text-[10px] font-bold text-zinc-700">{msg.user?.name}</span>}
                     <span className="text-[9px] text-zinc-400">{msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
                 <div 
@@ -152,7 +231,7 @@ export function ProjectChat({ className, projectId, projectName, collapsed = fal
                             : "bg-white text-zinc-600 border-zinc-100 rounded-tl-sm"
                     )}
                 >
-                    {msg.content}
+                    <div className="prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: msg.content }} />
                 </div>
               </div>
             </div>
@@ -173,15 +252,15 @@ export function ProjectChat({ className, projectId, projectName, collapsed = fal
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Type a message..."
+                disabled={isSending}
                 className="border-none shadow-none focus-visible:ring-0 px-2 py-6 text-sm bg-transparent min-h-[44px]"
             />
             <Button 
                 type="submit" 
-                disabled={!inputValue.trim()}
+                disabled={!inputValue.trim() || isSending}
                 className="h-9 w-9 bg-primary hover:bg-primary/90 text-white rounded-lg shrink-0 p-0 shadow-md shadow-primary/20 disabled:opacity-50 disabled:shadow-none transition-all"
             >
-                <div className="sr-only">Send</div>
-                <Send className="h-4 w-4" />
+                {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
         </form>
         <p className="text-[10px] text-center text-zinc-400 mt-2">
