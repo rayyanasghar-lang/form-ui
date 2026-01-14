@@ -113,9 +113,9 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
     let variant: "done" | "in-process" | "rejected" | "draft" = "in-process"
     
     // Strict mapping based on requested Enum
-    if (normalized === "print and ship") {
+    if (normalized === "print & ship") {
       variant = "done" 
-    } else if (normalized === "on hold/challenge") {
+    } else if (normalized === "on hold / challenged") {
       variant = "rejected"
     } else if (normalized === "new job creation") {
         variant = "draft"
@@ -151,8 +151,8 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                     badge={projects.filter((p) => normalizeStatus(p.status) === normalizeStatus(status)).length}
                     className="shrink-0 text-xs px-4 py-2 md:text-xs md:px-6 md:py-2.5 rounded-full bg-zinc-100 text-zinc-600 data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-300 font-bold uppercase tracking-wider shadow-sm hover:bg-zinc-200 data-[state=active]:shadow-md data-[state=active]:shadow-primary/20 border-0 flex items-center justify-center"
                 >
-                    {status === "On hold/challenge" ? <XCircle className="h-3.5 w-3.5 mr-2" /> :
-                     status === "Print and Ship" ? <CheckCircle2 className="h-3.5 w-3.5 mr-2" /> :
+                    {status === "On Hold / Challenged" ? <XCircle className="h-3.5 w-3.5 mr-2" /> :
+                     status === "Print & Ship" ? <CheckCircle2 className="h-3.5 w-3.5 mr-2" /> :
                      <Clock className="h-3.5 w-3.5 mr-2" />
                     }
                     {status}

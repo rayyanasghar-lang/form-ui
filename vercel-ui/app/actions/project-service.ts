@@ -51,7 +51,7 @@ export async function fetchProjectsAction(): Promise<ProjectsResponse | { error:
         return { error: "Backend returned invalid JSON. Check Odoo logs or database selection." }
     }
     
-    const statuses: ProjectStatus[] = ["New Job Creation", "New Design", "Design internal review", "Design revision", "Awaiting Engineering", "Print and Ship", "On hold/challenge"]
+    const statuses: ProjectStatus[] = ["New Job Creation", "New Design", "Design-Internal Review", "Design Revision", "Awaiting Engineering", "Print & Ship", "Design Submitted", "On Hold / Challenged"]
     
     // Map the new API structure to our frontend Project type
     const mappedProjects: Project[] = data.data.map((item: any) => {
@@ -64,16 +64,17 @@ export async function fetchProjectsAction(): Promise<ProjectsResponse | { error:
         
         if (!label) return "New Job Creation"
 
-        // Normalize specific DB variations to our strict Frontend Enum
         const normalized = String(label).trim()
         
-        if (normalized === "Print & Ship") return "Print and Ship"
-        if (normalized === "Design-Internal Review") return "Design internal review"
-        if (normalized === "Design Revision") return "Design revision"
-        if (normalized === "Design Submitted") return "Design submitted"
-        if (normalized === "draft" || normalized === "New") return "New Job Creation" // Map legacy draft/New to New Job Creation
+        // Match specific mappings if needed, otherwise return normalized
+        if (normalized === "Print and Ship") return "Print & Ship"
+        if (normalized === "Design internal review") return "Design-Internal Review"
+        if (normalized === "Design revision") return "Design Revision"
+        if (normalized === "Design submitted") return "Design Submitted"
+        if (normalized === "On hold/challenge") return "On Hold / Challenged"
+        if (normalized === "draft" || normalized === "New") return "New Job Creation" 
         
-        return normalized
+        return normalized as ProjectStatus
       }
 
       // Helper to extract One2many/Many2one data

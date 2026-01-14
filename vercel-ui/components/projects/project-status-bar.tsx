@@ -21,12 +21,12 @@ interface Stage {
 const STAGES: Stage[] = [
   { id: "New Job Creation", label: "New Job Creation", icon: FilePlus },
   { id: "New Design", label: "New Design", icon: PenTool },
-  { id: "Design internal review", label: "Design-Internal Review", icon: Search },
-  { id: "Design revision", label: "Design Revision", icon: RefreshCw },
+  { id: "Design-Internal Review", label: "Design-Internal Review", icon: Search },
+  { id: "Design Revision", label: "Design Revision", icon: RefreshCw },
   { id: "Awaiting Engineering", label: "Awaiting Engineering", icon: Aperture },
-  { id: "Print and Ship", label: "Print & Ship", icon: Printer },
-  { id: "Design submitted", label: "Design Submitted", icon: Send },
-  { id: "On hold/challenge", label: "On Hold / Challenged", icon: PauseCircle },
+  { id: "Print & Ship", label: "Print & Ship", icon: Printer },
+  { id: "Design Submitted", label: "Design Submitted", icon: Send },
+  { id: "On Hold / Challenged", label: "On Hold / Challenged", icon: PauseCircle },
 ]
 
 interface ProjectStatusBarProps {

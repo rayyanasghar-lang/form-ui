@@ -19,7 +19,7 @@ const StatusBadge = React.forwardRef<HTMLDivElement, StatusBadgeProps>(
       if (normalizedStatus.includes("rejected") || normalizedStatus.includes("hold") || normalizedStatus.includes("challenge")) {
         return "text-red-600"
       }
-      if (normalizedStatus.includes("draft")) {
+      if (normalizedStatus.includes("draft") || normalizedStatus.includes("new job")) {
         return "text-zinc-500"
       }
       // Default for in-process states (New Design, Internal Review, Revision, Engineering, Print & Ship, etc.)

@@ -1,27 +1,27 @@
 // Project status types
 export type ProjectStatus = 
-  | 'draft'
-  | 'pending'
   | 'New Job Creation'
   | 'New Design'
-  | 'Design internal review'
-  | 'Design revision'
-  | 'Design submitted'
+  | 'Design-Internal Review'
+  | 'Design Revision'
   | 'Awaiting Engineering'
-  | 'Print and Ship'
-  | 'On hold/challenge';
+  | 'Print & Ship'
+  | 'Design Submitted'
+  | 'On Hold / Challenged'
+  | 'draft'
+  | 'pending';
 
 export const PROJECT_STATUSES: ProjectStatus[] = [
-  'draft',
-  'pending',
   'New Job Creation',
   'New Design',
-  'Design internal review',
-  'Design revision',
-  'Design submitted',
+  'Design-Internal Review',
+  'Design Revision',
   'Awaiting Engineering',
-  'Print and Ship',
-  'On hold/challenge'
+  'Print & Ship',
+  'Design Submitted',
+  'On Hold / Challenged',
+  'draft',
+  'pending'
 ];
 
 // Project interface matching permit form data structure
