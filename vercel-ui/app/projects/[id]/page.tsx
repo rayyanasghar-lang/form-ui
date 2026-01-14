@@ -676,62 +676,7 @@ export default function ProjectDetailsPage() {
                   </Card>
                 </div>
 
-                {/* Project Status (Timeline) */}
-                {realtimeData?.chat_logs && realtimeData.chat_logs.length > 0 && (
-                  <div className="grid grid-cols-1 gap-8 animate-in fade-in slide-in-from-bottom-5 duration-700 delay-100">
-                    <Card className="border-border bg-card rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden">
-                      <CardHeader className="bg-zinc-50/50 border-b border-zinc-100 py-6">
-                        <div className="flex items-center justify-between">
-                           <div className="flex items-center gap-3">
-                              <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                                 <ClipboardList className="h-5 w-5" />
-                              </div>
-                              <CardTitle className="text-sm font-black uppercase tracking-[0.2em] text-zinc-900">Project Logs</CardTitle>
-                           </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="p-6">
-                        <div className="max-h-[400px] overflow-y-auto pr-4 -mr-4 custom-scrollbar">
-                          <div className="relative pl-6 border-l-2 border-zinc-100 space-y-8 pb-4 ml-1">
-                            {realtimeData.chat_logs.map((log, index) => (
-                               <div key={log.id} className="relative group">
-                                  {/* Timeline Dot */}
-                                  <div className="absolute -left-[31px] top-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-zinc-300 group-hover:bg-primary transition-colors shadow-sm ring-4 ring-white" />
-                                  
-                                  <div className="flex flex-col gap-1">
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider bg-zinc-50 px-2 py-0.5 rounded-md border border-zinc-100">
-                                        {new Date(log.date).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                      </span>
-                                      <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-                                        {log.author}
-                                      </span>
-                                    </div>
-                                    
-                                    <p className="text-sm font-medium text-zinc-900 leading-snug">
-                                      {log.subtype === "Stage Changed" 
-                                        ? log.tracking?.[0]?.description || log.body 
-                                        : log.body || log.subtype}
-                                    </p>
-                                    
-                                    {log.tracking && log.tracking.length > 0 && log.subtype !== "Stage Changed" && (
-                                       <div className="mt-2 space-y-1">
-                                          {log.tracking.map((track, i) => (
-                                             <p key={i} className="text-xs text-zinc-500 italic bg-zinc-50/50 p-2 rounded-lg border border-zinc-100/50">
-                                                {track.description}
-                                             </p>
-                                          ))}
-                                       </div>
-                                    )}
-                                  </div>
-                               </div>
-                            ))}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                )}
+
 
                 {/* Subtasks Section */}
                 {subtasks.length > 0 && (
@@ -889,7 +834,8 @@ export default function ProjectDetailsPage() {
         <ProjectChat 
           projectId={id} 
           projectName={realtimeData?.project_name || project?.name || "Project"} 
-          initialMessages={realtimeData?.chat_logs || []} 
+          initialMessages={realtimeData?.chat_logs || []}
+          chatLogs={realtimeData?.chat_logs || []} 
           className={cn(
             "shrink-0 z-40 shadow-[-5px_0_30px_-5px_rgba(0,0,0,0.05)]",
             // Desktop styles
@@ -908,7 +854,8 @@ export default function ProjectDetailsPage() {
               <ProjectChat 
                 projectId={id} 
                 projectName={realtimeData?.project_name || project?.name || "Project"} 
-                initialMessages={realtimeData?.chat_logs || []} 
+                initialMessages={realtimeData?.chat_logs || []}
+                chatLogs={realtimeData?.chat_logs || []}
                 className="w-full h-full border-none"
                 collapsed={false}
                 onCollapsedChange={(collapsed) => {
