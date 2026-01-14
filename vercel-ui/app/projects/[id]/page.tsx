@@ -415,7 +415,7 @@ export default function ProjectDetailsPage() {
 
         <div className="flex flex-1 overflow-hidden">
           <main className="flex-1 overflow-auto relative min-w-0">
-          <div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-md">
+          <div className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
             <div className="flex items-center justify-between px-4 py-3 lg:px-6 lg:py-4">
               <div className="flex items-center gap-3 lg:gap-4">
                  {/* Mobile Menu Trigger */}
