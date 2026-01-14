@@ -217,6 +217,10 @@ export async function fetchProjectByIdAction(id: string): Promise<{ data?: Proje
       system_components: systemComponents,
       uploads: uploads,
       general_notes: item.general_notes,
+      
+      // Services and Submission Type
+      services: item.services || item.service_ids || [],
+      submission_type: item.submission_type || item.submission_type_id,
 
       // Legacy matching
       ownerName: item.user_profile?.contact_name,
