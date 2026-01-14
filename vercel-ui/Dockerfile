@@ -15,6 +15,9 @@ RUN npm ci
 # Copy the rest of the application
 COPY . .
 
+ENV WATCHPACK_POLLING=true
+ENV CHOKIDAR_USEPOLLING=true
+
 # Expose the port Next.js runs on
 EXPOSE 3000
 

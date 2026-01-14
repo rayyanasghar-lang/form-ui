@@ -43,6 +43,7 @@ import UtilityDetails from "@/components/utility-details"
 import OptionalExtras from "@/components/optional-extras"
 import FormCard from "@/components/form-card"
 import SystemComponentsTable, { Component } from "@/components/system-components-table"
+import { ServicesSelector } from "@/components/services-selector"
 
 
 
@@ -514,19 +515,7 @@ export default function ProjectDetailsPage() {
                   <MessageSquare className="h-5 w-5" />
                 </Button>
 
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  title="Sign Out"
-                  className="bg-background hover:bg-zinc-100 border border-zinc-200 text-zinc-600 hover:text-destructive h-10 w-10 rounded-xl shadow-sm transition-colors"
-                  onClick={async () => {
-                    await signoutAction()
-                    localStorage.removeItem("contractor")
-                    window.location.href = "/"
-                  }}
-                >
-                  <LogOut className="h-5 w-5" />
-                </Button>
+
 
                 {project.status === 'draft' && (
                   <Button 
@@ -564,7 +553,7 @@ export default function ProjectDetailsPage() {
 
           </div>
 
-          <div className="bg-white border-b border-zinc-200">
+          <div className="bg-white mt-3">
              <ProjectStatusBar currentStatus={currentStatus as ProjectStatus} className="w-full" />
           </div>
 
@@ -598,6 +587,12 @@ export default function ProjectDetailsPage() {
                     className="rounded-2xl px-3 md:px-10 py-2.5 md:py-3.5 text-[9px] md:text-xs font-black uppercase tracking-widest text-zinc-700! data-[state=active]:bg-primary! data-[state=active]:text-primary-foreground! data-[state=active]:shadow-2xl! transition-all duration-500 shadow-none hover:text-zinc-900 hover:bg-white/50 flex-1 md:flex-none"
                   >
                     Uploads
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="services" 
+                    className="rounded-2xl px-3 md:px-10 py-2.5 md:py-3.5 text-[9px] md:text-xs font-black uppercase tracking-widest text-zinc-700! data-[state=active]:bg-primary! data-[state=active]:text-primary-foreground! data-[state=active]:shadow-2xl! transition-all duration-500 shadow-none hover:text-zinc-900 hover:bg-white/50 flex-1 md:flex-none"
+                  >
+                    Services
                   </TabsTrigger>
                 </TabsList>
                 </div>
@@ -793,37 +788,53 @@ export default function ProjectDetailsPage() {
                  />
               </TabsContent>
 
+              <TabsContent value="services" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <FormCard title="Project Services">
+                  <ServicesSelector
+                    selectedServices={project?.services || []}
+                    onServicesChange={(services) => handleUpdateField('services', services)}
+                  />
+                </FormCard>
+              </TabsContent>
+
 
               {/* Mobile Bottom Tabs */}
-              <div className="fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border md:hidden shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.05)]">
-                <TabsList className="grid grid-cols-4 h-22 pb-safe rounded-none bg-transparent border-0 p-0">
+              <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-zinc-200 md:hidden shadow-[0_-10px_40px_-5px_rgba(0,0,0,0.1)] pb-safe">
+                <TabsList className="grid grid-cols-5 h-16 bg-transparent border-0 p-1 gap-1">
                     <TabsTrigger
                       value="overview"
-                      className="flex-1 flex flex-col items-center justify-center gap-1 h-full rounded-2xl data-[state=active]:bg-primary data-[state=active]:text-black text-zinc-500 font-black text-[10px] uppercase tracking-wider transition-all duration-300"
+                      className="flex flex-col items-center justify-center gap-1 h-full rounded-xl data-[state=active]:bg-primary! data-[state=active]:text-white! data-[state=active]:shadow-lg data-[state=active]:shadow-primary/25 text-zinc-950! font-black text-[9px] uppercase tracking-wider transition-all duration-300"
                     >
-                      <LayoutDashboard className="w-4 h-4" />
+                      <LayoutDashboard className="w-4 h-4 text-zinc-900 data-[state=active]:text-white" />
                       Overview
                     </TabsTrigger>
                     <TabsTrigger
                       value="site"
-                      className="flex-1 flex flex-col items-center justify-center gap-1 h-full rounded-2xl data-[state=active]:bg-primary data-[state=active]:text-black text-zinc-500 font-black text-[10px] uppercase tracking-wider transition-all duration-300"
+                      className="flex flex-col items-center justify-center gap-1 h-full rounded-xl data-[state=active]:bg-primary! data-[state=active]:text-white! data-[state=active]:shadow-lg data-[state=active]:shadow-primary/25 text-zinc-950! font-black text-[9px] uppercase tracking-wider transition-all duration-300"
                     >
-                      <MapIcon className="w-4 h-4" />
+                      <MapIcon className="w-4 h-4 text-zinc-900 data-[state=active]:text-white" />
                       Site
                     </TabsTrigger>
                     <TabsTrigger
                       value="components"
-                      className="flex-1 flex flex-col items-center justify-center gap-1 h-full rounded-2xl data-[state=active]:bg-primary data-[state=active]:text-black text-zinc-500 font-black text-[10px] uppercase tracking-wider transition-all duration-300"
+                      className="flex flex-col items-center justify-center gap-1 h-full rounded-xl data-[state=active]:bg-primary! data-[state=active]:text-white! data-[state=active]:shadow-lg data-[state=active]:shadow-primary/25 text-zinc-950! font-black text-[9px] uppercase tracking-wider transition-all duration-300"
                     >
-                      <Box className="w-4 h-4" />
-                      Equipment
+                      <Box className="w-4 h-4 text-zinc-900 data-[state=active]:text-white" />
+                      Equip
                     </TabsTrigger>
                     <TabsTrigger
                       value="uploads"
-                      className="flex-1 flex flex-col items-center justify-center gap-1 h-full rounded-2xl data-[state=active]:bg-primary data-[state=active]:text-black text-zinc-500 font-black text-[10px] uppercase tracking-wider transition-all duration-300"
+                      className="flex flex-col items-center justify-center gap-1 h-full rounded-xl data-[state=active]:bg-primary! data-[state=active]:text-white! data-[state=active]:shadow-lg data-[state=active]:shadow-primary/25 text-zinc-950! font-black text-[9px] uppercase tracking-wider transition-all duration-300"
                     >
-                      <Plus className="w-4 h-4" />
-                      Uploads
+                      <Plus className="w-4 h-4 text-zinc-900 data-[state=active]:text-white" />
+                      Files
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="services"
+                      className="flex flex-col items-center justify-center gap-1 h-full rounded-xl data-[state=active]:bg-primary! data-[state=active]:text-white! data-[state=active]:shadow-lg data-[state=active]:shadow-primary/25 text-zinc-950! font-black text-[9px] uppercase tracking-wider transition-all duration-300"
+                    >
+                      <Briefcase className="w-4 h-4 text-zinc-900 data-[state=active]:text-white" />
+                      Services
                     </TabsTrigger>
 
                 </TabsList>
