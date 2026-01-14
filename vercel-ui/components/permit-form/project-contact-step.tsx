@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils"
 import { Zap, NotebookIcon, Building2, User, Mail, Phone, ClipboardList, MapPin, Briefcase, CheckSquare, Loader2, CloudSun, Database, Search, CheckCircle2, Activity } from "lucide-react"
 import { Service } from "@/app/actions/fetch-services"
 import AddressAutocomplete from "../address-autocomplete"
+import MapSelector from "../map-selector"
 
 interface ProjectContactStepProps {
     formData: any
@@ -44,7 +45,7 @@ export default function ProjectContactStep({
     weatherLoading = false,
 }: ProjectContactStepProps) {
     return (
-        <FormCard title="Project & Contact Information">
+        <FormCard title="Project Creation Information">
             <div className="space-y-6">
                 
                 {/* Submission Type */}
@@ -161,19 +162,24 @@ export default function ProjectContactStep({
                                 </TabsContent>
                             </Tabs>
 
+                            {/* Map Selector */}
+                            <div className="mt-4 h-[250px] md:h-[300px]">
+                                <MapSelector
+                                    lat={parseFloat(formData.latitude) || null}
+                                    lng={parseFloat(formData.longitude) || null}
+                                    onLocationChange={(lat, lng) => {
+                                        updateField("latitude", lat.toString())
+                                        updateField("longitude", lng.toString())
+                                    }}
+                                />
+                                <p className="text-[10px] text-muted-foreground mt-2 italic flex items-center gap-1">
+                                    <MapPin className="h-3 w-3" />
+                                    Tip: You can drag the pin or click on the map to pinpoint the exact location.
+                                </p>
+                            </div>
+
                             {errors.projectAddress && <p className="text-sm text-destructive">{errors.projectAddress}</p>}
-                            
-                            {/* Manual Scraper Trigger */}
-                            {(formData.projectAddress || (formData.latitude && formData.longitude)) && scrapingStatus === "idle" && (
-                                <button
-                                    type="button"
-                                    onClick={onStartScraping}
-                                    className="mt-2 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-all border border-primary/20 font-medium text-sm group"
-                                >
-                                    <Search className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                                    Fetch Property Intelligence
-                                </button>
-                            )}
+                        
 
                             {/* Scraped Data display */}
                             {/* Scraped Data display (Separate Boxes) */}

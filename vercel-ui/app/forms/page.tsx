@@ -50,7 +50,7 @@ export default function FormsPage() {
 
               <p className="text-sm sm:text-base text-muted-foreground font-medium max-w-2xl">
                 Complete your project details to generate a professional permit
-                planset. Data is automatically fetched from ASCE, Regrid, and Zillow.
+                planset.
               </p>
             </div>
 

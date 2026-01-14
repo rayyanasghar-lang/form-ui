@@ -26,6 +26,8 @@ import { fetchNearbyStations, geocodeAddress, reverseGeocode, WeatherStation } f
 
 import { Component } from "./system-components-table"
 
+const PERSIST_KEY = "sunpermit_planset_draft"
+
 const FORM_STEPS = ["Project & Contact"]
 
 export default function PermitPlansetForm() {
@@ -113,9 +115,21 @@ export default function PermitPlansetForm() {
     batterySldNotes: "",
   })
 
-  /* ---------------- Fetch Services ---------------- */
   /* ---------------- Fetch Services & Contractor ---------------- */
   useEffect(() => {
+    // Restoration of draft from localStorage
+    if (typeof window !== "undefined") {
+      const savedDraft = localStorage.getItem(PERSIST_KEY)
+      if (savedDraft) {
+        try {
+          const parsed = JSON.parse(savedDraft)
+          setFormData(prev => ({ ...prev, ...parsed }))
+        } catch (e) {
+          console.error("Failed to parse form draft", e)
+        }
+      }
+    }
+
     // Fetch Services
     fetchServicesAction().then((res) => {
       if ("data" in res && res.data) {
@@ -154,6 +168,61 @@ export default function PermitPlansetForm() {
     }
     loadContractor()
   }, [])
+
+  // 2. Auto-save to LocalStorage
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (typeof window !== "undefined") {
+        localStorage.setItem(PERSIST_KEY, JSON.stringify(formData))
+      }
+    }, 1000) // Debounce 1s
+
+    return () => clearTimeout(timeout)
+  }, [formData])
+
+  // 3. Immediate Reverse Geocoding for Coordinates
+  useEffect(() => {
+    const lat = parseFloat(formData.latitude)
+    const lng = parseFloat(formData.longitude)
+
+    if (!isNaN(lat) && !isNaN(lng)) {
+      const timeout = setTimeout(async () => {
+        const res = await reverseGeocode(lat, lng)
+        if (res.success && res.address) {
+          updateField("projectAddress", res.address)
+        }
+      }, 1500) // Debounce 1.5s
+
+      return () => clearTimeout(timeout)
+    }
+  }, [formData.latitude, formData.longitude])
+
+  // 4. Immediate Geocoding for Address (Sync Map Marker)
+  useEffect(() => {
+    if (formData.projectAddress && formData.projectAddress.length > 5) {
+      const timeout = setTimeout(async () => {
+        // Only geocode if the address changed and we're not currently reverse-geocoding
+        const res = await geocodeAddress(formData.projectAddress)
+        if (res.success && res.lat && res.lng) {
+          setFormData(prev => {
+            // Check if coordinates already match to avoid unnecessary state updates
+            const currentLat = parseFloat(prev.latitude)
+            const currentLng = parseFloat(prev.longitude)
+            if (Math.abs(currentLat - res.lat!) < 0.0001 && Math.abs(currentLng - res.lng!) < 0.0001) {
+              return prev
+            }
+            return {
+              ...prev,
+              latitude: res.lat!.toString(),
+              longitude: res.lng!.toString()
+            }
+          })
+        }
+      }, 2000) // Debounce 2s
+
+      return () => clearTimeout(timeout)
+    }
+  }, [formData.projectAddress])
 
   /* ---------------- Save Draft ---------------- */
   const handleSaveDraft = async () => {
@@ -269,6 +338,9 @@ export default function PermitPlansetForm() {
 
       if (res.success && projectId) {
         toast.success("Project created! Now provide more details.")
+        if (typeof window !== "undefined") {
+          localStorage.removeItem(PERSIST_KEY)
+        }
         router.push(`/projects/${projectId}`)
       } else {
         // Handle specific duplicate address error
@@ -396,10 +468,6 @@ export default function PermitPlansetForm() {
   /* ---------------- Render ---------------- */
   return (
     <form className="space-y-6 pb-32 md:pb-0 relative">
-      
-      <div className="sticky top-[64px] z-30 bg-transparent md:static">
-        <Stepper steps={STEPS} currentStep={currentStep} />
-      </div>
 
       <div className="max-w-3xl mx-auto space-y-6">
         <ProjectContactStep
