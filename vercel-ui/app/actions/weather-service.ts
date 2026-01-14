@@ -81,3 +81,29 @@ export async function geocodeAddress(address: string): Promise<{ success: boolea
         return { success: false, error: error.message };
     }
 }
+
+/**
+ * Reverse Geocode lat/lng to address using Google Maps Geocoding API
+ */
+export async function reverseGeocode(lat: number, lng: number): Promise<{ success: boolean; address?: string; error?: string }> {
+    try {
+        const apiKey = process.env.SOLAR_API;
+        if (!apiKey) {
+            return { success: false, error: "Geocoding API key missing (SOLAR_API)" };
+        }
+
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.status !== "OK" || !data.results.length) {
+            return { success: false, error: data.error_message || "Address not found for these coordinates" };
+        }
+
+        // Return the first formatted address
+        const address = data.results[0].formatted_address;
+        return { success: true, address };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}

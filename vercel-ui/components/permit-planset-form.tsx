@@ -22,7 +22,7 @@ import {
   scrapeASCE722Action, 
   scrapeRegridAction 
 } from "@/app/actions/scrape-service"
-import { fetchNearbyStations, geocodeAddress, WeatherStation } from "@/app/actions/weather-service"
+import { fetchNearbyStations, geocodeAddress, reverseGeocode, WeatherStation } from "@/app/actions/weather-service"
 
 import { Component } from "./system-components-table"
 
@@ -56,6 +56,8 @@ export default function PermitPlansetForm() {
     email: "", // Default empty, fill from profile
     phone: "", // Default empty, fill from profile
     projectAddress: "",
+    latitude: "",
+    longitude: "",
     projectType: "",
     services: [] as string[],
     systemSize: "",
@@ -298,24 +300,63 @@ export default function PermitPlansetForm() {
 
     try {
       // 1. Weather & Geocoding
-      geocodeAddress(formData.projectAddress).then((geo) => {
-        if (geo.success && geo.lat && geo.lng) {
-          fetchNearbyStations(geo.lat, geo.lng).then((stations) => {
-            if (stations.success && stations.data) {
-              setWeatherStations(stations.data)
-            }
-            setWeatherLoading(false)
-          })
-        } else {
-          setWeatherLoading(false)
+      let effectiveLat: number | null = null;
+      let effectiveLng: number | null = null;
+      let effectiveAddress = formData.projectAddress;
+
+      // Handle Coordinates search
+      if (formData.latitude && formData.longitude) {
+        effectiveLat = parseFloat(formData.latitude);
+        effectiveLng = parseFloat(formData.longitude);
+
+        if (isNaN(effectiveLat) || isNaN(effectiveLng)) {
+          toast.error("Invalid latitude or longitude");
+          setScrapingStatus("idle");
+          setWeatherLoading(false);
+          return;
         }
-      })
+
+        // If we have coordinates but no address, perform reverse geocoding
+        if (!effectiveAddress) {
+          const rev = await reverseGeocode(effectiveLat, effectiveLng);
+          if (rev.success && rev.address) {
+            effectiveAddress = rev.address;
+            updateField("projectAddress", rev.address);
+          } else {
+            console.error("[Scraper] Reverse geocoding failed:", rev.error);
+          }
+        }
+      } else if (effectiveAddress) {
+        // Geocode address if no coordinates provided
+        const geo = await geocodeAddress(effectiveAddress);
+        if (geo.success && geo.lat && geo.lng) {
+          effectiveLat = geo.lat;
+          effectiveLng = geo.lng;
+        }
+      }
+
+      if (effectiveLat && effectiveLng) {
+        fetchNearbyStations(effectiveLat, effectiveLng).then((stations) => {
+          if (stations.success && stations.data) {
+            setWeatherStations(stations.data)
+          }
+          setWeatherLoading(false)
+        })
+      } else {
+        setWeatherLoading(false)
+      }
+
+      if (!effectiveAddress) {
+          toast.error("An address or coordinates are required to gather property intelligence.");
+          setScrapingStatus("idle");
+          return;
+      }
 
       // 2. Property Scraping
       const [zillow, asce, regrid] = await Promise.all([
-        scrapeZillowAction(formData.projectAddress),
-        scrapeASCE722Action(formData.projectAddress),
-        scrapeRegridAction(formData.projectAddress),
+        scrapeZillowAction(effectiveAddress),
+        scrapeASCE722Action(effectiveAddress),
+        scrapeRegridAction(effectiveAddress),
       ])
 
       const sources: any = {}

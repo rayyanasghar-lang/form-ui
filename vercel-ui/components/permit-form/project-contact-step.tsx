@@ -111,17 +111,60 @@ export default function ProjectContactStep({
                         <div className="space-y-2">
                             <Label htmlFor="projectAddress" className="flex items-center gap-2">
                                 <MapPin className="w-4 h-4 text-muted-foreground" />
-                                Project Address
+                                Project Location
                             </Label>
-                            <AddressAutocomplete
-                                value={formData.projectAddress}
-                                onChange={(value) => updateField("projectAddress", value)}
-                                className="bg-muted/50"
-                            />
+                            
+                            <Tabs defaultValue="address" className="w-full mt-2">
+                                <TabsList className="grid w-full grid-cols-2 h-9 bg-muted/50 p-1 text-zinc-500">
+                                    <TabsTrigger value="address" className="text-[10px] uppercase font-bold tracking-wider text-zinc-700! data-[state=active]:text-white!">Address Search</TabsTrigger>
+                                    
+                                    <TabsTrigger value="coords" className="text-[10px] uppercase font-bold tracking-wider text-zinc-700! data-[state=active]:text-white! ">Coordinates</TabsTrigger>
+                                </TabsList>
+
+                                <TabsContent value="address" className="space-y-4 mt-4">
+                                    <AddressAutocomplete
+                                        value={formData.projectAddress}
+                                        onChange={(value) => updateField("projectAddress", value)}
+                                        className="bg-muted/50"
+                                    />
+                                </TabsContent>
+
+                                <TabsContent value="coords" className="space-y-4 mt-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label className="text-[10px] uppercase font-bold text-muted-foreground">Latitude</Label>
+                                            <Input 
+                                                type="text" 
+                                                placeholder="e.g. 34.0522" 
+                                                value={formData.latitude}
+                                                onChange={(e) => updateField("latitude", e.target.value)}
+                                                className="bg-muted/50"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-[10px] uppercase font-bold text-muted-foreground">Longitude</Label>
+                                            <Input 
+                                                type="text" 
+                                                placeholder="e.g. -118.2437" 
+                                                value={formData.longitude}
+                                                onChange={(e) => updateField("longitude", e.target.value)}
+                                                className="bg-muted/50"
+                                            />
+                                        </div>
+                                    </div>
+                                    {formData.projectAddress && (
+                                        <div className="p-3 rounded-lg bg-green-500/5 border border-green-500/10 flex items-center gap-2">
+                                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                            <span className="text-xs font-medium text-green-700">Resolved to: {formData.projectAddress}</span>
+                                        </div>
+                                    )}
+                                </TabsContent>
+                            </Tabs>
+
                             {errors.projectAddress && <p className="text-sm text-destructive">{errors.projectAddress}</p>}
                             
                             {/* Manual Scraper Trigger */}
-                            {formData.projectAddress && scrapingStatus === "idle" && (
+                            {(formData.projectAddress || (formData.latitude && formData.longitude)) && scrapingStatus === "idle" && (
                                 <button
                                     type="button"
                                     onClick={onStartScraping}
