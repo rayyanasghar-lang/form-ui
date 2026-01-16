@@ -78,9 +78,15 @@ export default function SiteDetails({ systemType, formData, onUpdateField, onFil
                             <Input
                                 id="numberOfArrays"
                                 type="number"
+                                min="0"
                                 placeholder="e.g., 2"
                                 value={formData.numberOfArrays}
-                                onChange={(e) => onUpdateField("numberOfArrays", e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === "" || Number(val) >= 0) {
+                                        onUpdateField("numberOfArrays", val);
+                                    }
+                                }}
                             />
                         </div>
                     </div>
@@ -142,9 +148,15 @@ export default function SiteDetails({ systemType, formData, onUpdateField, onFil
                             <Input
                                 id="rowCount"
                                 type="number"
+                                min="0"
                                 placeholder="e.g., 3"
                                 value={formData.rowCount}
-                                onChange={(e) => onUpdateField("rowCount", e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === "" || Number(val) >= 0) {
+                                        onUpdateField("rowCount", val);
+                                    }
+                                }}
                             />
                         </div>
 
@@ -153,9 +165,15 @@ export default function SiteDetails({ systemType, formData, onUpdateField, onFil
                             <Input
                                 id="moduleCountPerRow"
                                 type="number"
+                                min="0"
                                 placeholder="e.g., 8"
                                 value={formData.moduleCountPerRow}
-                                onChange={(e) => onUpdateField("moduleCountPerRow", e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === "" || Number(val) >= 0) {
+                                        onUpdateField("moduleCountPerRow", val);
+                                    }
+                                }}
                             />
                         </div>
                     </div>

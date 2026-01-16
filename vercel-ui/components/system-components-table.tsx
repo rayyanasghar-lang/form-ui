@@ -92,9 +92,15 @@ export default function SystemComponentsTable({
                                     <TableCell>
                                         <Input
                                             type="number"
+                                            min="0"
                                             placeholder="1"
                                             value={component.qty}
-                                            onChange={(e) => onUpdateComponent(component.id, "qty", e.target.value)}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                if (val === "" || Number(val) >= 0) {
+                                                    onUpdateComponent(component.id, "qty", val);
+                                                }
+                                            }}
                                             className="h-9"
                                         />
                                     </TableCell>

@@ -41,10 +41,16 @@ export default function SystemSummaryStep({
                             <Input
                                 id="systemSize"
                                 type="number"
+                                min="0"
                                 step="0.01"
                                 placeholder="e.g., 10.5"
                                 value={formData.systemSize}
-                                onChange={(e) => updateField("systemSize", e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === "" || Number(val) >= 0) {
+                                        updateField("systemSize", val);
+                                    }
+                                }}
                             />
                             {errors.systemSize && <p className="text-sm text-destructive">{errors.systemSize}</p>}
                         </div>
@@ -82,9 +88,15 @@ export default function SystemSummaryStep({
                             <Input
                                 id="pvModules"
                                 type="number"
+                                min="0"
                                 placeholder="e.g., 24"
                                 value={formData.pvModules}
-                                onChange={(e) => updateField("pvModules", e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === "" || Number(val) >= 0) {
+                                        updateField("pvModules", val);
+                                    }
+                                }}
                             />
                         </div>
 
@@ -93,9 +105,15 @@ export default function SystemSummaryStep({
                             <Input
                                 id="inverters"
                                 type="number"
+                                min="0"
                                 placeholder="e.g., 1"
                                 value={formData.inverters}
-                                onChange={(e) => updateField("inverters", e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === "" || Number(val) >= 0) {
+                                        updateField("inverters", val);
+                                    }
+                                }}
                             />
                         </div>
                     </div>
@@ -131,9 +149,15 @@ export default function SystemSummaryStep({
                                         <Input
                                             id="batteryQty"
                                             type="number"
+                                            min="0"
                                             placeholder="e.g., 2"
                                             value={formData.batteryQty}
-                                            onChange={(e) => updateField("batteryQty", e.target.value)}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                if (val === "" || Number(val) >= 0) {
+                                                    updateField("batteryQty", val);
+                                                }
+                                            }}
                                         />
                                     </div>
 

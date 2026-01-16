@@ -38,9 +38,15 @@ export default function ElectricalDetails({ formData, onUpdateField, onFileUploa
                     <Input
                         id="mainPanelSize"
                         type="number"
+                        min="0"
                         placeholder="e.g., 200"
                         value={formData.mainPanelSize}
-                        onChange={(e) => onUpdateField("mainPanelSize", e.target.value)}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "" || Number(val) >= 0) {
+                                onUpdateField("mainPanelSize", val);
+                            }
+                        }}
                     />
                 </div>
 
@@ -49,9 +55,15 @@ export default function ElectricalDetails({ formData, onUpdateField, onFileUploa
                     <Input
                         id="busRating"
                         type="number"
+                        min="0"
                         placeholder="e.g., 200"
                         value={formData.busRating}
-                        onChange={(e) => onUpdateField("busRating", e.target.value)}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "" || Number(val) >= 0) {
+                                onUpdateField("busRating", val);
+                            }
+                        }}
                     />
                 </div>
 
@@ -60,9 +72,15 @@ export default function ElectricalDetails({ formData, onUpdateField, onFileUploa
                     <Input
                         id="mainBreaker"
                         type="number"
+                        min="0"
                         placeholder="e.g., 200"
                         value={formData.mainBreaker}
-                        onChange={(e) => onUpdateField("mainBreaker", e.target.value)}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "" || Number(val) >= 0) {
+                                onUpdateField("mainBreaker", val);
+                            }
+                        }}
                     />
                 </div>
             </div>
