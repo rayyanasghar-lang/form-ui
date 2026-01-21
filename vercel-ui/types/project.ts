@@ -72,6 +72,7 @@ export interface Project {
       qty: number;
       model: string;
       image: string[];
+      equipment_id?: string;
     };
   };
   site_details?: {

@@ -209,8 +209,12 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                 </TableRow>
               ) : (
                 paginatedProjects.map((project) => (
-                  <TableRow key={project.id} className="hover:bg-zinc-50/50 transition-colors border-b border-zinc-100 last:border-0">
-                    <TableCell>
+                  <TableRow 
+                    key={project.id} 
+                    className="hover:bg-zinc-50/50 transition-colors border-b border-zinc-100 last:border-0 cursor-pointer"
+                    onClick={() => handleViewDetails(project)}
+                  >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <Checkbox
                         checked={selectedIds.has(project.id)}
                         onCheckedChange={() => toggleSelect(project.id)}
@@ -225,7 +229,7 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                     <TableCell className="font-semibold">{CalculateProjectProgress(project)}%</TableCell>
                     <TableCell className="text-zinc-600 font-medium">{formatDate(project.createdAt)}</TableCell>
 
-                    <TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -292,7 +296,7 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
                         <div>
                           <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1 leading-none">Address</p>
                           <div className="mt-1">
-                            <p className="text-sm font-medium text-zinc-900 leading-snug break-words">{project.address}</p>
+                            <p className="text-sm font-medium text-zinc-900 leading-snug wrap-break-word">{project.address}</p>
                           </div>
                         </div>
 

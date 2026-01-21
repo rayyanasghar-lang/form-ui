@@ -6,18 +6,19 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
-import { Info } from "lucide-react"
+import { Info, MapPin, Calculator, Calendar, User, Zap, Sun, Battery, Settings2, Power, FileCode, Paperclip, Search } from "lucide-react"
+import { EquipmentSearchSelector } from "../equipment-search-selector"
 import FileUploader from "../file-uploader"
-import SystemComponentsTable, { Component } from "../system-components-table"
+import SystemComponentsSections, { EquipmentItem } from "../system-components-sections"
 
 interface SystemSummaryStepProps {
     formData: any
     updateField: (field: string, value: any) => void
     errors: Record<string, string>
     submissionMode: "quick" | "provide details"
-    components: Component[]
-    addComponent: () => void
-    updateComponent: (id: string, field: keyof Component, value: any) => void
+    components: EquipmentItem[]
+    addComponent: (type?: string) => void
+    updateComponent: (id: string, field: keyof EquipmentItem, value: any) => void
     removeComponent: (id: string) => void
 }
 
@@ -163,16 +164,18 @@ export default function SystemSummaryStep({
 
                                     <div className="space-y-2">
                                         <Label htmlFor="batteryModel">Battery Make/Model (optional)</Label>
-                                        <Input
-                                            id="batteryModel"
-                                            placeholder="e.g., Tesla Powerwall 2"
+                                        <EquipmentSearchSelector
                                             value={formData.batteryModel}
-                                            onChange={(e) => updateField("batteryModel", e.target.value)}
+                                            equipmentId={formData.batteryId}
+                                            apiType="battery"
+                                            onSelect={(makeModel: string, equipmentId?: string) => {
+                                                updateField("batteryModel", makeModel)
+                                                if (equipmentId) updateField("batteryId", equipmentId)
+                                            }}
+                                            placeholder="Search for battery model..."
                                         />
                                     </div>
                                 </div>
-
-
                             </div>
                         )}
                     </div>
@@ -180,8 +183,8 @@ export default function SystemSummaryStep({
             </FormCard>
 
             {submissionMode === "provide details" && (
-                <FormCard title="System Components">
-                    <SystemComponentsTable
+                <FormCard title="System Equipment">
+                    <SystemComponentsSections
                         components={components}
                         onAddComponent={addComponent}
                         onUpdateComponent={updateComponent}
