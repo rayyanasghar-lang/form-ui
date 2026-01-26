@@ -34,7 +34,6 @@ export async function GET(
   }
 }
 
-
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ type: string; uuid: string }> }

@@ -60,11 +60,10 @@ function PlacesAutocomplete({ value, onChange, disabled, className }: AddressAut
     onChange(e.target.value)
   }
 
-  const handleSelect = async (address: string) => {
+    const handleSelect = async (address: string) => {
+    console.log(`[AddressAutocomplete] Selected address: ${address}`)
     setValue(address, false)
     clearSuggestions()
-    onChange(address)
-    // Address selection is now just a value update
     onChange(address)
   }
 

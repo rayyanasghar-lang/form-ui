@@ -22,7 +22,9 @@ import {
   CreditCard,
   User2Icon,
   Plus,
-  Database
+  Database,
+  Search,
+  CloudSun
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -94,6 +96,8 @@ export default function Sidebar({
         { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
         { id: "projects", label: "My Projects", icon: FolderKanban, href: "/projects" },
         { id: "equipment", label: "Equipment", icon: Database, href: "/equipment" },
+        { id: "ashrae", label: "ASHRAE Data", icon: CloudSun, href: "/ashrae" },
+        { id: "scrapers", label: "Scrapers", icon: Search, href: "/scrapers" },
         { id: "new-permit", label: "New Permit", icon: Zap, href: "/forms" },
         { id: "user-profile", label: "User Profile", icon: User2Icon, href: "/profile" },
         { id: "team", label: "Team", icon: Users, href: "#" },

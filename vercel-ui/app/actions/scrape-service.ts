@@ -2,6 +2,7 @@
 
 import puppeteer from "puppeteer-core";
 import chromium from "@sparticuz/chromium-min";
+import { fetchNearbyStations, geocodeAddress } from "./weather-service";
 
 
 // Helper to launch browser (compatible with both local and Vercel)
@@ -19,6 +20,9 @@ async function getBrowser() {
     const chromePaths = [
       "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
       "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+      "/usr/bin/google-chrome",
+      "/usr/bin/chromium",
+      "/usr/bin/chromium-browser",
       process.env.CHROME_PATH || ""
     ];
     
@@ -44,7 +48,7 @@ async function getBrowser() {
 }
 
 async function preparePage(page: any) {
-    // Basic stealth to avoid detection
+    // Advanced stealth to avoid detection
     await page.evaluateOnNewDocument(() => {
         // Pass the Webdriver Test
         Object.defineProperty(navigator, 'webdriver', {
@@ -54,7 +58,6 @@ async function preparePage(page: any) {
         // Pass the Chrome Test
         (window as any).chrome = {
             runtime: {},
-            // ... add more if needed
         };
 
         // Pass the Permissions Test
@@ -66,16 +69,47 @@ async function preparePage(page: any) {
 
         // Pass the Plugins Test
         Object.defineProperty(navigator, 'plugins', {
-            get: () => [1, 2, 3, 4, 5],
+            get: () => [
+                { name: 'Chrome PDF Viewer', filename: 'internal-pdf-viewer', description: 'Portable Document Format' },
+                { name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer', description: 'Portable Document Format' },
+                { name: 'Native Client', filename: 'internal-nacl-plugin', description: '' }
+            ],
         });
 
         // Pass the Languages Test
         Object.defineProperty(navigator, 'languages', {
             get: () => ['en-US', 'en'],
         });
+
+        // hardwareConcurrency and deviceMemory
+        Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
+        Object.defineProperty(navigator, 'deviceMemory', { get: () => 8 });
+        
+        // Mocking WebGL vendor/renderer
+        const getParameter = WebGLRenderingContext.prototype.getParameter;
+        WebGLRenderingContext.prototype.getParameter = function(parameter: number) {
+            // UNMASKED_VENDOR_WEBGL
+            if (parameter === 37445) return 'Intel Inc.';
+            // UNMASKED_RENDERER_WEBGL
+            if (parameter === 37446) return 'Intel(R) Iris(TM) Graphics 6100';
+            return getParameter.apply(this, [parameter]);
+        };
     });
 
-    await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+    const userAgents = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    ];
+    const randomUA = userAgents[Math.floor(Math.random() * userAgents.length)];
+    await page.setUserAgent(randomUA);
+    
+    // Set a realistic viewport
+    await page.setViewport({
+        width: 1280 + Math.floor(Math.random() * 100),
+        height: 800 + Math.floor(Math.random() * 100),
+        deviceScaleFactor: 1,
+    });
 }
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
@@ -115,7 +149,21 @@ export async function scrapeZillowAction(address: string) {
     const isBotDetected = response?.status() === 403 || (await page.title()).includes("Access Denied") || (await page.title()).includes("Robot or human");
     
     if (isBotDetected) {
-        console.warn("[Scraper] Potential bot detection/CAPTCHA encountered. Attempting to extract from script tags anyway...");
+        console.warn("[Scraper] Potential bot detection/CAPTCHA encountered. Attempting to remove CAPTCHA elements and extract anyway...");
+        await page.evaluate(() => {
+            const captchaContainers = document.querySelectorAll('#px-captcha-wrapper, .px-captcha-container, #px-captcha, [class*="captcha"]');
+            captchaContainers.forEach(el => el.remove());
+            
+            // Look for overlays/modals that might be blocking the view
+            const overlays = Array.from(document.querySelectorAll('div')).filter(el => {
+                const style = window.getComputedStyle(el);
+                return style.position === 'fixed' && (parseInt(style.zIndex) > 1000 || style.backgroundColor.includes('rgba(0, 0, 0'));
+            });
+            overlays.forEach(el => el.remove());
+            
+            document.body.style.overflow = 'auto';
+            document.documentElement.style.overflow = 'auto';
+        });
     }
 
     // Wait for the data scripts to be present
@@ -471,16 +519,16 @@ export async function scrapeASCE722Action(address: string) {
     if (browser) await browser.close();
   }
 }
-export async function scrapeRegridAction(address: string) {
+export async function scrapeRegridAction(address: string, email?: string, password?: string) {
     console.log(`[Scraper] Starting Regrid scrape for: ${address}`);
     let browser;
     try {
-        const email = process.env.REGRID_EMAIL;
-        const password = process.env.REGRID_PASSWORD;
+        const finalEmail = email || process.env.REGRID_EMAIL;
+        const finalPassword = password || process.env.REGRID_PASSWORD;
         
-        if (!email || !password) {
-            console.error("[Scraper] Regrid credentials missing in env vars.");
-            return { success: false, error: "Regrid credentials missing." };
+        if (!finalEmail || !finalPassword) {
+            console.error("[Scraper] Regrid credentials missing.");
+            return { success: false, error: "Regrid credentials missing. Please provide email and password." };
         }
 
         browser = await getBrowser();
@@ -531,7 +579,7 @@ export async function scrapeRegridAction(address: string) {
                         passInput.dispatchEvent(new Event('input', { bubbles: true }));
                         passInput.dispatchEvent(new Event('change', { bubbles: true }));
                     }
-                }, email, password);
+                }, finalEmail, finalPassword);
 
                 // Submit
                 await page.evaluate(() => {
@@ -888,6 +936,18 @@ export async function scrapeAllAction(address: string) {
     console.log(`[Scraper] Starting concurrent scrape for: ${address}`);
 
     try {
+        // First geocode the address for the weather API
+        console.log(`[Scraper] Geocoding address: ${address}`);
+        const geocodeResult = await geocodeAddress(address);
+        
+        let weatherResult: any = { success: false, error: "Geocoding failed" };
+        if (geocodeResult.success && geocodeResult.lat && geocodeResult.lng) {
+            console.log(`[Scraper] Geocode success: ${geocodeResult.lat}, ${geocodeResult.lng}. Fetching weather stations...`);
+            weatherResult = await fetchNearbyStations(geocodeResult.lat, geocodeResult.lng);
+        } else {
+            console.warn(`[Scraper] Geocoding failed for weather station lookup.`);
+        }
+
         const [zillowResult, asce716Result, asce722Result, regridResult] = await Promise.all([
             scrapeZillowAction(address),
             scrapeASCE716Action(address),
@@ -904,6 +964,8 @@ export async function scrapeAllAction(address: string) {
                 asce716: asce716Result,
                 asce722: asce722Result,
                 regrid: regridResult,
+                weather: weatherResult,
+                coordinates: geocodeResult.success ? { lat: geocodeResult.lat, lng: geocodeResult.lng } : null
             }
         };
     } catch (error: any) {
