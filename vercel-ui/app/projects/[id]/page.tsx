@@ -52,6 +52,8 @@ import { toast } from "sonner"
 import { CalculateProjectProgress } from "@/lib/calculate-progress"
 import { useProjectUpdates } from "@/hooks/use-project-updates"
 import { ProjectStatusBar } from "@/components/projects/project-status-bar"
+import { geocodeAddress } from "@/app/actions/weather-service"
+import { scrapeAHJAction, scrapeUtilityAction } from "@/app/actions/scrape-service"
 
 import AuthGuard from "@/components/auth/auth-guard"
 
@@ -205,6 +207,7 @@ export default function ProjectDetailsPage() {
     // Map snake_case from API to camelCase for components
     utilityProvider: project.site_details?.utility_provider || "",
     jurisdiction: project.site_details?.jurisdiction || "",
+    useLastProjectValues: false,
     roofMaterial: project.site_details?.roof_material || "",
     roofPitch: project.site_details?.roof_pitch || "",
     numberOfArrays: project.site_details?.number_of_arrays || 0,
@@ -231,6 +234,11 @@ export default function ProjectDetailsPage() {
     batterySldRequested: project.optional_extra_details?.battery_sld_requested || false,
     batterySldNotes: project.optional_extra_details?.battery_sld_notes || "",
   } : {}
+
+  if (project) {
+    console.log("[ProjectDetails] Project site_details:", project.site_details)
+    console.log("[ProjectDetails] formCompatibleData utilityProvider:", (formCompatibleData as any).utilityProvider)
+  }
 
 
 
@@ -262,6 +270,55 @@ export default function ProjectDetailsPage() {
     }
     loadProject()
   }, [id])
+
+  // Automatic AHJ & Utility Discovery for Projects
+  useEffect(() => {
+    if (project && project.address && (!project.site_details?.jurisdiction || !project.site_details?.utility_provider)) {
+      const runDiscovery = async () => {
+        console.log(`[ProjectDetails] Auto-discovering missing data for: ${project.address}`)
+        const geo = await geocodeAddress(project.address)
+        if (geo.success && geo.lat && geo.lng) {
+          console.log(`[ProjectDetails] Geocoding success: ${geo.lat}, ${geo.lng}`)
+          const updates: any = { site_details: { ...project.site_details } }
+          let needsUpdate = false
+
+          if (!project.site_details?.jurisdiction) {
+            console.log("[ProjectDetails] Discovery: Fetching AHJ for", project.address)
+            const ahj = await scrapeAHJAction(geo.lat, geo.lng)
+            console.log("[ProjectDetails] Discovery: AHJ result:", ahj)
+            if (ahj.success && ahj.data?.jurisdiction) {
+              updates.site_details.jurisdiction = ahj.data.jurisdiction
+              needsUpdate = true
+            }
+          }
+
+          if (!project.site_details?.utility_provider) {
+            console.log(`[ProjectDetails] Discovery: Fetching Utility for ${geo.lat}, ${geo.lng}...`)
+            const util = await scrapeUtilityAction(geo.lat, geo.lng)
+            console.log("[ProjectDetails] Discovery: Utility action response:", util)
+            if (util.success && util.data?.utilityName) {
+              updates.site_details.utility_provider = util.data.utilityName
+              needsUpdate = true
+            } else if (!util.success) {
+              console.error("[ProjectDetails] Discovery: Utility fetch failed error detail:", util.error)
+            }
+          }
+
+          if (needsUpdate) {
+            console.log(`[ProjectDetails] Updating project ${id} with discovered data...`, updates)
+            const updateRes = await updateProjectAction(id, updates)
+            if (updateRes.success) {
+              setProject(prev => prev ? { ...prev, site_details: { ...prev.site_details, ...updates.site_details } } : null)
+              toast.success("Project details auto-updated with property intelligence")
+            } else {
+              console.error("[ProjectDetails] Update failed:", updateRes.error)
+            }
+          }
+        }
+      }
+      runDiscovery()
+    }
+  }, [project?.id, project?.address])
 
   const handleUpdateField = (path: string, value: any) => {
     setProject(prev => {

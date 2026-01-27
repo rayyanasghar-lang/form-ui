@@ -17,12 +17,8 @@ import { uploadWithRcloneAction } from "@/app/actions/upload-rclone"
 import { submitProjectAction } from "@/app/actions/submit-project"
 import { fetchServicesAction, Service } from "@/app/actions/fetch-services"
 import { getContractorProfileAction } from "@/app/actions/auth-service"
-import { 
-  scrapeZillowAction, 
-  scrapeASCE722Action, 
-  scrapeRegridAction 
-} from "@/app/actions/scrape-service"
 import { fetchNearbyStations, geocodeAddress, reverseGeocode, WeatherStation } from "@/app/actions/weather-service"
+import { scrapeAHJAction, scrapeUtilityAction } from "@/app/actions/scrape-service"
 
 import { Component } from "./system-components-table"
 
@@ -219,10 +215,39 @@ export default function PermitPlansetForm() {
           })
         }
       }, 2000) // Debounce 2s
+ 
+       return () => clearTimeout(timeout)
+     }
+   }, [formData.projectAddress])
+
+  // 5. Automatic AHJ & Utility Detection
+  useEffect(() => {
+    const lat = parseFloat(formData.latitude)
+    const lng = parseFloat(formData.longitude)
+
+    if (!isNaN(lat) && !isNaN(lng)) {
+      const timeout = setTimeout(async () => {
+        // Only fetch if not already set to avoid overwriting user manual changes or redundant calls
+        if (!formData.jurisdiction) {
+          scrapeAHJAction(lat, lng).then(res => {
+            if (res.success && res.data?.jurisdiction) {
+              updateField("jurisdiction", res.data.jurisdiction)
+            }
+          })
+        }
+
+        if (!formData.utilityProvider) {
+          scrapeUtilityAction(lat, lng).then(res => {
+            if (res.success && res.data?.utilityName) {
+              updateField("utilityProvider", res.data.utilityName)
+            }
+          })
+        }
+      }, 1000) // Small delay after coordinates change
 
       return () => clearTimeout(timeout)
     }
-  }, [formData.projectAddress])
+  }, [formData.latitude, formData.longitude])
 
   /* ---------------- Save Draft ---------------- */
   const handleSaveDraft = async () => {
@@ -241,13 +266,17 @@ export default function PermitPlansetForm() {
     try {
       const payload = prepareProjectPayload(formData, [], "draft")
       const res = await submitProjectAction(payload)
-      const projectId = res.data?.id || res.data?.result?.id || res.data?.result || (typeof res.data === 'number' || typeof res.data === 'string' ? res.data : undefined)
+      console.log("[PermitForm] Save Draft Response:", res)
+      const projectId = res.data?.project_id || res.data?.id || res.data?.result?.id || res.data?.result || (typeof res.data === 'number' || typeof res.data === 'string' ? res.data : undefined)
+      console.log("[PermitForm] Extracted ProjectID:", projectId)
 
       if (res.success && projectId) {
         setLastSaved(new Date())
         setSaveStatus("saved")
         toast.success("Draft saved. Redirecting to details...")
-        router.push(`/projects/${projectId}`)
+        setTimeout(() => {
+          router.push(`/projects/${projectId}`)
+        }, 500)
       } else {
         setSaveStatus("idle")
         const errorMsg = res.error ? (typeof res.error === 'object' ? (res.error as any).message || (res.error as any).status : String(res.error)) : "Draft saved but ID missing";
@@ -306,12 +335,36 @@ export default function PermitPlansetForm() {
         address: data.projectAddress,
         type: data.projectType,
         general_notes: data.generalNotes,
-        system_type: data.systemType, // Added system_type
+        system_type: data.systemType,
         submission_type_name: submissionMode,
+      },
+      site_details: {
+        jurisdiction: data.jurisdiction,
+        utility_provider: data.utilityProvider,
+        lot_size: data.lotSize,
+        parcel_number: data.parcelNumber,
+        wind_speed: data.windSpeed,
+        snow_load: data.snowLoad,
+        roof_material: data.roofMaterial,
+        roof_pitch: data.roofPitch,
+        number_of_arrays: data.numberOfArrays,
+        ground_mount_type: data.groundMountType,
+        foundation_type: data.foundationType,
+      },
+      system_summary: {
+        system_size: data.systemSize,
+        system_type: data.systemType,
+        pv_modules: data.pvModules,
+        inverters: data.inverters,
+        battery_backup: data.batteryBackup,
+        battery_info: {
+          qty: data.batteryQty,
+          model: data.batteryModel,
+        }
       },
       services: data.services,
       status: status,
-      contractor_id: contractorId // Added contractor_id linkage
+      contractor_id: contractorId
     }
   }
 
@@ -333,15 +386,20 @@ export default function PermitPlansetForm() {
     try {
       const payload = prepareProjectPayload(formData, [], "draft")
       const res = await submitProjectAction(payload)
+      console.log("[PermitForm] Create Project Response:", res)
+
       // Check for project_id (from new backend format), id, or other variations
       const projectId = res.data?.project_id || res.data?.id || res.data?.result?.id || res.data?.result || (typeof res.data === 'number' || typeof res.data === 'string' ? res.data : undefined)
+      console.log("[PermitForm] Extracted ProjectID:", projectId)
 
       if (res.success && projectId) {
         toast.success("Project created! Now provide more details.")
         if (typeof window !== "undefined") {
           localStorage.removeItem(PERSIST_KEY)
         }
-        router.push(`/projects/${projectId}`)
+        setTimeout(() => {
+          router.push(`/projects/${projectId}`)
+        }, 500)
       } else {
         // Handle specific duplicate address error
         const errorMsg = res.error ? (typeof res.error === 'object' ? (res.error as any).message || (res.error as any).status : String(res.error)) : "Project created but ID missing";
@@ -424,12 +482,28 @@ export default function PermitPlansetForm() {
           return;
       }
 
-      // 2. Property Scraping
-      const [zillow, asce, regrid] = await Promise.all([
-        scrapeZillowAction(effectiveAddress),
-        scrapeASCE722Action(effectiveAddress),
-        scrapeRegridAction(effectiveAddress),
+      // 2. Property Scraping via API Routes
+      const [zillowRes, asceRes, regridRes] = await Promise.all([
+        fetch("/api/scrape/zillow", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ address: effectiveAddress })
+        }).then(r => r.json()),
+        fetch("/api/scrape/asce", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ address: effectiveAddress, standard: "7-22" })
+        }).then(r => r.json()),
+        fetch("/api/scrape/regrid", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ address: effectiveAddress })
+        }).then(r => r.json()),
       ])
+
+      const zillow = zillowRes
+      const asce = asceRes
+      const regrid = regridRes
 
       const sources: any = {}
       if (zillow.success) sources.zillow = zillow.data
@@ -457,8 +531,8 @@ export default function PermitPlansetForm() {
     }
   }
 
-  const handleNext = () => {
-    handleSubmit()
+  const handleNext = async () => {
+    await handleSubmit()
   }
 
   const handleBack = () => {

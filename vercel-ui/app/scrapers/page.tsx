@@ -1,16 +1,15 @@
 "use client"
 
 import React, { useState } from "react"
-import { Search, Loader2, Info, Building, Home, Wind, Snowflake, MapPin, Database, CloudSun } from "lucide-react"
+import { Search, Loader2, Info, Building, Home, Wind, Snowflake, MapPin, Database, CloudSun, Copy, Check, Map, Plug } from "lucide-react"
 import AddressAutocomplete from "@/components/address-autocomplete"
 import { 
-  scrapeZillowAction, 
-  scrapeRegridAction, 
-  scrapeASCE716Action, 
-  scrapeASCE722Action 
+  scrapeAHJAction,
+  scrapeUtilityAction
 } from "@/app/actions/scrape-service"
 import { geocodeAddress, fetchNearbyStations } from "@/app/actions/weather-service"
 import { fetchAshraeData, AshraeRecord } from "@/app/actions/ashrae-service"
+import { fetchProjectsAction } from "@/app/actions/project-service"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -38,6 +37,8 @@ export default function ScrapersPage() {
   const [asce716Loading, setAsce716Loading] = useState(false)
   const [asce722Loading, setAsce722Loading] = useState(false)
   const [weatherLoading, setWeatherLoading] = useState(false)
+  const [ahjLoading, setAhjLoading] = useState(false)
+  const [utilityLoading, setUtilityLoading] = useState(false)
 
   // Individual result states
   const [zillowResult, setZillowResult] = useState<any>(null)
@@ -45,14 +46,14 @@ export default function ScrapersPage() {
   const [asce716Result, setAsce716Result] = useState<any>(null)
   const [asce722Result, setAsce722Result] = useState<any>(null)
   const [weatherResult, setWeatherResult] = useState<any>(null)
+  const [ahjResult, setAhjResult] = useState<any>(null)
+  const [utilityResult, setUtilityResult] = useState<any>(null)
   const [coordinates, setCoordinates] = useState<any>(null)
   const [addressState, setAddressState] = useState<string>("")
 
-  // ASHRAE Modal State
-  const [isAshraeModalOpen, setIsAshraeModalOpen] = useState(false)
-  const [selectedStation, setSelectedStation] = useState<string>("")
-  const [ashraeData, setAshraeData] = useState<AshraeRecord | null>(null)
-  const [ashraeLoading, setAshraeLoading] = useState(false)
+  // ASHRAE Station Data State (Store fetched ASHRAE data for stations)
+  const [stationAshraeData, setStationAshraeData] = useState<Record<string, AshraeRecord | null>>({})
+  const [stationLoading, setStationLoading] = useState<Record<string, boolean>>({})
 
   const handleScrape = async () => {
     if (!address) {
@@ -68,9 +69,11 @@ export default function ScrapersPage() {
     setAsce716Result(null)
     setAsce722Result(null)
     setWeatherResult(null)
+    setAhjResult(null)
+    setUtilityResult(null)
     setCoordinates(null)
     setAddressState("")
-    setAshraeData(null)
+    setStationAshraeData({})
 
     // Set all loaders
     setZillowLoading(true)
@@ -78,8 +81,8 @@ export default function ScrapersPage() {
     setAsce716Loading(true)
     setAsce722Loading(true)
     setWeatherLoading(true)
-
-    setWeatherLoading(true)
+    setAhjLoading(true)
+    setUtilityLoading(true)
 
     console.log(`[ScrapersPage] Starting prioritized scrape for: ${address}`)
 
@@ -89,54 +92,150 @@ export default function ScrapersPage() {
             setCoordinates({ lat: geoStep.lat, lng: geoStep.lng })
             setAddressState(geoStep.state || "")
             
-            fetchNearbyStations(geoStep.lat, geoStep.lng).then(res => {
+            fetchNearbyStations(geoStep.lat, geoStep.lng).then(async res => {
                 setWeatherResult(res)
                 setWeatherLoading(false)
                 console.log("[ScrapersPage] Weather Stations done (Prioritized)")
+                
+                // Automate ASHRAE fetching for each station
+                if (res.success && res.data) {
+                    console.log("[ScrapersPage] Automating ASHRAE lookups...")
+                    for (const station of res.data) {
+                        try {
+                            // Extract search name (reuse logic from handleStationClick)
+                            const searchName = station.name.split(' ')[0].replace(/[^a-zA-Z]/g, '')
+                            setStationLoading(prev => ({ ...prev, [station.name]: true }))
+                            
+                            const query = new URLSearchParams({
+                                state: geoStep.state || "",
+                                station: searchName,
+                                limit: "1"
+                            })
+                            
+                            const response = await fetch(`/api/ashrae/lookup?${query.toString()}`)
+                            const ashraeRes = await response.json()
+                            
+                            if (ashraeRes.status === "success" && ashraeRes.data && ashraeRes.data.length > 0) {
+                                setStationAshraeData(prev => ({ ...prev, [station.name]: ashraeRes.data[0] }))
+                            } else {
+                                setStationAshraeData(prev => ({ ...prev, [station.name]: null }))
+                            }
+                        } catch (e) {
+                            console.error(`Error auto-fetching ASHRAE for ${station.name}:`, e)
+                        } finally {
+                            setStationLoading(prev => ({ ...prev, [station.name]: false }))
+                        }
+                    }
+                }
+            }).catch(e => {
+                setWeatherResult({ success: false, error: "Weather fetch failed" })
+                setWeatherLoading(false)
+            })
+
+            // Trigger AHJ and Utility in parallel with Weather
+            scrapeAHJAction(geoStep.lat, geoStep.lng).then(res => {
+                setAhjResult(res)
+                setAhjLoading(false)
+                console.log("[ScrapersPage] AHJ done")
+            }).catch(e => {
+                setAhjResult({ success: false, error: "AHJ fetch failed" })
+                setAhjLoading(false)
+            })
+
+            scrapeUtilityAction(geoStep.lat, geoStep.lng).then(res => {
+                setUtilityResult(res)
+                setUtilityLoading(false)
+                console.log("[ScrapersPage] Utility done")
+            }).catch(e => {
+                setUtilityResult({ success: false, error: "Utility fetch failed" })
+                setUtilityLoading(false)
             })
         } else {
             const fail = { success: false, error: "Geocoding failed" }
             setWeatherResult(fail)
+            setAhjResult(fail)
+            setUtilityResult(fail)
             setWeatherLoading(false)
+            setAhjLoading(false)
+            setUtilityLoading(false)
             toast.error("Geocoding failed. Check address.")
         }
         
         // --- 2. TRIGGER HEAVY SCRAPERS AFTER GEOCODE STARTS/FINISHES ---
         // We trigger these even if geocode fails (as they use address string)
         
-        console.log("[ScrapersPage] Starting heavy scrapers...")
+        console.log("[ScrapersPage] Starting heavy scrapers via API Routes...")
 
-        scrapeZillowAction(address).then(res => {
+        // Zillow fetch
+        fetch("/api/scrape/zillow", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ address })
+        }).then(r => r.json())
+          .then(res => {
             setZillowResult(res)
             setZillowLoading(false)
             console.log("[ScrapersPage] Zillow done")
+        }).catch(e => {
+            setZillowResult({ success: false, error: "Zillow API failed" })
+            setZillowLoading(false)
         })
 
-        scrapeRegridAction(address, regridEmail, regridPassword).then(res => {
+        // Regrid fetch
+        fetch("/api/scrape/regrid", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ address, email: regridEmail, password: regridPassword })
+        }).then(r => r.json())
+          .then(res => {
             setRegridResult(res)
             setRegridLoading(false)
             console.log("[ScrapersPage] Regrid done")
+        }).catch(e => {
+            setRegridResult({ success: false, error: "Regrid API failed" })
+            setRegridLoading(false)
         })
 
-        scrapeASCE716Action(address).then(res => {
+        // ASCE 7-16 fetch
+        fetch("/api/scrape/asce", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ address, standard: "7-16" })
+        }).then(r => r.json())
+          .then(res => {
             setAsce716Result(res)
             setAsce716Loading(false)
             console.log("[ScrapersPage] ASCE 7-16 done")
+        }).catch(e => {
+            setAsce716Result({ success: false, error: "ASCE 7-16 failed" })
+            setAsce716Loading(false)
         })
 
-        scrapeASCE722Action(address).then(res => {
+        // ASCE 7-22 fetch
+        fetch("/api/scrape/asce", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ address, standard: "7-22" })
+        }).then(r => r.json())
+          .then(res => {
             setAsce722Result(res)
             setAsce722Loading(false)
             console.log("[ScrapersPage] ASCE 7-22 done")
+        }).catch(e => {
+            setAsce722Result({ success: false, error: "ASCE 7-22 failed" })
+            setAsce722Loading(false)
         })
 
     }).catch(e => {
         console.error("[ScrapersPage] Scrape chain error:", e)
         setWeatherLoading(false)
+        setAhjLoading(false)
+        setUtilityLoading(false)
     }).finally(() => {
         setLoading(false)
     })
   }
+
 
   const handleStationClick = async (stationName: string) => {
     if (!addressState) {
@@ -146,12 +245,11 @@ export default function ScrapersPage() {
 
     // Use only the first word for matching (e.g. "HARRISBURG" from "HARRISBURG CAPITAL ARPT")
     const searchName = stationName.split(' ')[0].replace(/[^a-zA-Z]/g, '')
-    console.log(`[ASHRAE Client] Fetching: ${searchName} in ${addressState} (Full name: ${stationName})`)
+    
+    // Toggle/Check if already loading or fetched
+    if (stationAshraeData[stationName] !== undefined || stationLoading[stationName]) return
 
-    setSelectedStation(stationName)
-    setIsAshraeModalOpen(true)
-    setAshraeLoading(true)
-    setAshraeData(null)
+    setStationLoading(prev => ({ ...prev, [stationName]: true }))
 
     try {
         // Use standard fetch to bypass Server Action queue
@@ -164,19 +262,15 @@ export default function ScrapersPage() {
         const response = await fetch(`/api/ashrae/lookup?${query.toString()}`)
         const res = await response.json()
 
-        console.log(`[ASHRAE Client] API Response for ${searchName}:`, res)
-
         if (res.status === "success" && res.data && res.data.length > 0) {
-            setAshraeData(res.data[0])
+            setStationAshraeData(prev => ({ ...prev, [stationName]: res.data[0] }))
         } else {
-            console.warn(`[ASHRAE Client] No data found for ${searchName}`)
-            // Keep ashraeData null to show "No data found"
+            setStationAshraeData(prev => ({ ...prev, [stationName]: null }))
         }
     } catch (e) {
         console.error("Error fetching ASHRAE data:", e)
-        toast.error("Failed to fetch ASHRAE data")
     } finally {
-        setAshraeLoading(false)
+        setStationLoading(prev => ({ ...prev, [stationName]: false }))
     }
   }
 
@@ -261,7 +355,7 @@ export default function ScrapersPage() {
             </Card>
         </div>
 
-        {(loading || zillowLoading || regridLoading || asce716Loading || asce722Loading || weatherLoading) && (
+        {(loading || zillowLoading || regridLoading || asce716Loading || asce722Loading || weatherLoading || ahjLoading || utilityLoading) && (
             <div className="flex items-center justify-center p-4 bg-muted/30 rounded-lg border border-border animate-pulse">
                 <p className="text-xs text-muted-foreground flex items-center gap-2">
                     <Loader2 className="h-3 w-3 animate-spin" />
@@ -278,7 +372,7 @@ export default function ScrapersPage() {
                   <CloudSun className="h-5 w-5 text-orange-400" />
                   <CardTitle className="text-md font-medium">NWS Weather Stations</CardTitle>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2">
                     {coordinates && (
                         <Badge variant="secondary" className="font-mono text-[10px]">
                             {coordinates.lat.toFixed(4)}, {coordinates.lng.toFixed(4)}
@@ -302,22 +396,62 @@ export default function ScrapersPage() {
                     </div>
                 ) : weatherResult?.success ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                    {weatherResult.data?.map((station: any, i: number) => (
-                      <div 
-                        key={i} 
-                        className="p-3 rounded-lg border border-border bg-card/50 flex flex-col gap-1 hover:border-primary/30 hover:bg-primary/5 cursor-pointer transition-all active:scale-[0.98]"
-                        onClick={() => handleStationClick(station.name)}
-                      >
-                        <div className="flex justify-between items-start">
-                            <span className="font-bold text-sm truncate max-w-[150px]">{station.name}</span>
-                            <Badge variant="outline" className="text-[10px] h-4 px-1">{station.id}</Badge>
+                    {weatherResult.data?.map((station: any, i: number) => {
+                      const ashrae = stationAshraeData[station.name]
+                      const isStnLoading = stationLoading[station.name]
+                      
+                      return (
+                        <div 
+                          key={i} 
+                          className="p-3 rounded-lg border border-border bg-card/50 flex flex-col gap-2 hover:border-primary/30 hover:bg-primary/5 cursor-pointer transition-all active:scale-[0.98] relative group"
+                          onClick={() => handleStationClick(station.name)}
+                        >
+                          <div className="flex justify-between items-start">
+                              <span className="font-bold text-sm truncate max-w-[150px]">{station.name}</span>
+                              <div className="flex items-center gap-1">
+                                <div onClick={(e) => e.stopPropagation()}>
+                                    <CopyButton 
+                                        title={station.name}
+                                        fields={[
+                                            { label: "Station ID", value: station.id },
+                                            { label: "Distance", value: `${(station.distance / 1000).toFixed(2)} km` },
+                                            ...(ashrae ? [
+                                                { label: "ASHRAE High 2%", value: `${ashrae.high_temp_2_avg}°C` },
+                                                { label: "ASHRAE Extr Min", value: `${ashrae.extreme_temp_min}°C` }
+                                            ] : [])
+                                        ]}
+                                    />
+                                </div>
+                                <Badge variant="outline" className="text-[10px] h-4 px-1">{station.id}</Badge>
+                              </div>
+                          </div>
+                          
+                          <div className="flex justify-between text-[10px] text-muted-foreground">
+                              <span>Distance: {(station.distance / 1000).toFixed(2)} km</span>
+                              {ashrae === undefined && !isStnLoading && <span className="text-primary hover:underline italic">Click for ASHRAE</span>}
+                          </div>
+
+                          {isStnLoading && <Loader2 className="h-3 w-3 animate-spin mx-auto text-primary/40" />}
+                          
+                          {ashrae && (
+                            <div className="mt-1 pt-2 border-t border-border/50 grid grid-cols-2 gap-2 animate-in fade-in zoom-in-95 duration-200">
+                                <div className="flex flex-col">
+                                    <span className="text-[8px] uppercase font-bold text-muted-foreground">High 2%</span>
+                                    <span className="text-xs font-bold text-blue-600">{ashrae.high_temp_2_avg}°C</span>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[8px] uppercase font-bold text-muted-foreground">Extr Min</span>
+                                    <span className="text-xs font-bold text-orange-600">{ashrae.extreme_temp_min}°C</span>
+                                </div>
+                            </div>
+                          )}
+                          
+                          {ashrae === null && (
+                            <div className="text-[9px] text-destructive italic text-center border-t border-border/20 pt-1">No ASHRAE data found</div>
+                          )}
                         </div>
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>Distance:</span>
-                            <span>{(station.distance / 1000).toFixed(2)} km</span>
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                     {(!weatherResult.data || weatherResult.data.length === 0) && (
                         <div className="col-span-full py-4 text-center text-muted-foreground text-sm">
                             No nearby weather stations found.
@@ -335,6 +469,58 @@ export default function ScrapersPage() {
                 )}
               </CardContent>
             </Card>
+
+            {/* AHJ Results */}
+            <ResultCard 
+              title="AHJ Information" 
+              icon={<Map className="h-5 w-5 text-indigo-500" />} 
+              data={ahjResult}
+              loading={ahjLoading}
+              fields={[
+                { label: "Jurisdiction", value: ahjResult?.data?.jurisdiction || "N/A" },
+                { label: "Place", value: ahjResult?.data?.place || "N/A" },
+                { label: "Subdivision", value: ahjResult?.data?.countySubdivision || "N/A" },
+                { label: "County", value: ahjResult?.data?.county || "N/A" }
+              ]}
+            />
+
+            {/* Utility Results */}
+            <ResultCard 
+              title="Utility Provider" 
+              icon={<Plug className="h-5 w-5 text-yellow-500" />} 
+              data={utilityResult}
+              loading={utilityLoading}
+              fields={[
+                { label: "Utility Name", value: utilityResult?.data?.utilityName || "N/A" },
+                { label: "Res. Rate", value: utilityResult?.data?.residentialRate ? `$${utilityResult.data.residentialRate}/kWh` : "N/A" },
+                { label: "Comm. Rate", value: utilityResult?.data?.commercialRate ? `$${utilityResult.data.commercialRate}/kWh` : "N/A" },
+                { label: "Company ID", value: utilityResult?.data?.companyId || "N/A" }
+              ]}
+            />
+
+            {/* ASCE 7-22 Results */}
+            <ResultCard 
+              title="ASCE 7-22 Hazards" 
+              icon={<Wind className="h-5 w-5 text-emerald-500" />} 
+              data={asce722Result}
+              loading={asce722Loading}
+              fields={[
+                { label: "Wind Speed", value: asce722Result?.data?.windSpeed || "N/A" },
+                { label: "Ground Snow Load", value: asce722Result?.data?.snowLoad || "N/A" }
+              ]}
+            />
+
+            {/* ASCE 7-16 Results */}
+            <ResultCard 
+              title="ASCE 7-16 Hazards" 
+              icon={<Snowflake className="h-5 w-5 text-cyan-500" />} 
+              data={asce716Result}
+              loading={asce716Loading}
+              fields={[
+                { label: "Wind Speed", value: asce716Result?.data?.windSpeed || "N/A" },
+                { label: "Ground Snow Load", value: asce716Result?.data?.snowLoad || "N/A" }
+              ]}
+            />
 
             {/* Zillow Results */}
             <ResultCard 
@@ -364,107 +550,9 @@ export default function ScrapersPage() {
                 { label: "Land Use", value: regridResult?.data?.land_use || "N/A" }
               ]}
             />
-
-            {/* ASCE 7-22 Results */}
-            <ResultCard 
-              title="ASCE 7-22 Hazards" 
-              icon={<Wind className="h-5 w-5 text-emerald-500" />} 
-              data={asce722Result}
-              loading={asce722Loading}
-              fields={[
-                { label: "Wind Speed", value: asce722Result?.data?.windSpeed || "N/A" },
-                { label: "Ground Snow Load", value: asce722Result?.data?.snowLoad || "N/A" }
-              ]}
-            />
-
-            {/* ASCE 7-16 Results */}
-            <ResultCard 
-              title="ASCE 7-16 Hazards" 
-              icon={<Snowflake className="h-5 w-5 text-cyan-500" />} 
-              data={asce716Result}
-              loading={asce716Loading}
-              fields={[
-                { label: "Wind Speed", value: asce716Result?.data?.windSpeed || "N/A" },
-                { label: "Ground Snow Load", value: asce716Result?.data?.snowLoad || "N/A" }
-              ]}
-            />
         </div>
       </div>
 
-      <Dialog open={isAshraeModalOpen} onOpenChange={setIsAshraeModalOpen}>
-        <DialogContent className="sm:max-w-md rounded-3xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CloudSun className="h-5 w-5 text-orange-400" />
-              ASHRAE Weather Data
-            </DialogTitle>
-            <DialogDescription>
-              Details for station: <span className="font-semibold text-zinc-900">{selectedStation}</span>
-            </DialogDescription>
-          </DialogHeader>
-
-          {ashraeLoading ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Fetching ASHRAE records...</p>
-            </div>
-          ) : ashraeData ? (
-            <div className="space-y-6 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100 flex flex-col gap-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">State</span>
-                  <span className="text-lg font-bold text-zinc-900">{ashraeData.state}</span>
-                </div>
-                <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100 flex flex-col gap-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Station ID</span>
-                  <span className="text-sm font-bold text-zinc-900 truncate" title={ashraeData.station}>{ashraeData.station}</span>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-3 rounded-xl bg-blue-50/50 border border-blue-100">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
-                      <CloudSun className="h-4 w-4" />
-                    </div>
-                    <span className="text-sm font-medium text-zinc-700">High Temp 2% Avg</span>
-                  </div>
-                  <span className="text-lg font-bold text-blue-700">{ashraeData.high_temp_2_avg}°C</span>
-                </div>
-
-                <div className="flex justify-between items-center p-3 rounded-xl bg-orange-50/50 border border-orange-100">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600">
-                      <Snowflake className="h-4 w-4" />
-                    </div>
-                    <span className="text-sm font-medium text-zinc-700">Extreme Min Temp</span>
-                  </div>
-                  <span className="text-lg font-bold text-orange-700">{ashraeData.extreme_temp_min}°C</span>
-                </div>
-              </div>
-              
-              <p className="text-[10px] text-center text-muted-foreground italic">
-                Data source: ASHRAE Fundamentals Handbook
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-12 gap-3 text-center">
-              <div className="h-12 w-12 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-400">
-                <Database className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="font-semibold text-zinc-900">No ASHRAE data found</p>
-                <p className="text-sm text-muted-foreground max-w-[250px]">
-                  We couldn't find a matching record for {selectedStation} in {addressState}.
-                </p>
-              </div>
-              <Button variant="outline" className="mt-2 rounded-xl" onClick={() => setIsAshraeModalOpen(false)}>
-                Close
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
@@ -473,19 +561,27 @@ function ResultCard({ title, icon, data, fields, loading }: { title: string, ico
   const success = data?.success
   
   return (
-    <Card className={(!success && data) ? "border-destructive/20 opacity-80" : ""}>
+    <Card className={(!success && data) ? "border-destructive/20 opacity-80" : "relative group"}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="flex items-center gap-2">
           {icon}
           <CardTitle className="text-md font-medium">{title}</CardTitle>
         </div>
-        {loading ? (
-            <Badge variant="outline" className="animate-pulse">Loading...</Badge>
-        ) : data && (
-            <Badge variant={success ? "outline" : "destructive"}>
-                {success ? "Success" : "Failed"}
-            </Badge>
-        )}
+        <div className="flex items-center gap-2">
+            {!loading && data && (
+                <CopyButton 
+                    title={title} 
+                    fields={fields} 
+                />
+            )}
+            {loading ? (
+                <Badge variant="outline" className="animate-pulse">Loading...</Badge>
+            ) : data && (
+                <Badge variant={success ? "outline" : "destructive"}>
+                    {success ? "Success" : "Failed"}
+                </Badge>
+            )}
+        </div>
       </CardHeader>
       <CardContent>
         {loading ? (
@@ -514,4 +610,32 @@ function ResultCard({ title, icon, data, fields, loading }: { title: string, ico
       </CardContent>
     </Card>
   )
+}
+
+function CopyButton({ title, fields }: { title: string, fields: { label: string, value: any }[] }) {
+    const [copied, setCopied] = useState(false)
+
+    const handleCopy = () => {
+        const text = `${title}\n` + fields.map(f => `${f.label}: ${f.value}`).join('\n')
+        navigator.clipboard.writeText(text)
+        setCopied(true)
+        toast.success(`${title} copied to clipboard`)
+        setTimeout(() => setCopied(false), 2000)
+    }
+
+    return (
+        <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-7 w-7 rounded-full hover:bg-zinc-100 transition-colors" 
+            onClick={handleCopy}
+            title="Copy to clipboard"
+        >
+            {copied ? (
+                <Check className="h-3.5 w-3.5 text-emerald-500" />
+            ) : (
+                <Copy className="h-3.5 w-3.5 text-zinc-400" />
+            )}
+        </Button>
+    )
 }
