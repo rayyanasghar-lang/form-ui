@@ -73,12 +73,12 @@ function PlacesAutocomplete({ value, onChange, disabled, className }: AddressAut
         value={searchValue}
         onChange={handleInput}
         disabled={!ready || disabled}
-        placeholder="Start typing address..."
+        placeholder="Type Address (123 ABC St) or Coordinates (34.0522, -118.2437)"
         className={cn("pr-10", className)}
         autoComplete="off" // Disable browser autocomplete
       />
       <div className="absolute right-3 top-2.5 flex items-center gap-2">
-        {isScraping && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+        {(isScraping || !ready) && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
         <MapPin className="h-5 w-5 text-muted-foreground pointer-events-none opacity-50" />
       </div>
 

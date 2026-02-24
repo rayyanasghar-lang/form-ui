@@ -121,7 +121,7 @@ export function ServicesSelector({
                   {service.name}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                  ID: {service.id.slice(0, 8)}...
+                  ID: {String(service.id).slice(0, 8)}...
                 </p>
               </div>
             </button>

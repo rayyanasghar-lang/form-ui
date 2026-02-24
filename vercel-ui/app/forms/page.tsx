@@ -1,8 +1,9 @@
 "use client"
 
 import { motion } from "framer-motion"
+import { useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { ChevronLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Navbar } from "@/components/layout/navbar"
@@ -10,7 +11,19 @@ import PermitPlansetForm from "@/components/permit-planset-form"
 import AuthGuard from "@/components/auth/auth-guard"
 
 export default function FormsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <FormsPageContent />
+    </Suspense>
+  )
+}
+
+function FormsPageContent() {
   const [mounted, setMounted] = useState(false)
+  const searchParams = useSearchParams()
+  // Currently we use these for pre-filling if needed
+  const siteUuid = searchParams.get("siteUuid") || undefined
+  const projectUuid = searchParams.get("projectUuid") || undefined
 
   useEffect(() => {
     setMounted(true)

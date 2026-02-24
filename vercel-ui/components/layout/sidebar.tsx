@@ -30,6 +30,8 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import { signoutAction, getContractorProfileAction } from "@/app/actions/auth-service"
+import { fetchAvailableServices } from "@/app/actions/service-api"
+import { Service as ServiceType } from "@/types/site-centric"
 import { useEffect } from "react"
 
 interface SidebarProps {
@@ -52,6 +54,7 @@ export default function Sidebar({
   const router = useRouter()
   const [internalCollapsed, setInternalCollapsed] = useState(false)
   const [contractor, setContractor] = useState<any>(null)
+  const [services, setServices] = useState<ServiceType[]>([])
   
   const isCollapsed = onCollapsedChange ? collapsed : internalCollapsed
   const setCollapsed = onCollapsedChange || setInternalCollapsed
@@ -72,7 +75,16 @@ export default function Sidebar({
         }
       }
     }
+
+    async function loadServices() {
+      const result = await fetchAvailableServices()
+      if (result.status === "success" && result.data) {
+        setServices(result.data)
+      }
+    }
+
     loadContractor()
+    loadServices()
   }, [])
 
   const handleLogout = async () => {
@@ -95,6 +107,7 @@ export default function Sidebar({
       items: [
         { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
         { id: "projects", label: "My Projects", icon: FolderKanban, href: "/projects" },
+        { id: "technical", label: "Technical Workflow", icon: Zap, href: "/technical" },
         { id: "equipment", label: "Equipment", icon: Database, href: "/equipment" },
         { id: "ashrae", label: "ASHRAE Data", icon: CloudSun, href: "/ashrae" },
         { id: "scrapers", label: "Scrapers", icon: Search, href: "/scrapers" },
@@ -103,6 +116,15 @@ export default function Sidebar({
         { id: "team", label: "Team", icon: Users, href: "#" },
       ],
     },
+    ...(services.length > 0 ? [{
+      title: "Technical Services",
+      items: services.map(s => ({
+        id: `service-${s.id}`,
+        label: s.name,
+        icon: Zap, // Could use getServiceIcon here if imported
+        href: `/technical?serviceId=${s.id}`
+      }))
+    }] : []),
     {
       title: "Resources",
       items: [

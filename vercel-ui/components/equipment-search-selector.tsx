@@ -5,6 +5,7 @@ import { Check, ChevronsUpDown, Loader2, Plus, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
 interface EquipmentSearchItem {
@@ -12,6 +13,9 @@ interface EquipmentSearchItem {
     brandName: string
     model: string
     display_label: string
+    power?: number | string
+    voltage?: number | string
+    efficiency?: number | string
 }
 
 interface EquipmentSearchSelectorProps {
@@ -19,8 +23,10 @@ interface EquipmentSearchSelectorProps {
     equipmentId?: string
     apiType: string
     onSelect: (makeModel: string, equipmentId?: string) => void
+    onSelectFull?: (item: EquipmentSearchItem) => void
     placeholder?: string
     className?: string
+    frequentItems?: { label: string, uuid?: string }[]
 }
 
 export function EquipmentSearchSelector({ 
@@ -28,8 +34,10 @@ export function EquipmentSearchSelector({
     equipmentId, 
     apiType, 
     onSelect,
+    onSelectFull,
     placeholder = "Search or enter model...",
-    className
+    className,
+    frequentItems = []
 }: EquipmentSearchSelectorProps) {
     const [open, setOpen] = useState(false)
     const [searchQuery, setSearchQuery] = useState("")
@@ -65,6 +73,7 @@ export function EquipmentSearchSelector({
 
     const handleSelect = (item: EquipmentSearchItem) => {
         onSelect(item.display_label, item.uuid)
+        onSelectFull?.(item)
         setOpen(false)
         setSearchQuery("")
     }
@@ -108,6 +117,26 @@ export function EquipmentSearchSelector({
                             className="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
                         />
                     </div>
+                    {frequentItems.length > 0 && searchQuery.length < 1 && (
+                        <div className="p-3 border-b bg-zinc-50/50">
+                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Frequent Models</p>
+                            <div className="flex flex-wrap gap-2">
+                                {frequentItems.map((item) => (
+                                    <Badge 
+                                        key={item.label}
+                                        variant="outline" 
+                                        className="cursor-pointer hover:bg-primary hover:text-white hover:border-primary transition-all rounded-lg py-1 px-3 bg-white text-zinc-600 border-zinc-200"
+                                        onClick={() => {
+                                            onSelect(item.label, item.uuid)
+                                            setOpen(false)
+                                        }}
+                                    >
+                                        {item.label}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                     <CommandList>
                         {isLoading && (
                             <div className="flex items-center justify-center py-6">
@@ -147,10 +176,17 @@ export function EquipmentSearchSelector({
                                                 equipmentId === item.uuid ? "opacity-100 text-primary" : "opacity-0"
                                             )}
                                         />
-                                        <div className="flex flex-col">
-                                            <span className="font-medium">{item.display_label}</span>
-                                            <span className="text-xs text-muted-foreground">
-                                                {item.brandName} • Verified
+                                        <div className="flex flex-col gap-0.5">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-bold text-zinc-900">{item.display_label}</span>
+                                                {item.power && (
+                                                    <Badge variant="outline" className="h-4 px-1.5 text-[10px] bg-primary/5 text-primary border-primary/20">
+                                                        {item.power}{typeof item.power === 'number' ? 'W' : ''}
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-tight">
+                                                {item.brandName || "Verified Brand"} • Verified Component
                                             </span>
                                         </div>
                                     </CommandItem>

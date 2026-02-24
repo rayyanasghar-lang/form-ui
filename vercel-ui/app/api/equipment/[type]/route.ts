@@ -5,20 +5,29 @@ const INTERNAL_API_URL = process.env.INTERNAL_API_URL || "http://host.docker.int
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ type: string }> } // Correct type for dynamic route params
+  { params }: { params: Promise<{ type: string }> }
 ) {
   const { type } = await params
   const { searchParams } = new URL(request.url)
-  const page = searchParams.get("page") || "1"
-  const limit = searchParams.get("limit") || "10"
-  const q = searchParams.get("q") || ""
+
+  // Construct internal URL
+  const internalUrl = new URL(`${INTERNAL_API_URL}/api/equipment/${type}`)
+  
+  // Forward all search params
+  searchParams.forEach((value, key) => {
+    internalUrl.searchParams.append(key, value)
+  })
+
+  // Ensure defaults for pagination if not present
+  if (!internalUrl.searchParams.has("page")) internalUrl.searchParams.set("page", "1")
+  if (!internalUrl.searchParams.has("limit")) internalUrl.searchParams.set("limit", "10")
 
   try {
-    const res = await fetch(`${INTERNAL_API_URL}/api/equipment/${type}?page=${page}&limit=${limit}&q=${encodeURIComponent(q)}`, {
+    const res = await fetch(internalUrl.toString(), {
       headers: {
         "Content-Type": "application/json",
       },
-      cache: "no-store", // Keep no-store to ensure fresh data for pagination/search
+      cache: "no-store", 
     })
 
     if (!res.ok) {

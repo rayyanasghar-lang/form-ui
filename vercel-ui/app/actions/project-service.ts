@@ -122,6 +122,14 @@ export async function fetchProjectsAction(): Promise<ProjectsResponse | { error:
         system_components: systemComponents,
         uploads: uploads,
         general_notes: item.general_notes,
+        
+        // Site-Centric Root
+        site: item.site ? {
+            uuid: item.site.uuid || item.site_id,
+           address: item.site.address || item.address,
+           roof: item.site.roof || siteDetails,
+           electrical: item.site.electrical || electricalDetails,
+        } : undefined,
 
         // Legacy matching
         ownerName: item.user_profile?.contact_name,
@@ -222,6 +230,15 @@ export async function fetchProjectByIdAction(id: string): Promise<{ data?: Proje
       // Services and Submission Type
       services: item.services || item.service_ids || [],
       submission_type: item.submission_type || item.submission_type_id,
+      service_answers: item.service_answers || item.answers || {},
+
+      // Site-Centric Root
+      site: item.site ? {
+        uuid: item.site.uuid || item.site_id,
+        address: item.site.address || item.address,
+        roof: item.site.roof || siteDetails,
+        electrical: item.site.electrical || electricalDetails,
+      } : undefined,
 
       // Legacy matching
       ownerName: item.user_profile?.contact_name,

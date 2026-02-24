@@ -42,6 +42,14 @@ export interface Project {
   type: string; // "commercial" from JSON
   general_notes: string;
 
+  // New Site-Centric Root
+  site?: {
+    uuid: string;
+    address: string;
+    roof?: Record<string, any>;
+    electrical?: Record<string, any>;
+  };
+
   // New Top Level Fields
   submission_type?: {
     id: string;
@@ -135,6 +143,9 @@ export interface Project {
   ownerName?: string;
   ownerEmail?: string;
   ownerPhone?: string;
+
+  // Dynamic Service Answers (Store unmapped data)
+  service_answers?: Record<string, any>;
 }
 
 // Dashboard statistics

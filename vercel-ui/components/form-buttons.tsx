@@ -44,25 +44,15 @@ export default function FormButtons({
   const displayLabel = nextLabel ?? (isLastStep ? "Submit" : "Next")
 
   return (
-    <div className="flex gap-2 sm:gap-4 justify-between items-center sm:mt-8">
-      <Button
-        type="button"
-        variant="secondary"
-        onClick={onBack}
-        disabled={isFirstStep || isLoading}
-        className="px-4 sm:px-8 flex-1 sm:flex-none sm:min-w-[140px]"
-      >
-        {backLabel}
-      </Button>
-
-      <div className="flex flex-1 sm:flex-none gap-2 sm:gap-3 items-center justify-end">
+    <div className="flex gap-2 sm:gap-4 justify-center items-center sm:mt-8">
+      <div className="flex gap-2 sm:gap-3 items-center justify-center">
         {onSaveDraft && (
           <Button
             type="button"
             variant="outline"
             onClick={onSaveDraft}
             disabled={isLoading || saveStatus === "saving"}
-            className="flex px-3 sm:px-8 border-primary text-primary hover:bg-primary/5 flex-1 sm:flex-none sm:min-w-[140px] h-9 sm:h-10 items-center justify-center gap-2"
+            className="flex px-3 sm:px-8 border-primary text-primary hover:bg-primary/5 sm:min-w-[140px] h-9 sm:h-10 items-center justify-center gap-2"
           >
             {saveStatus === "saving" ? (
               <>
@@ -85,7 +75,7 @@ export default function FormButtons({
           type="button"
           onClick={onNext}
           disabled={isLoading}
-          className="px-4 sm:px-8 bg-primary text-primary-foreground hover:bg-primary/90 flex-1 sm:flex-none sm:min-w-[140px] shadow-lg shadow-primary/20"
+          className="px-8 sm:px-12 bg-primary text-primary-foreground hover:bg-primary/90 sm:min-w-[180px] shadow-lg shadow-primary/20"
         >
           {isLoading ? (
             <>

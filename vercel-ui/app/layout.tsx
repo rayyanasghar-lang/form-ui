@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "@/components/ui/sonner"
+import QueryProvider from "@/components/providers/QueryProvider"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -33,6 +34,9 @@ export const metadata: Metadata = {
   },
 }
 
+import { Suspense } from "react"
+import ProgressBar from "@/components/providers/ProgressBar"
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -41,8 +45,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable}`} suppressHydrationWarning>
       <body className={`font-sans antialiased`} suppressHydrationWarning>
-        {children}
-        <Toaster position="top-right" richColors />
+        <QueryProvider>
+          <Suspense fallback={null}>
+            <ProgressBar />
+          </Suspense>
+          {children}
+          <Toaster position="top-right" richColors />
+        </QueryProvider>
       </body>
     </html>
   )

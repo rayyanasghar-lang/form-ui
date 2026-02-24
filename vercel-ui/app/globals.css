@@ -5,11 +5,11 @@
   color-scheme: light;
   --background: rgb(255, 255, 255); /* #F9FAFB */
   --foreground: oklch(0.21 0.006 285.885); /* #111827 */
-  --card:  #ffffff;
+  --card: #ffffff;
   --card-foreground: oklch(0.21 0.006 285.885); /* #111827 */
   --popover: oklch(1 0 0); /* #FFFFFF */
   --popover-foreground: oklch(0.21 0.006 285.885); /* #111827 */
-  --primary: #5367E9;
+  --primary: #5367e9;
   --primary-foreground: oklch(1 0 0); /* #FFFFFF */
   --secondary: oklch(0.28 0.07 263); /* #1E293B Deep Slate */
   --secondary-foreground: oklch(0.98 0 0); /* #F9FAFB */
@@ -21,23 +21,22 @@
   --destructive-foreground: oklch(0.98 0 0);
   --border: oklch(0.92 0 0);
   --input: oklch(0.92 0 0);
-  --ring: #5367E9;
+  --ring: #5367e9;
   --radius: 0.75rem;
-  --sidebar: #FFFFFF;
+  --sidebar: #ffffff;
   --sidebar-foreground: oklch(0.21 0.006 285.885);
-  --sidebar-primary: #5367E9;
+  --sidebar-primary: #5367e9;
   --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-accent: oklch(0.95 0 0); /* Subtle Greyush */
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0 0);
-  --sidebar-ring: #5367E9;
+  --sidebar-ring: #5367e9;
   --success: oklch(0.65 0.18 150); /* #10B981 Emerald */
 }
 
 @theme inline {
   --variant-dark: null;
-  --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui,
-    sans-serif;
+  --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
 
   --font-mono: "Geist Mono", "Geist Mono Fallback";
   --color-background: var(--background);
@@ -200,4 +199,22 @@ body {
 
 .animate-gradient {
   animation: gradient 15s ease infinite;
+}
+
+/* NProgress Custom Styles */
+#nprogress .bar {
+  background: var(--primary) !important;
+  height: 3px !important;
+  z-index: 9999 !important;
+}
+
+#nprogress .peg {
+  box-shadow:
+    0 0 10px var(--primary),
+    0 0 5px var(--primary) !important;
+}
+
+#nprogress .spinner-icon {
+  border-top-color: var(--primary) !important;
+  border-left-color: var(--primary) !important;
 }

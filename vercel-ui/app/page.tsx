@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button"
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -356,20 +357,14 @@ export default function LandingPage() {
                         className="h-11 rounded-xl bg-white border-zinc-200 focus:bg-white transition-all focus:ring-4 focus:ring-primary/10"
                       />
                     </div>
-                    <Button
-                      type="submit"
-                      disabled={isLoading}
-                      className="w-full h-12 rounded-xl text-md font-bold shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Signing In...
-                        </>
-                      ) : (
-                        "Sign In"
-                      )}
-                    </Button>
+                  <LoadingButton 
+                    type="submit" 
+                    className="w-full h-12 rounded-xl text-md font-bold shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200" 
+                    loading={isLoading}
+                    loadingText="Signing In..."
+                  >
+                    Sign In
+                  </LoadingButton>
                   </form>
                 </TabsContent>
 

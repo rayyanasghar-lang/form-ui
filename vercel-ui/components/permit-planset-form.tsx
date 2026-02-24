@@ -5,20 +5,17 @@ import { toast } from "sonner"
 import axios from "axios"
 import { useRouter } from "next/navigation"
 
+
 import Stepper from "./stepper"
-import FormCard from "./form-card"
 import FormButtons from "./form-buttons"
 
 import ProjectContactStep from "@/components/permit-form/project-contact-step"
 // Migration: Other steps moved to Project Details Page
 
-import { uploadWithRcloneAction } from "@/app/actions/upload-rclone"
-
 import { submitProjectAction } from "@/app/actions/submit-project"
 import { fetchServicesAction, Service } from "@/app/actions/fetch-services"
 import { getContractorProfileAction } from "@/app/actions/auth-service"
-import { fetchNearbyStations, geocodeAddress, reverseGeocode, WeatherStation } from "@/app/actions/weather-service"
-import { scrapeAHJAction, scrapeUtilityAction } from "@/app/actions/scrape-service"
+import { geocodeAddress, reverseGeocode } from "@/app/actions/weather-service"
 
 import { Component } from "./system-components-table"
 
@@ -43,16 +40,16 @@ export default function PermitPlansetForm() {
 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const [scrapingStatus, setScrapingStatus] = useState<"idle" | "scraping" | "completed" | "error">("idle")
-  const [weatherLoading, setWeatherLoading] = useState(false)
-  const [weatherStations, setWeatherStations] = useState<WeatherStation[]>([])
-
   const [formData, setFormData] = useState({
     companyName: "",
+    companyLogo: "", // From profile
     projectName: "",
     contactName: "", // Default empty, fill from profile
     email: "", // Default empty, fill from profile
     phone: "", // Default empty, fill from profile
+    companyAddress: "", // From profile
+    licenseNo: "", // From profile
+    hicNo: "", // From profile
     projectAddress: "",
     latitude: "",
     longitude: "",
@@ -68,7 +65,6 @@ export default function PermitPlansetForm() {
     batteryImage: [] as string[],
     projectFiles: [] as string[],
     generalNotes: "",
-    sources: {} as any,
     // Site Details
     roofMaterial: "",
     roofPitch: "",
@@ -141,9 +137,13 @@ export default function PermitPlansetForm() {
         setFormData(prev => ({
           ...prev,
           companyName: result.data.company_name || prev.companyName,
+          companyLogo: result.data.image_url || result.data.logo || result.data.image_1920 || result.data.image_128 || prev.companyLogo,
           contactName: result.data.name || prev.contactName,
           email: result.data.email || prev.email,
           phone: result.data.phone || prev.phone,
+          companyAddress: result.data.contact_address || result.data.address || prev.companyAddress,
+          licenseNo: result.data.license_no || prev.licenseNo,
+          hicNo: result.data.hic_no || prev.hicNo,
         }))
       } else {
         // Fallback to localStorage
@@ -154,9 +154,13 @@ export default function PermitPlansetForm() {
                 setFormData(prev => ({
                     ...prev,
                     companyName: c.company_name || prev.companyName,
+                    companyLogo: c.image_url || c.logo || c.image_1920 || c.image_128 || prev.companyLogo,
                     contactName: c.name || prev.contactName,
                     email: c.email || prev.email,
                     phone: c.phone || prev.phone,
+                    companyAddress: c.contact_address || c.address || prev.companyAddress,
+                    licenseNo: c.license_no || prev.licenseNo,
+                    hicNo: c.hic_no || prev.hicNo,
                 }))
             } catch (e) {}
         }
@@ -219,35 +223,6 @@ export default function PermitPlansetForm() {
        return () => clearTimeout(timeout)
      }
    }, [formData.projectAddress])
-
-  // 5. Automatic AHJ & Utility Detection
-  useEffect(() => {
-    const lat = parseFloat(formData.latitude)
-    const lng = parseFloat(formData.longitude)
-
-    if (!isNaN(lat) && !isNaN(lng)) {
-      const timeout = setTimeout(async () => {
-        // Only fetch if not already set to avoid overwriting user manual changes or redundant calls
-        if (!formData.jurisdiction) {
-          scrapeAHJAction(lat, lng).then(res => {
-            if (res.success && res.data?.jurisdiction) {
-              updateField("jurisdiction", res.data.jurisdiction)
-            }
-          })
-        }
-
-        if (!formData.utilityProvider) {
-          scrapeUtilityAction(lat, lng).then(res => {
-            if (res.success && res.data?.utilityName) {
-              updateField("utilityProvider", res.data.utilityName)
-            }
-          })
-        }
-      }, 1000) // Small delay after coordinates change
-
-      return () => clearTimeout(timeout)
-    }
-  }, [formData.latitude, formData.longitude])
 
   /* ---------------- Save Draft ---------------- */
   const handleSaveDraft = async () => {
@@ -404,130 +379,13 @@ export default function PermitPlansetForm() {
         // Handle specific duplicate address error
         const errorMsg = res.error ? (typeof res.error === 'object' ? (res.error as any).message || (res.error as any).status : String(res.error)) : "Project created but ID missing";
         
-        if (errorMsg.toLowerCase().includes("address")) {
-           toast.error("This address is already registered with another project. Please verify the address.")
-           setErrors(prev => ({ ...prev, projectAddress: "Address already in use" }))
-        } else {
-           toast.error(errorMsg)
-        }
+        toast.error(errorMsg);
       }
     } catch (error) {
       console.error("Submission error:", error)
       toast.error("An unexpected error occurred")
     } finally {
       setIsSubmitting(false)
-    }
-  }
-
-  const handleStartScraping = async () => {
-    if (!formData.projectAddress) {
-      toast.error("Please enter an address first")
-      return
-    }
-
-    setScrapingStatus("scraping")
-    setWeatherLoading(true)
-
-    try {
-      // 1. Weather & Geocoding
-      let effectiveLat: number | null = null;
-      let effectiveLng: number | null = null;
-      let effectiveAddress = formData.projectAddress;
-
-      // Handle Coordinates search
-      if (formData.latitude && formData.longitude) {
-        effectiveLat = parseFloat(formData.latitude);
-        effectiveLng = parseFloat(formData.longitude);
-
-        if (isNaN(effectiveLat) || isNaN(effectiveLng)) {
-          toast.error("Invalid latitude or longitude");
-          setScrapingStatus("idle");
-          setWeatherLoading(false);
-          return;
-        }
-
-        // If we have coordinates but no address, perform reverse geocoding
-        if (!effectiveAddress) {
-          const rev = await reverseGeocode(effectiveLat, effectiveLng);
-          if (rev.success && rev.address) {
-            effectiveAddress = rev.address;
-            updateField("projectAddress", rev.address);
-          } else {
-            console.error("[Scraper] Reverse geocoding failed:", rev.error);
-          }
-        }
-      } else if (effectiveAddress) {
-        // Geocode address if no coordinates provided
-        const geo = await geocodeAddress(effectiveAddress);
-        if (geo.success && geo.lat && geo.lng) {
-          effectiveLat = geo.lat;
-          effectiveLng = geo.lng;
-        }
-      }
-
-      if (effectiveLat && effectiveLng) {
-        fetchNearbyStations(effectiveLat, effectiveLng).then((stations) => {
-          if (stations.success && stations.data) {
-            setWeatherStations(stations.data)
-          }
-          setWeatherLoading(false)
-        })
-      } else {
-        setWeatherLoading(false)
-      }
-
-      if (!effectiveAddress) {
-          toast.error("An address or coordinates are required to gather property intelligence.");
-          setScrapingStatus("idle");
-          return;
-      }
-
-      // 2. Property Scraping via API Routes
-      const [zillowRes, asceRes, regridRes] = await Promise.all([
-        fetch("/api/scrape/zillow", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ address: effectiveAddress })
-        }).then(r => r.json()),
-        fetch("/api/scrape/asce", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ address: effectiveAddress, standard: "7-22" })
-        }).then(r => r.json()),
-        fetch("/api/scrape/regrid", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ address: effectiveAddress })
-        }).then(r => r.json()),
-      ])
-
-      const zillow = zillowRes
-      const asce = asceRes
-      const regrid = regridRes
-
-      const sources: any = {}
-      if (zillow.success) sources.zillow = zillow.data
-      if (asce.success) sources.asce = asce.data
-      if (regrid.success) sources.regrid = regrid.data
-
-      setFormData((prev) => ({
-        ...prev,
-        sources,
-        lotSize: regrid.data?.lot_size || zillow.data?.lot_size || prev.lotSize,
-        parcelNumber:
-          regrid.data?.parcel_number ||
-          zillow.data?.parcel_number ||
-          prev.parcelNumber,
-        windSpeed: asce.data?.windSpeed || prev.windSpeed,
-        snowLoad: asce.data?.snowLoad || prev.snowLoad,
-      }))
-
-      setScrapingStatus("completed")
-      toast.success("Property intelligence gathered!")
-    } catch (error) {
-      console.error("Scraping error:", error)
-      setScrapingStatus("error")
-      toast.error("Failed to gather property records")
     }
   }
 
@@ -543,26 +401,17 @@ export default function PermitPlansetForm() {
   return (
     <form className="space-y-6 pb-32 md:pb-0 relative">
 
-      <div className="max-w-3xl mx-auto space-y-6">
-        <ProjectContactStep
-          formData={formData}
-          updateField={updateField}
-          errors={errors}
-          submissionMode={submissionMode}
-          setSubmissionMode={setSubmissionMode}
-          toggleService={toggleService}
-          availableServices={availableServices}
-          servicesLoading={servicesLoading}
-          scrapingStatus={scrapingStatus}
-          onStartScraping={handleStartScraping}
-          weatherStations={weatherStations}
-          weatherLoading={weatherLoading}
-        />
+      <div className="max-w-6xl mx-auto">
+          <ProjectContactStep
+            formData={formData}
+            updateField={updateField}
+            errors={errors}
+          />
       </div>
 
       {/* Sticky Mobile Buttons */}
       <div className="fixed md:static bottom-0 left-0 right-0 z-40 bg-background md:bg-transparent border-t md:border-none px-4 py-3 md:pt-4 md:pb-0">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <FormButtons
             onNext={handleNext}
             onBack={handleBack}

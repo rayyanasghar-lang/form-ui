@@ -34,10 +34,51 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
+import { Skeleton } from "@/components/ui/skeleton"
 import { StatusBadge } from "./status-badge"
 import { Project, ProjectStatus, ProjectTableProps, PROJECT_STATUSES } from "@/types/project"
 import { CalculateProjectProgress } from "@/lib/calculate-progress"
 
+function ProjectSkeleton() {
+  return (
+    <>
+      {[...Array(5)].map((_, i) => (
+        <TableRow key={i} className="hover:bg-transparent border-b border-zinc-100 last:border-0">
+          <TableCell><Skeleton className="h-4 w-4 rounded" /></TableCell>
+          <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+          <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+          <TableCell><Skeleton className="h-6 w-24 rounded-full" /></TableCell>
+          <TableCell><Skeleton className="h-5 w-12" /></TableCell>
+          <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+          <TableCell><Skeleton className="h-8 w-8 rounded-full" /></TableCell>
+        </TableRow>
+      ))}
+    </>
+  )
+}
+
+function ProjectMobileSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[...Array(3)].map((_, i) => (
+        <div key={i} className="p-4 border border-zinc-100 rounded-xl bg-white space-y-3">
+          <div className="flex justify-between items-start">
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+            <Skeleton className="h-6 w-20 rounded-full" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
+          </div>
+          <Skeleton className="h-10 w-full rounded-xl" />
+        </div>
+      ))}
+    </div>
+  )
+}
 
 type TabFilter = "all" | ProjectStatus
 
@@ -187,14 +228,7 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-24">
-                    <div className="flex flex-col items-center justify-center gap-3">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                      <p className="text-sm font-medium text-zinc-500">Loading projects...</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
+                <ProjectSkeleton />
               ) : error ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-12 text-red-500 font-medium">
@@ -254,10 +288,7 @@ export function ProjectsTable({ projects, isLoading = false, error = null, class
         {/* Mobile Table */}
         <div className="md:hidden">
           {isLoading ? (
-            <div className="text-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
-              <p className="text-sm font-medium text-zinc-500">Loading projects...</p>
-            </div>
+            <ProjectMobileSkeleton />
           ) : error ? (
             <div className="text-center py-12 text-red-500 font-medium">{error}</div>
           ) : filteredProjects.length === 0 ? (
