@@ -23,6 +23,7 @@ import { Progress } from "@/components/ui/progress"
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
 import { EquipmentSearchSelector } from "@/components/equipment-search-selector"
+import React from "react"
 
 interface DynamicFormEngineProps {
   questions: Question[]

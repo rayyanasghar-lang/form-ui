@@ -200,21 +200,3 @@ body {
 .animate-gradient {
   animation: gradient 15s ease infinite;
 }
-
-/* NProgress Custom Styles */
-#nprogress .bar {
-  background: var(--primary) !important;
-  height: 3px !important;
-  z-index: 9999 !important;
-}
-
-#nprogress .peg {
-  box-shadow:
-    0 0 10px var(--primary),
-    0 0 5px var(--primary) !important;
-}
-
-#nprogress .spinner-icon {
-  border-top-color: var(--primary) !important;
-  border-left-color: var(--primary) !important;
-}

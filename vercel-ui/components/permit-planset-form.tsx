@@ -399,31 +399,34 @@ export default function PermitPlansetForm() {
 
   /* ---------------- Render ---------------- */
   return (
-    <form className="space-y-6 pb-32 md:pb-0 relative">
-
-      <div className="max-w-6xl mx-auto">
+    <div className="space-y-6 pb-32 md:pb-0 relative">
+      <div className="w-full">
           <ProjectContactStep
             formData={formData}
             updateField={updateField}
             errors={errors}
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
           />
       </div>
 
-      {/* Sticky Mobile Buttons */}
+      {/* Sticky Mobile Buttons - Hidden for Create Step as it's integrated */}
+      {/* 
       <div className="fixed md:static bottom-0 left-0 right-0 z-40 bg-background md:bg-transparent border-t md:border-none px-4 py-3 md:pt-4 md:pb-0">
         <div className="max-w-6xl mx-auto">
           <FormButtons
             onNext={handleNext}
             onBack={handleBack}
             isFirstStep={true}
-            isLastStep={true}
+            isLastStep={true} // Form only has 1 step now
             isLoading={isSubmitting}
             saveStatus={saveStatus}
             lastSaved={lastSaved}
             nextLabel="Create"
           />
         </div>
-      </div>
-    </form>
+      </div> 
+      */}
+    </div>
   )
 }

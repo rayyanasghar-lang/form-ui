@@ -35,7 +35,7 @@ export const metadata: Metadata = {
 }
 
 import { Suspense } from "react"
-import ProgressBar from "@/components/providers/ProgressBar"
+import GlobalLoader from "@/components/providers/GlobalLoader"
 
 export default function RootLayout({
   children,
@@ -46,9 +46,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable}`} suppressHydrationWarning>
       <body className={`font-sans antialiased`} suppressHydrationWarning>
         <QueryProvider>
-          <Suspense fallback={null}>
-            <ProgressBar />
-          </Suspense>
+          <GlobalLoader />
           {children}
           <Toaster position="top-right" richColors />
         </QueryProvider>

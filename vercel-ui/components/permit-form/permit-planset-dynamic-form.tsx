@@ -916,16 +916,11 @@ export default function PermitPlansetDynamicForm({ siteUuid, projectUuid }: Perm
   }
 
   if (isLoadingSite) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4">
-        <Loader2 className="w-12 h-12 text-primary animate-spin opacity-20" />
-        <p className="text-zinc-400 font-bold animate-pulse">Pre-filling project context...</p>
-      </div>
-    )
+    return null
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full" data-no-loader="true">
       <DynamicFormEngine 
         ref={engineRef}
         questions={questions} 
