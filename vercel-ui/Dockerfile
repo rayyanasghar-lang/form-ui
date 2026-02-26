@@ -24,7 +24,14 @@ WORKDIR /app
 
 # Copy package files and install all dependencies
 COPY package.json package-lock.json* ./
-RUN npm ci
+
+# Configure npm for better resilience on slow/flaky networks
+RUN npm config set fetch-retries 5 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000
+
+# Use BuildKit cache mount to preserve npm cache between builds
+RUN --mount=type=cache,target=/root/.npm npm ci
 
 # Copy the rest of the application
 COPY . .

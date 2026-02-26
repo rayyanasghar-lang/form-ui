@@ -60,7 +60,7 @@ export const allQuestions: Question[] = [
     isRequired: true,
     categoryName: "Group 2: Core Equipment",
     categoryId: "core_equipment",
-    sequence: 21,
+    sequence: 20,
     extraData: {
       equipmentType: "solar",
       frequentItems: [
@@ -77,7 +77,7 @@ export const allQuestions: Question[] = [
     isRequired: true,
     categoryName: "Group 2: Core Equipment",
     categoryId: "core_equipment",
-    sequence: 20,
+    sequence: 21,
   },
   {
     id: 60,
@@ -87,7 +87,7 @@ export const allQuestions: Question[] = [
     isRequired: true,
     categoryName: "Group 2: Core Equipment",
     categoryId: "core_equipment",
-    sequence: 23,
+    sequence: 22,
     extraData: {
       equipmentType: "inverter",
       frequentItems: [
@@ -104,7 +104,7 @@ export const allQuestions: Question[] = [
     isRequired: true,
     categoryName: "Group 2: Core Equipment",
     categoryId: "core_equipment",
-    sequence: 22,
+    sequence: 23,
   },
   {
     id: 101,
@@ -114,7 +114,7 @@ export const allQuestions: Question[] = [
     isRequired: false,
     categoryName: "Group 2: Core Equipment",
     categoryId: "core_equipment",
-    sequence: 25,
+    sequence: 24,
     extraData: {
       equipmentType: "optimizer",
       frequentItems: [
@@ -131,7 +131,7 @@ export const allQuestions: Question[] = [
     isRequired: false,
     categoryName: "Group 2: Core Equipment",
     categoryId: "core_equipment",
-    sequence: 24,
+    sequence: 25,
   },
   {
     id: 103,
@@ -141,7 +141,7 @@ export const allQuestions: Question[] = [
     isRequired: false,
     categoryName: "Group 2: Core Equipment",
     categoryId: "core_equipment",
-    sequence: 27,
+    sequence: 26,
     extraData: {
       equipmentType: "disconnect",
     },
@@ -154,7 +154,7 @@ export const allQuestions: Question[] = [
     isRequired: false,
     categoryName: "Group 2: Core Equipment",
     categoryId: "core_equipment",
-    sequence: 26,
+    sequence: 27,
   },
   {
     id: 40,
@@ -180,7 +180,7 @@ export const allQuestions: Question[] = [
     categoryName: "Group 2: Core Equipment",
     categoryId: "core_equipment",
     condition: "has_battery_backup == 'yes'",
-    sequence: 29,
+    sequence: 28,
     extraData: {
       equipmentType: "battery",
       frequentItems: [
@@ -198,7 +198,7 @@ export const allQuestions: Question[] = [
     categoryName: "Group 2: Core Equipment",
     categoryId: "core_equipment",
     condition: "has_battery_backup == 'yes'",
-    sequence: 28,
+    sequence: 29,
   },
   {
     id: 43,

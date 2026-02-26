@@ -657,31 +657,12 @@ export const DynamicFormEngine = forwardRef<
               transition={{ duration: 0.3 }}
             >
               <div className="flex flex-col gap-y-6 py-1">
-                {currentCategory?.questions.reduce(
-                  (acc: any[], q: Question, idx: number, arr: Question[]) => {
+                {currentCategory?.questions.map(
+                  (q: Question, idx: number, arr: Question[]) => {
                     const isVisible = checkCondition(q.condition, watchedData);
-                    if (!isVisible || q.extraData?.hidden) return acc;
+                    if (!isVisible || q.extraData?.hidden) return null;
 
-                    // Lookahead for pairing: if this is a quantity field and next is a product field
-                    const isQty =
-                      q.key.endsWith("_count") ||
-                      q.key.endsWith("_qty") ||
-                      q.key.includes("quantity");
-                    const nextQ = arr[idx + 1];
-                    const nextIsProduct =
-                      nextQ && nextQ.key.includes("_product");
-
-                    // If this is a product field and previous was quantity, skip (handled by quantity)
                     const prevQ = arr[idx - 1];
-                    const isProduct = q.key.includes("_product");
-                    const prevWasQty =
-                      prevQ &&
-                      (prevQ.key.endsWith("_count") ||
-                        prevQ.key.endsWith("_qty") ||
-                        prevQ.key.includes("quantity"));
-
-                    if (isProduct && prevWasQty) return acc;
-
                     const subCategory = q.subCategory;
                     const prevSubCategory = prevQ?.subCategory;
                     const showDivider =
@@ -689,7 +670,7 @@ export const DynamicFormEngine = forwardRef<
                       subCategory !== "default" &&
                       subCategory !== prevSubCategory;
 
-                    const questionEl = (
+                    return (
                       <div key={q.key} className="space-y-4">
                         {showDivider && (
                           <div className="pt-4 pb-2 border-b border-zinc-100 mb-2">
@@ -698,41 +679,15 @@ export const DynamicFormEngine = forwardRef<
                             </h4>
                           </div>
                         )}
-
-                        {isQty && nextIsProduct ? (
-                          <div className="flex flex-row items-end gap-3 w-full max-w-2xl">
-                            <div className="flex-none">
-                              <RenderField
-                                q={q}
-                                control={control}
-                                onValueChange={onValueChange}
-                                errors={errors}
-                              />
-                            </div>
-                            <div className="flex-1">
-                              <RenderField
-                                q={nextQ}
-                                control={control}
-                                onValueChange={onValueChange}
-                                errors={errors}
-                              />
-                            </div>
-                          </div>
-                        ) : (
-                          <RenderField
-                            q={q}
-                            control={control}
-                            onValueChange={onValueChange}
-                            errors={errors}
-                          />
-                        )}
+                        <RenderField
+                          q={q}
+                          control={control}
+                          onValueChange={onValueChange}
+                          errors={errors}
+                        />
                       </div>
                     );
-
-                    acc.push(questionEl);
-                    return acc;
                   },
-                  [],
                 )}
               </div>
             </motion.div>
