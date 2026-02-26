@@ -127,16 +127,19 @@ export const DynamicFormEngine = forwardRef<
     });
 
     // Sync defaultValues when they arrive asynchronously
-    // Using a ref to prevent infinite loops if reset triggers a parent re-render
+    const isInitializedRef = React.useRef(false);
     const lastResetDefaults = React.useRef<string>("");
+
     useEffect(() => {
       const defaultsStr = JSON.stringify(computedDefaults);
+
+      // Initial sync or schema change
       if (
-        computedDefaults &&
         Object.keys(computedDefaults).length > 0 &&
-        lastResetDefaults.current !== defaultsStr
+        (!isInitializedRef.current || lastResetDefaults.current !== defaultsStr)
       ) {
         lastResetDefaults.current = defaultsStr;
+        isInitializedRef.current = true;
         reset(computedDefaults);
       }
     }, [computedDefaults, reset]);
@@ -439,7 +442,7 @@ export const DynamicFormEngine = forwardRef<
                                   type="button"
                                   variant="outline"
                                   size="icon"
-                                  className="h-11 w-11 rounded-2xl border-zinc-200 bg-white/50 hover:bg-white hover:border-primary/30 transition-all shrink-0 shadow-sm"
+                                  className="h-5 w-5 rounded-2xl border-zinc-200 bg-white/50 hover:bg-white hover:border-primary/30 transition-all shrink-0 shadow-sm"
                                   onClick={() => {
                                     const current = Number(field.value) || 0;
                                     const next = current + 1;
@@ -454,16 +457,7 @@ export const DynamicFormEngine = forwardRef<
 
                             {q.inputType === "select" &&
                               (q.options && q.options.length <= 8 ? (
-                                <div
-                                  className={cn(
-                                    "grid gap-4 p-1",
-                                    q.options.some((opt: any) => opt.image)
-                                      ? "grid-cols-2 md:grid-cols-3"
-                                      : q.options.length <= 2
-                                        ? "grid-cols-2"
-                                        : "grid-cols-1",
-                                  )}
-                                >
+                                <div className="flex flex-wrap gap-3 w-fit py-1">
                                   {q.options.map((opt: any) => {
                                     const isSelected =
                                       field.value === opt.value;
@@ -479,10 +473,10 @@ export const DynamicFormEngine = forwardRef<
                                         className={cn(
                                           "flex flex-col rounded-[24px] text-sm font-black transition-all duration-500 border-2 relative overflow-hidden group",
                                           hasImage
-                                            ? "min-h-[130px]"
-                                            : "min-h-[50px] items-center justify-center px-4 py-2",
+                                            ? "min-h-[110px] min-w-[150px]"
+                                            : "min-h-[44px] min-w-[120px] items-center justify-center px-6 py-2",
                                           isSelected
-                                            ? "bg-primary/5 border-primary text-primary shadow-2xl shadow-primary/10 scale-[1.02]"
+                                            ? "bg-primary border-primary text-white shadow-xl shadow-primary/20 scale-[0.98]"
                                             : "bg-white border-zinc-100 text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 hover:bg-zinc-50 shadow-sm",
                                         )}
                                       >
@@ -513,10 +507,10 @@ export const DynamicFormEngine = forwardRef<
                                         {isSelected && (
                                           <motion.div
                                             layoutId={`check-${q.key}`}
-                                            className="absolute top-3 right-3 z-30"
+                                            className="absolute top-2 right-2 z-30"
                                           >
-                                            <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-lg border border-primary/20">
-                                              <Check className="w-4 h-4 text-primary" />
+                                            <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-lg border border-primary/10">
+                                              <Check className="w-3 h-3 text-primary" />
                                             </div>
                                           </motion.div>
                                         )}
@@ -525,7 +519,7 @@ export const DynamicFormEngine = forwardRef<
                                           className={cn(
                                             "relative z-20 w-full",
                                             hasImage
-                                              ? "mt-auto p-3 bg-white/10 backdrop-blur-md border-t border-white/20"
+                                              ? "mt-auto p-2 bg-white/10 backdrop-blur-md border-t border-white/20"
                                               : "",
                                           )}
                                         >
@@ -533,7 +527,7 @@ export const DynamicFormEngine = forwardRef<
                                             className={cn(
                                               "text-center block leading-tight",
                                               hasImage &&
-                                                "text-white drop-shadow-md text-xs uppercase tracking-widest font-black",
+                                                "text-white drop-shadow-md text-[10px] uppercase tracking-widest font-black",
                                             )}
                                           >
                                             {opt.label}
@@ -544,7 +538,7 @@ export const DynamicFormEngine = forwardRef<
                                   })}
                                 </div>
                               ) : (
-                                <div className="relative group">
+                                <div className="relative group max-w-lg">
                                   <select
                                     id={`field-${q.key}`}
                                     value={field.value ?? ""}
@@ -654,30 +648,19 @@ export const DynamicFormEngine = forwardRef<
                             {q.inputType === "boolean" && (
                               <div
                                 className={cn(
-                                  "flex items-center justify-between p-3.5 rounded-[24px] border-2 transition-all cursor-pointer group",
+                                  "flex items-center justify-between p-3.5 rounded-[24px] border-2 transition-all group w-fit min-w-[180px] gap-8",
                                   field.value
                                     ? "bg-primary/5 border-primary/20 shadow-lg shadow-primary/5"
                                     : "border-zinc-100 bg-white/40 shadow-sm hover:shadow-md hover:border-zinc-200",
                                 )}
-                                onClick={() => {
-                                  field.onChange(!field.value);
-                                  onValueChange?.(q.key, !field.value);
-                                }}
-                                role="checkbox"
-                                aria-checked={!!field.value}
-                                tabIndex={0}
-                                onKeyDown={(e) => {
-                                  if (e.key === " " || e.key === "Enter") {
-                                    e.preventDefault();
-                                    field.onChange(!field.value);
-                                    onValueChange?.(q.key, !field.value);
-                                  }
-                                }}
                               >
-                                <div className="space-y-1.5 pointer-events-none">
+                                <label
+                                  htmlFor={`switch-${q.key}`}
+                                  className="space-y-1.5 cursor-pointer flex-1"
+                                >
                                   <span
                                     className={cn(
-                                      "text-[15px] font-black transition-colors",
+                                      "text-[15px] font-black block transition-colors",
                                       field.value
                                         ? "text-primary"
                                         : "text-zinc-800 group-hover:text-zinc-900",
@@ -690,14 +673,15 @@ export const DynamicFormEngine = forwardRef<
                                       {q.description}
                                     </p>
                                   )}
-                                </div>
+                                </label>
                                 <Switch
+                                  id={`switch-${q.key}`}
                                   checked={!!field.value}
-                                  onCheckedChange={(val) => {
-                                    field.onChange(val);
-                                    onValueChange?.(q.key, val);
+                                  onCheckedChange={(checked) => {
+                                    field.onChange(checked);
+                                    onValueChange?.(q.key, checked);
                                   }}
-                                  className="scale-110 pointer-events-none"
+                                  className="scale-110"
                                 />
                               </div>
                             )}
@@ -721,7 +705,7 @@ export const DynamicFormEngine = forwardRef<
                                   q.placeholder || `Search ${q.label}...`
                                 }
                                 frequentItems={q.extraData?.frequentItems}
-                                className="h-11 rounded-2xl border-2 border-zinc-100 bg-zinc-50/30 focus:border-primary/40 focus:ring-8 focus:ring-primary/5 text-base font-bold"
+                                className="w-full max-w-lg h-11 rounded-2xl border-2 border-zinc-100 bg-zinc-50/30 focus:border-primary/40 focus:ring-8 focus:ring-primary/5 text-base font-bold"
                               />
                             )}
 

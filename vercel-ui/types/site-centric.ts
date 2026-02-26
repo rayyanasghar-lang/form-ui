@@ -12,6 +12,7 @@ export interface QuestionOption {
   id: number | string
   label: string
   value: string
+  image?: string
 }
 
 export interface Question {

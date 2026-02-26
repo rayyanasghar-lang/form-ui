@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import {
   DynamicFormEngine,
@@ -14,8 +14,8 @@ import {
   scrapeUtilityAction,
 } from "@/app/actions/scrape-service";
 import { geocodeAddress } from "@/app/actions/weather-service";
-import { allQuestions } from "@/types/Permit-Questions";
 import { PermitPlansetDynamicFormProps } from "@/types/PermitPlansetDynamicFormProps";
+import { allQuestions } from "@/types/Permit-Questions";
 
 export default function PermitPlansetDynamicForm({
   siteUuid,
@@ -95,14 +95,13 @@ export default function PermitPlansetDynamicForm({
   }, [siteUuid]);
 
   const questions = useMemo(() => {
-    // These keys are considered "Project Context" that we already have
-    // Also system_size is calculated manually now
     const hiddenKeys = [
       "project_name",
       "address",
       "project_type",
       "system_size",
     ];
+
     return allQuestions.map((q) => {
       if (hiddenKeys.includes(q.key)) {
         return {
@@ -114,31 +113,37 @@ export default function PermitPlansetDynamicForm({
     });
   }, [allQuestions]);
 
-  const handleValueChange = (key: string, value: any, extraData?: any) => {
-    if (key === "pv_module_product") {
-      if (extraData?.power) {
-        const powerValue = Number(extraData.power);
-        setModulePower(powerValue);
-        const currentCount = engineRef.current?.getValues()?.pv_modules_count;
-        if (currentCount) {
-          const size = (powerValue * Number(currentCount)) / 1000;
+  const handleValueChange = useCallback(
+    (key: string, value: any, extraData?: any) => {
+      if (key === "pv_module_product") {
+        if (extraData?.power) {
+          const powerValue = Number(extraData.power);
+          setModulePower(powerValue);
+          const currentCount = engineRef.current?.getValues()?.pv_modules_count;
+          if (currentCount) {
+            const size = (powerValue * Number(currentCount)) / 1000;
+            engineRef.current?.setValue(
+              "system_size",
+              parseFloat(size.toFixed(3)),
+            );
+          }
+        } else {
+          setModulePower(null);
+        }
+      }
+
+      if (key === "pv_modules_count") {
+        if (modulePower && value) {
+          const size = (modulePower * Number(value)) / 1000;
           engineRef.current?.setValue(
             "system_size",
             parseFloat(size.toFixed(3)),
           );
         }
-      } else {
-        setModulePower(null);
       }
-    }
-
-    if (key === "pv_modules_count") {
-      if (modulePower && value) {
-        const size = (modulePower * Number(value)) / 1000;
-        engineRef.current?.setValue("system_size", parseFloat(size.toFixed(3)));
-      }
-    }
-  };
+    },
+    [modulePower],
+  );
 
   const handleFormSubmit = async (data: Record<string, any>) => {
     if (!siteUuid && !projectUuid) {
