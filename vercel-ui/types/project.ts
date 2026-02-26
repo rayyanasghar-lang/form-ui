@@ -1,5 +1,28 @@
 // Project status types
-export type ProjectStatus = 'draft' | 'pending' | 'in_review' | 'approved' | 'rejected';
+export type ProjectStatus = 
+  | 'New Job Creation'
+  | 'New Design'
+  | 'Design-Internal Review'
+  | 'Design Revision'
+  | 'Awaiting Engineering'
+  | 'Print & Ship'
+  | 'Design Submitted'
+  | 'On Hold / Challenged'
+  | 'draft'
+  | 'pending';
+
+export const PROJECT_STATUSES: ProjectStatus[] = [
+  'New Job Creation',
+  'New Design',
+  'Design-Internal Review',
+  'Design Revision',
+  'Awaiting Engineering',
+  'Print & Ship',
+  'Design Submitted',
+  'On Hold / Challenged',
+  'draft',
+  'pending'
+];
 
 // Project interface matching permit form data structure
 export interface Project {
@@ -7,19 +30,122 @@ export interface Project {
   name: string;
   address: string;
   status: ProjectStatus;
-  systemSize: string;      // e.g., "12.5 kW"
-  systemType: string;      // e.g., "Roof Mount", "Ground Mount"
-  pvModules: string;
-  inverters: string;
-  batteryBackup: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  submittedAt?: Date;
-  approvedAt?: Date;
-  // Owner info
+  systemSize: string | number; // Keep for backward compat if needed, but rely on system_summary
+  systemType: string;         // Keep for backward compat
+  pvModules: string | number; // Keep for backward compat
+  inverters: string | number; // Keep for backward compat
+  batteryBackup: boolean;     // Keep for backward compat
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  submittedAt?: Date | string;
+  approvedAt?: Date | string;
+  type: string; // "commercial" from JSON
+  general_notes: string;
+
+  // New Site-Centric Root
+  site?: {
+    uuid: string;
+    address: string;
+    roof?: Record<string, any>;
+    electrical?: Record<string, any>;
+  };
+
+  // New Top Level Fields
+  submission_type?: {
+    id: string;
+    name: string;
+  };
+  services?: Array<{
+    id: string;
+    name: string;
+  }>;
+  
+  // Nested Details
+  user_profile?: {
+    id?: string;
+    company_name: string;
+    contact_name: string;
+    email: string;
+    phone: string;
+  };
+  system_summary?: {
+    id?: string;
+    system_size?: number | string;
+    system_type?: string;
+    pv_modules?: number | string;
+    inverters?: number | string;
+    battery_backup?: boolean;
+    battery_info?: {
+      id?: string;
+      qty: number;
+      model: string;
+      image: string[];
+      equipment_id?: string;
+    };
+  };
+  site_details?: {
+    id?: string;
+    roof_material: string;
+    roof_pitch: string;
+    number_of_arrays: number;
+    ground_mount_type?: boolean | string;
+    foundation_type?: boolean | string;
+    main_panel_size?: boolean | string; // Note: JSON has false, but likely string/number in real usage
+    utility_provider: string;
+    jurisdiction: string;
+  };
+  electrical_details?: {
+    id?: string;
+    main_panel_size: string;
+    bus_rating: string;
+    main_breaker: string;
+    pv_breaker_location: boolean | string; // JSON has false
+    one_line_diagram: string[];
+  };
+  advanced_electrical_details?: {
+    id?: string;
+    meter_location: string;
+    service_entrance_type: string;
+    subpanel_details: string;
+  };
+  optional_extra_details?: {
+    id?: string;
+    miracle_watt_required: boolean;
+    miracle_watt_notes?: boolean | string;
+    der_rlc_required: boolean;
+    der_rlc_notes: string;
+    setback_constraints: boolean;
+    setback_notes?: boolean | string;
+    site_access_restrictions: boolean;
+    site_access_notes?: boolean | string;
+    inspection_notes: boolean;
+    inspection_notes_text: string;
+    battery_sld_requested: boolean;
+    battery_sld_notes?: boolean | string;
+  };
+  system_components?: Array<{
+    id?: string; 
+    type?: string;
+    make_model?: string;
+    qty?: number;
+    attachment?: string[];
+    notes?: string;
+    // Allow for any structure since JSON was empty array
+    [key: string]: any;
+  }>;
+  uploads?: Array<{
+    url: string;
+    name: string;
+    category: string;
+  }>;
+
+  // Owner info (for backward compatibility if needed)
   ownerName?: string;
   ownerEmail?: string;
   ownerPhone?: string;
+
+  // Dynamic Service Answers (Store unmapped data)
+  service_answers?: Record<string, any>;
 }
 
 // Dashboard statistics
@@ -27,7 +153,9 @@ export interface ProjectStats {
   total: number;
   pending: number;
   inReview: number;
+  inProcess: number;
   approved: number;
+  done: number;
   rejected: number;
   draft: number;
   totalCapacityKW: number;
@@ -55,4 +183,12 @@ export interface ProjectFilters {
   };
   sortBy?: keyof Project;
   sortOrder?: 'asc' | 'desc';
+}
+
+
+export interface ProjectTableProps {
+  projects: Project[]
+  isLoading?: boolean
+  error?: string | null
+  className?: string
 }

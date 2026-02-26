@@ -6,7 +6,7 @@ export const mockProjects: Project[] = [
     id: 'proj-001',
     name: 'Smith Residence',
     address: '123 Oak Street, Los Angeles, CA 90001',
-    status: 'approved',
+    status: 'draft',
     systemSize: '8.5 kW',
     systemType: 'Roof Mount',
     pvModules: 'LG NeON 2 (20 panels)',
@@ -19,6 +19,8 @@ export const mockProjects: Project[] = [
     ownerName: 'John Smith',
     ownerEmail: 'john.smith@email.com',
     ownerPhone: '(555) 123-4567',
+    type: 'residential',
+    general_notes: '',
   },
   {
     id: 'proj-002',
@@ -36,6 +38,8 @@ export const mockProjects: Project[] = [
     ownerName: 'Sarah Jones',
     ownerEmail: 'sarah.jones@email.com',
     ownerPhone: '(555) 234-5678',
+    type: 'residential',
+    general_notes: '',
   },
   {
     id: 'proj-003',
@@ -53,12 +57,14 @@ export const mockProjects: Project[] = [
     ownerName: 'Miguel Garcia',
     ownerEmail: 'm.garcia@business.com',
     ownerPhone: '(555) 345-6789',
+    type: 'commercial',
+    general_notes: '',
   },
   {
     id: 'proj-004',
     name: 'Williams Retrofit',
     address: '321 Maple Ave, Las Vegas, NV 89101',
-    status: 'approved',
+    status: 'draft',
     systemSize: '6.8 kW',
     systemType: 'Roof Mount',
     pvModules: 'Canadian Solar HiKu (16 panels)',
@@ -71,6 +77,8 @@ export const mockProjects: Project[] = [
     ownerName: 'Robert Williams',
     ownerEmail: 'rwilliams@email.com',
     ownerPhone: '(555) 456-7890',
+    type: 'residential',
+    general_notes: '',
   },
   {
     id: 'proj-005',
@@ -88,6 +96,8 @@ export const mockProjects: Project[] = [
     ownerName: 'Emily Thompson',
     ownerEmail: 'ethompson@email.com',
     ownerPhone: '(555) 567-8901',
+    type: 'residential',
+    general_notes: '',
   },
   {
     id: 'proj-006',
@@ -104,6 +114,8 @@ export const mockProjects: Project[] = [
     ownerName: 'Mark Davis',
     ownerEmail: 'mdavis@email.com',
     ownerPhone: '(555) 678-9012',
+    type: 'residential',
+    general_notes: '',
   },
   {
     id: 'proj-007',
@@ -121,12 +133,14 @@ export const mockProjects: Project[] = [
     ownerName: 'Ana Martinez',
     ownerEmail: 'amartinez@email.com',
     ownerPhone: '(555) 789-0123',
+    type: 'residential',
+    general_notes: '',
   },
   {
     id: 'proj-008',
     name: 'Anderson Office',
     address: '753 Willow Way, Portland, OR 97201',
-    status: 'approved',
+    status: 'draft',
     systemSize: '22.5 kW',
     systemType: 'Roof Mount',
     pvModules: 'SunPower Maxeon 6 (50 panels)',
@@ -139,20 +153,25 @@ export const mockProjects: Project[] = [
     ownerName: 'Tom Anderson',
     ownerEmail: 'tanderson@business.com',
     ownerPhone: '(555) 890-1234',
+    type: 'residential',
+    general_notes: '',
   },
 ];
 
-// Calculate stats from mock projects
-export function getProjectStats(): ProjectStats {
-  const total = mockProjects.length;
-  const pending = mockProjects.filter(p => p.status === 'pending').length;
-  const inReview = mockProjects.filter(p => p.status === 'in_review').length;
-  const approved = mockProjects.filter(p => p.status === 'approved').length;
-  const rejected = mockProjects.filter(p => p.status === 'rejected').length;
-  const draft = mockProjects.filter(p => p.status === 'draft').length;
+// Calculate stats from projects
+export function getProjectStats(projectsArray: Project[] = mockProjects): ProjectStats {
+  const total = projectsArray.length;
+  const pending = projectsArray.filter(p => p.status === 'pending').length;
+  const inReview = projectsArray.filter(p => p.status === 'in_review').length;
+  const approved = projectsArray.filter(p => p.status === 'approved').length;
+  const done = projectsArray.filter(p => p.status === 'approved' || p.status === 'done').length;
+  const rejected = projectsArray.filter(p => p.status === 'rejected').length;
+  const draft = projectsArray.filter(p => p.status === 'draft').length;
+  const inProcess = projectsArray.filter(p => p.status === 'pending' || p.status === 'in_review' || p.status === 'in_process').length;
   
-  const totalCapacityKW = mockProjects.reduce((sum, p) => {
-    const size = parseFloat(p.systemSize.replace(' kW', ''));
+  const totalCapacityKW = projectsArray.reduce((sum, p) => {
+    const sizeStr = typeof p.systemSize === 'string' ? p.systemSize : '0';
+    const size = parseFloat(sizeStr.replace(' kW', ''));
     return sum + (isNaN(size) ? 0 : size);
   }, 0);
 
@@ -161,6 +180,8 @@ export function getProjectStats(): ProjectStats {
     pending,
     inReview,
     approved,
+    done,
+    inProcess,
     rejected,
     draft,
     totalCapacityKW: Math.round(totalCapacityKW * 10) / 10,

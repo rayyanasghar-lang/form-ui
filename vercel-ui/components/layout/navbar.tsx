@@ -18,11 +18,11 @@ interface NavbarProps {
 
 export function Navbar({ title, backLink, children, actions }: NavbarProps) {
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/20 border-b border-zinc-200/60 h-16 shadow-xs select-none">
+    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border h-16 shadow-sm select-none">
       <div className="max-w-[1500px] mx-auto px-4 h-full flex items-center justify-between">
         {/* Left Section: Logo + Context */}
         <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="transition-all hover:opacity-80 active:scale-95 shrink-0 -ml-2">
+          <Link href="/projects" className="transition-all hover:opacity-80 active:scale-95 shrink-0 -ml-2">
             <Image src="/logo.png" alt="SunPermit" width={110} height={40} className="h-12 w-auto" />
           </Link>
           

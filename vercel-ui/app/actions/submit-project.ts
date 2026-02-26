@@ -1,18 +1,36 @@
 "use server"
 
+import { cookies } from "next/headers"
+
+const API_BASE_URL = process.env.INTERNAL_API_URL || "http://localhost:8069"
+const ODOO_DB = process.env.ODOO_DB 
+
+const getHeaders = async () => {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  }
+  if (ODOO_DB) {
+    headers["X-Odoo-Database"] = ODOO_DB
+  }
+
+  const cookieStore = await cookies()
+  const token = cookieStore.get("auth_token")?.value
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`
+  }
+
+  return headers
+}
+
 export async function submitProjectAction(payload: any): Promise<{ success: boolean; data?: any; error?: any; status?: number }> {
     try {
-        const response = await fetch("http://localhost:8069/api/create-project", {
+        const response = await fetch(`${API_BASE_URL}/api/create-project`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers: await getHeaders(),
             body: JSON.stringify(payload),
         })
 
         const text = await response.text()
-        console.log("Odoo Response Status:", response.status)
-        console.log("Odoo Response Body:", text)
 
         let data
         try {

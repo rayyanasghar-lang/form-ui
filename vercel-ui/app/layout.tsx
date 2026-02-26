@@ -1,16 +1,15 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Poppins } from "next/font/google"
+import { Inter } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "@/components/ui/sonner"
-import { ThemeProvider } from "next-themes"
-import { BackgroundGradient } from "@/components/layout/background-gradient"
+import QueryProvider from "@/components/providers/QueryProvider"
 
-const poppins = Poppins({
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-poppins"
+  variable: "--font-inter"
 })
+
 
 export const metadata: Metadata = {
   title: "Form Portal",
@@ -35,19 +34,22 @@ export const metadata: Metadata = {
   },
 }
 
+import { Suspense } from "react"
+import GlobalLoader from "@/components/providers/GlobalLoader"
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${poppins.variable}`} suppressHydrationWarning>
-      <body className={`font-sans antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <BackgroundGradient />
+    <html lang="en" className={`${inter.variable}`} suppressHydrationWarning>
+      <body className={`font-sans antialiased`} suppressHydrationWarning>
+        <QueryProvider>
+          <GlobalLoader />
           {children}
           <Toaster position="top-right" richColors />
-        </ThemeProvider>
+        </QueryProvider>
       </body>
     </html>
   )

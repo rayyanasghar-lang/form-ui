@@ -1,17 +1,30 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import type React from "react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button"
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -19,22 +32,42 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { toast } from "sonner"
-import { Upload, Plus, Trash2 } from "lucide-react"
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { Upload, Plus, Trash2, Loader2 } from "lucide-react";
+import { loginAction, signupAction } from "@/app/actions/auth-service";
 
 type License = {
-  id: string
-  number: string
-  type: string
-  state: string
-}
+  id: string;
+  number: string;
+  type: string;
+  state: string;
+};
 
 export default function LandingPage() {
-  const router = useRouter()
-  const [signupStep, setSignupStep] = useState(1)
-  const [licenses, setLicenses] = useState<License[]>([{ id: "1", number: "", type: "", state: "" }])
-  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [signupStep, setSignupStep] = useState(1);
+  const [licenses, setLicenses] = useState<License[]>([
+    { id: "1", number: "", type: "", state: "" },
+  ]);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [signupFormData, setSignupFormData] = useState({
+    fullname: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    company: "",
+    phone: "",
+    address: "",
+  });
+
+  const handleSignupInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { id, value } = e.target;
+    setSignupFormData((prev) => ({ ...prev, [id]: value }));
+  };
 
   const addLicense = () => {
     setLicenses([
@@ -45,54 +78,122 @@ export default function LandingPage() {
         type: "",
         state: "",
       },
-    ])
-  }
+    ]);
+  };
 
   const removeLicense = (id: string) => {
     if (licenses.length > 1) {
-      setLicenses(licenses.filter((l) => l.id !== id))
+      setLicenses(licenses.filter((l) => l.id !== id));
     }
-  }
+  };
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-    toast.success("Login successful", {
-      description: "Redirecting to your dashboard...",
-    })
-    setTimeout(() => {
-      router.push("/dashboard")
-    }, 1500)
-  }
+  const updateLicense = (id: string, field: keyof License, value: string) => {
+    setLicenses(
+      licenses.map((l) => (l.id === id ? { ...l, [field]: value } : l))
+    );
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    const form = e.target as HTMLFormElement;
+    const email = (form.elements.namedItem("login-email") as HTMLInputElement)
+      .value;
+    const password = (
+      form.elements.namedItem("login-password") as HTMLInputElement
+    ).value;
+
+    try {
+      const res = await loginAction({ email, password });
+      if (res.success && res.data?.contractor) {
+        // Store contractor data in localStorage
+        localStorage.setItem("contractor", JSON.stringify(res.data.contractor));
+
+        toast.success("Login successful", {
+          description: "Redirecting to your dashboard...",
+        });
+        setTimeout(() => {
+          router.push("/projects");
+        }, 1500);
+      } else {
+        toast.error(res.error || "Login failed");
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleNextStep = () => {
     if (signupStep < 3) {
-      setSignupStep(signupStep + 1)
+      setSignupStep(signupStep + 1);
     }
-  }
+  };
 
   const handlePreviousStep = () => {
     if (signupStep > 1) {
-      setSignupStep(signupStep - 1)
+      setSignupStep(signupStep - 1);
     }
-  }
+  };
 
-  const handleSignup = (e: React.FormEvent) => {
-    e.preventDefault()
-    toast.success("Account created!", {
-      description: "Welcome to Solar Permit Portal. Redirecting...",
-    })
-    setTimeout(() => {
-      router.push("/dashboard")
-    }, 1500)
-  }
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    // Collect data from form
+    // Use state instead of searching for elements that might be unmounted
+    const { fullname, email, password, company, phone, address } =
+      signupFormData;
+
+    // Licenses from state
+    const formattedLicenses = licenses.map((l) => ({
+      license_no: l.number,
+      license_type: l.type,
+      state: l.state,
+    }));
+
+    try {
+      const res = await signupAction({
+        name: fullname,
+        email,
+        password,
+        company_name: company,
+        phone,
+        address,
+        logo_url: logoFile
+          ? "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxSEAMY_JvOZYIDqE06GBzt0PCjOtoSNNBew&s"
+          : "",
+        licenses: formattedLicenses,
+      });
+
+      if (res.success && res.data?.contractor) {
+        // Store contractor data in localStorage
+        localStorage.setItem("contractor", JSON.stringify(res.data.contractor));
+
+        toast.success("Account created!", {
+          description: "Welcome to Sunpermit Portal. Redirecting...",
+        });
+        setTimeout(() => {
+          router.push("/projects");
+        }, 1500);
+      } else {
+        toast.error(res.error || "Signup failed");
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    const file = e.dataTransfer.files[0]
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
     if (file && file.type.startsWith("image/")) {
-      setLogoFile(file)
+      setLogoFile(file);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4 selection:bg-primary/20">
@@ -100,46 +201,50 @@ export default function LandingPage() {
         {/* Left Side - Branding */}
         <div className="hidden lg:flex flex-col space-y-8 animate-fade-in-up">
           <div className="flex justify-start">
-            <Image 
-              src="/logo.png" 
-              alt="Solar Permit Portal" 
-              width={200} 
-              height={80} 
-              className="h-16 w-auto drop-shadow-sm hover:scale-105 transition-transform duration-300" 
+            <Image
+              src="/logo.png"
+              alt="Solar Permit Portal"
+              width={200}
+              height={80}
+              className="h-16 w-auto drop-shadow-sm hover:scale-105 transition-transform duration-300"
               priority
             />
           </div>
           <div className="space-y-4">
-            <h1 className="text-5xl lg:text-6xl font-extrabold tracking-tight text-balance leading-[1.1]" style={{ color: "oklch(68.351% 0.19585 34.956)" }}>
-              Streamline Your <span className="text-foreground">Solar Permits</span>
+            <h1 className="text-5xl lg:text-6xl font-extrabold tracking-tight text-balance leading-[1.1] text-primary">
+              Streamline Your{" "}
+              <span className="text-foreground">Solar Permits</span>
             </h1>
             <p className="text-xl text-muted-foreground/80 font-medium max-w-md">
-              The modern platform for solar contractors to manage permits, documentation, and compliance—all in one place.
+              The modern platform for solar contractors to manage permits,
+              documentation, and compliance—all in one place.
             </p>
           </div>
-          
+
           <div className="grid grid-cols-3 gap-6 pt-4">
             {[
               { label: "Permits Processed", value: "500+", delay: "0.1s" },
               { label: "Approval Rate", value: "98%", delay: "0.2s" },
-              { label: "Avg. Turnaround", value: "24hr", delay: "0.3s" }
+              { label: "Avg. Turnaround", value: "24hr", delay: "0.3s" },
             ].map((stat, i) => (
-              <div 
-                key={i} 
-                className="bg-[#F5F0E8] rounded-2xl p-5 border border-[#E8E0D5] shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1"
+              <div
+                key={i}
+                className="bg-card rounded-2xl p-5 border border-border shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1"
                 style={{ animationDelay: stat.delay }}
               >
-                <div className="text-2xl font-bold mb-1" style={{ color: "oklch(68.351% 0.19585 34.956)" }}>
+                <div className="text-2xl font-bold mb-1 text-primary">
                   {stat.value}
                 </div>
-                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">{stat.label}</div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                  {stat.label}
+                </div>
               </div>
             ))}
           </div>
         </div>
 
         {/* Right Side - Auth Forms */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
@@ -147,27 +252,52 @@ export default function LandingPage() {
         >
           {/* Decorative background blobs */}
           <div className="absolute -top-20 -right-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl -z-10 animate-pulse" />
-          <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-secondary/10 rounded-full blur-3xl -z-10 animate-pulse" style={{ animationDelay: '1s' }} />
+          <div
+            className="absolute -bottom-20 -left-20 w-64 h-64 bg-secondary/10 rounded-full blur-3xl -z-10 animate-pulse"
+            style={{ animationDelay: "1s" }}
+          />
 
-          <Card className="bg-[#F5F0E8] shadow-[0_20px_50px_rgba(0,0,0,0.08)] border-[#E8E0D5] overflow-hidden rounded-3xl">
+          <Card className="bg-card shadow-[0_20px_50px_rgba(0,0,0,0.08)] border-border overflow-hidden rounded-3xl">
             <div className="lg:hidden p-6 pb-0 flex justify-center">
-              <Image src="/logo.png" alt="Logo" width={140} height={50} className="h-10 w-auto" />
+              <Image
+                src="/logo.png"
+                alt="Logo"
+                width={140}
+                height={50}
+                className="h-10 w-auto"
+              />
             </div>
             <CardHeader className="space-y-1 pb-4">
-              <CardTitle className="text-3xl font-bold tracking-tight">Welcome</CardTitle>
-              <CardDescription className="text-base">Sign in or create your account to get started</CardDescription>
+              <CardTitle className="text-3xl font-bold tracking-tight">
+                Welcome
+              </CardTitle>
+              <CardDescription className="text-base">
+                Sign in or create your account to get started
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 p-1 bg-muted/50 rounded-xl mb-8">
-                  <TabsTrigger value="login" className="rounded-lg data-[state=active]:shadow-sm" onClick={() => setSignupStep(1)}>
+                <TabsList className="grid w-full grid-cols-2 p-1 bg-zinc-100! rounded-xl mb-8">
+                  <TabsTrigger
+                    value="login"
+                    className="rounded-lg text-zinc-800! data-[state=active]:text-white! data-[state=active]:shadow-sm!"
+                    onClick={() => setSignupStep(1)}
+                  >
                     Login
                   </TabsTrigger>
-                  <TabsTrigger value="signup" className="rounded-lg data-[state=active]:shadow-sm">Create Account</TabsTrigger>
+                  <TabsTrigger
+                    value="signup"
+                    className="rounded-lg text-zinc-800! data-[state=active]:text-white! data-[state=active]:shadow-sm!"
+                  >
+                    Create Account
+                  </TabsTrigger>
                 </TabsList>
 
                 {/* Login Tab */}
-                <TabsContent value="login" className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <TabsContent
+                  value="login"
+                  className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300"
+                >
                   <form onSubmit={handleLogin} className="space-y-5">
                     <div className="space-y-2">
                       <Label htmlFor="login-email">Email Address</Label>
@@ -176,7 +306,7 @@ export default function LandingPage() {
                         type="email"
                         placeholder="you@company.com"
                         required
-                        className="h-11 rounded-xl bg-white/50 border-white/50 focus:bg-white transition-all focus:ring-4 focus:ring-primary/10"
+                        className="h-11 rounded-xl bg-white border-zinc-200 focus:bg-white transition-all focus:ring-4 focus:ring-primary/10"
                       />
                     </div>
                     <div className="space-y-2">
@@ -184,23 +314,36 @@ export default function LandingPage() {
                         <Label htmlFor="login-password">Password</Label>
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button variant="link" className="px-0 h-auto text-sm font-semibold hover:no-underline" style={{ color: "oklch(68.351% 0.19585 34.956)" }}>
+                            <Button
+                              variant="link"
+                              className="px-0 h-auto text-sm font-semibold hover:no-underline text-primary"
+                            >
                               Forgot password?
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="sm:max-w-[400px] rounded-3xl border-white/40">
                             <DialogHeader>
-                              <DialogTitle className="text-2xl font-bold">Reset Password</DialogTitle>
+                              <DialogTitle className="text-2xl font-bold">
+                                Reset Password
+                              </DialogTitle>
                               <DialogDescription className="text-base pt-2">
-                                Enter your email address and we'll send you a link to reset your password.
+                                Enter your email address and we'll send you a
+                                link to reset your password.
                               </DialogDescription>
                             </DialogHeader>
                             <div className="space-y-4 pt-4">
                               <div className="space-y-2">
-                                <Label htmlFor="reset-email">Email Address</Label>
-                                <Input id="reset-email" type="email" placeholder="you@company.com" className="h-11 rounded-xl" />
+                                <Label htmlFor="reset-email">
+                                  Email Address
+                                </Label>
+                                <Input
+                                  id="reset-email"
+                                  type="email"
+                                  placeholder="you@company.com"
+                                  className="h-11 rounded-xl"
+                                />
                               </div>
-                              <Button className="w-full h-11 rounded-xl font-bold shadow-lg shadow-primary/20" style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}>
+                              <Button className="w-full h-11 rounded-xl font-bold shadow-lg shadow-primary/20">
                                 Send Reset Link
                               </Button>
                             </div>
@@ -211,12 +354,17 @@ export default function LandingPage() {
                         id="login-password"
                         type="password"
                         required
-                        className="h-11 rounded-xl bg-white/50 border-white/50 focus:bg-white transition-all focus:ring-4 focus:ring-primary/10"
+                        className="h-11 rounded-xl bg-white border-zinc-200 focus:bg-white transition-all focus:ring-4 focus:ring-primary/10"
                       />
                     </div>
-                    <Button type="submit" className="w-full h-12 rounded-xl text-md font-bold shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200" style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}>
-                      Sign In
-                    </Button>
+                  <LoadingButton 
+                    type="submit" 
+                    className="w-full h-12 rounded-xl text-md font-bold shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200" 
+                    loading={isLoading}
+                    loadingText="Signing In..."
+                  >
+                    Sign In
+                  </LoadingButton>
                   </form>
                 </TabsContent>
 
@@ -239,41 +387,86 @@ export default function LandingPage() {
                             <div className="h-1 w-full bg-muted rounded-full" />
                             <div className="h-1 w-full bg-muted rounded-full" />
                           </div>
-                          <div className="text-sm font-bold text-primary tracking-wide uppercase">Step 1: Account Information</div>
-                          
+                          <div className="text-sm font-bold text-primary tracking-wide uppercase">
+                            Step 1: Account Information
+                          </div>
+
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                               <Label htmlFor="fullname">Full Name *</Label>
-                              <Input id="fullname" placeholder="John Doe" required className="h-11 rounded-xl bg-white/50" />
+                              <Input
+                                id="fullname"
+                                placeholder="John Doe"
+                                required
+                                className="h-11 rounded-xl bg-white"
+                                value={signupFormData.fullname}
+                                onChange={handleSignupInputChange}
+                              />
                             </div>
                             <div className="space-y-2">
                               <Label htmlFor="company">Company *</Label>
-                              <Input id="company" placeholder="Solar Solutions Inc." required className="h-11 rounded-xl bg-white/50" />
+                              <Input
+                                id="company"
+                                placeholder="Solar Solutions Inc."
+                                required
+                                className="h-11 rounded-xl bg-white"
+                                value={signupFormData.company}
+                                onChange={handleSignupInputChange}
+                              />
                             </div>
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="email">Email Address *</Label>
-                            <Input id="email" type="email" placeholder="you@company.com" required className="h-11 rounded-xl bg-white/50" />
+                            <Input
+                              id="email"
+                              type="email"
+                              placeholder="you@company.com"
+                              required
+                              className="h-11 rounded-xl bg-white"
+                              value={signupFormData.email}
+                              onChange={handleSignupInputChange}
+                            />
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="phone">Phone Number *</Label>
-                            <Input id="phone" type="tel" placeholder="(555) 123-4567" required className="h-11 rounded-xl bg-white/50" />
+                            <Input
+                              id="phone"
+                              type="tel"
+                              placeholder="(555) 123-4567"
+                              required
+                              className="h-11 rounded-xl bg-white"
+                              value={signupFormData.phone}
+                              onChange={handleSignupInputChange}
+                            />
                           </div>
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                               <Label htmlFor="password">Password *</Label>
-                              <Input id="password" type="password" required className="h-11 rounded-xl bg-white/50" />
+                              <Input
+                                id="password"
+                                type="password"
+                                required
+                                className="h-11 rounded-xl bg-white"
+                                value={signupFormData.password}
+                                onChange={handleSignupInputChange}
+                              />
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="confirm-password">Confirm *</Label>
-                              <Input id="confirm-password" type="password" required className="h-11 rounded-xl bg-white/50" />
+                              <Label htmlFor="confirmPassword">Confirm *</Label>
+                              <Input
+                                id="confirmPassword"
+                                type="password"
+                                required
+                                className="h-11 rounded-xl bg-white"
+                                value={signupFormData.confirmPassword}
+                                onChange={handleSignupInputChange}
+                              />
                             </div>
                           </div>
                           <Button
                             type="button"
                             onClick={handleNextStep}
                             className="w-full h-12 rounded-xl text-md font-bold shadow-lg shadow-primary/20 mt-4"
-                            style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
                           >
                             Continue
                           </Button>
@@ -295,15 +488,19 @@ export default function LandingPage() {
                             <div className="h-1 w-full bg-primary rounded-full" />
                             <div className="h-1 w-full bg-muted rounded-full" />
                           </div>
-                          <div className="text-sm font-bold text-primary tracking-wide uppercase">Step 2: Business Information</div>
-                          
+                          <div className="text-sm font-bold text-primary tracking-wide uppercase">
+                            Step 2: Business Information
+                          </div>
+
                           <div className="space-y-2">
                             <Label htmlFor="address">Business Address</Label>
                             <Textarea
                               id="address"
                               placeholder="123 Main St&#10;Suite 100&#10;City, State 12345"
                               rows={4}
-                              className="rounded-xl bg-white/50 resize-none pt-3"
+                              className="rounded-xl bg-white resize-none pt-3"
+                              value={signupFormData.address}
+                              onChange={handleSignupInputChange}
                             />
                           </div>
                           <div className="space-y-2">
@@ -311,12 +508,14 @@ export default function LandingPage() {
                             <div
                               onDrop={handleDrop}
                               onDragOver={(e) => e.preventDefault()}
-                              className="group relative border-2 border-dashed border-white/60 bg-white/30 rounded-2xl p-8 text-center transition-all hover:border-primary/50 hover:bg-white/50 cursor-pointer overflow-hidden"
+                              className="group relative border-2 border-dashed border-zinc-200 bg-white rounded-2xl p-8 text-center transition-all hover:border-primary/50 hover:bg-zinc-50 cursor-pointer overflow-hidden"
                             >
                               <Upload className="mx-auto h-10 w-10 text-muted-foreground group-hover:text-primary group-hover:scale-110 transition-all duration-300" />
                               <p className="mt-3 text-sm font-medium text-muted-foreground">
                                 {logoFile ? (
-                                  <span className="text-primary font-bold">{logoFile.name}</span>
+                                  <span className="text-primary font-bold">
+                                    {logoFile.name}
+                                  </span>
                                 ) : (
                                   "Drag & drop logo or browse files"
                                 )}
@@ -326,9 +525,14 @@ export default function LandingPage() {
                                 accept="image/*"
                                 className="hidden"
                                 id="logo-upload"
-                                onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                                onChange={(e) =>
+                                  setLogoFile(e.target.files?.[0] || null)
+                                }
                               />
-                              <Label htmlFor="logo-upload" className="absolute inset-0 cursor-pointer opacity-0" />
+                              <Label
+                                htmlFor="logo-upload"
+                                className="absolute inset-0 cursor-pointer opacity-0"
+                              />
                             </div>
                           </div>
                           <div className="flex gap-3 pt-4">
@@ -336,7 +540,7 @@ export default function LandingPage() {
                               type="button"
                               variant="outline"
                               onClick={handlePreviousStep}
-                              className="flex-1 h-12 rounded-xl font-bold bg-white/20 border-white/40"
+                              className="flex-1 h-12 rounded-xl font-bold bg-white border-zinc-200"
                             >
                               Back
                             </Button>
@@ -344,7 +548,6 @@ export default function LandingPage() {
                               type="button"
                               onClick={handleNextStep}
                               className="flex-1 h-12 rounded-xl font-bold shadow-lg shadow-primary/20"
-                              style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}
                             >
                               Continue
                             </Button>
@@ -367,13 +570,20 @@ export default function LandingPage() {
                             <div className="h-1 w-full bg-primary rounded-full" />
                             <div className="h-1 w-full bg-primary rounded-full" />
                           </div>
-                          <div className="text-sm font-bold text-primary tracking-wide uppercase">Step 3: License Information</div>
-                          
+                          <div className="text-sm font-bold text-primary tracking-wide uppercase">
+                            Step 3: License Information
+                          </div>
+
                           <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 scrollbar-none">
                             {licenses.map((license, index) => (
-                              <div key={license.id} className="p-5 border border-white/50 rounded-2xl space-y-4 bg-white/40 shadow-sm relative group">
+                              <div
+                                key={license.id}
+                                className="p-5 border border-zinc-200 rounded-2xl space-y-4 bg-white shadow-sm relative group"
+                              >
                                 <div className="flex items-center justify-between">
-                                  <span className="text-sm font-bold opacity-60">License {index + 1}</span>
+                                  <span className="text-sm font-bold opacity-60">
+                                    License {index + 1}
+                                  </span>
                                   {licenses.length > 1 && (
                                     <Button
                                       type="button"
@@ -387,36 +597,100 @@ export default function LandingPage() {
                                   )}
                                 </div>
                                 <div className="space-y-2">
-                                  <Label htmlFor={`license-number-${license.id}`}>License Number</Label>
-                                  <Input id={`license-number-${license.id}`} placeholder="ABC123456" required className="h-10 rounded-lg bg-white/70" />
+                                  <Label
+                                    htmlFor={`license-number-${license.id}`}
+                                  >
+                                    License Number
+                                  </Label>
+                                  <Input
+                                    id={`license-number-${license.id}`}
+                                    placeholder="ABC123456"
+                                    required
+                                    className="h-10 rounded-lg bg-white"
+                                    value={license.number}
+                                    onChange={(e) =>
+                                      updateLicense(
+                                        license.id,
+                                        "number",
+                                        e.target.value
+                                      )
+                                    }
+                                  />
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                   <div className="space-y-2">
-                                    <Label htmlFor={`license-type-${license.id}`}>Type</Label>
-                                    <Select required>
-                                      <SelectTrigger id={`license-type-${license.id}`} className="h-10 rounded-lg bg-white/70">
+                                    <Label
+                                      htmlFor={`license-type-${license.id}`}
+                                    >
+                                      Type
+                                    </Label>
+                                    <Select
+                                      required
+                                      value={license.type}
+                                      onValueChange={(val) =>
+                                        updateLicense(license.id, "type", val)
+                                      }
+                                    >
+                                      <SelectTrigger
+                                        id={`license-type-${license.id}`}
+                                        className="h-10 rounded-lg bg-white"
+                                      >
                                         <SelectValue placeholder="Select" />
                                       </SelectTrigger>
                                       <SelectContent className="rounded-xl border-white/40">
-                                        <SelectItem value="electrical">Electrical</SelectItem>
-                                        <SelectItem value="general">General</SelectItem>
-                                        <SelectItem value="solar">Solar</SelectItem>
-                                        <SelectItem value="roofing">Roofing</SelectItem>
+                                        <SelectItem value="Electrical">
+                                          Electrical
+                                        </SelectItem>
+                                        <SelectItem value="General">
+                                          General
+                                        </SelectItem>
+                                        <SelectItem value="Solar">
+                                          Solar
+                                        </SelectItem>
+                                        <SelectItem value="Roofing">
+                                          Roofing
+                                        </SelectItem>
                                       </SelectContent>
                                     </Select>
                                   </div>
                                   <div className="space-y-2">
-                                    <Label htmlFor={`license-state-${license.id}`}>State</Label>
-                                    <Select required>
-                                      <SelectTrigger id={`license-state-${license.id}`} className="h-10 rounded-lg bg-white/70">
+                                    <Label
+                                      htmlFor={`license-state-${license.id}`}
+                                    >
+                                      State
+                                    </Label>
+                                    <Select
+                                      required
+                                      value={license.state}
+                                      onValueChange={(val) =>
+                                        updateLicense(license.id, "state", val)
+                                      }
+                                    >
+                                      <SelectTrigger
+                                        id={`license-state-${license.id}`}
+                                        className="h-10 rounded-lg bg-white"
+                                      >
                                         <SelectValue placeholder="State" />
                                       </SelectTrigger>
                                       <SelectContent className="rounded-xl border-white/40">
-                                        <SelectItem value="CA">California</SelectItem>
-                                        <SelectItem value="TX">Texas</SelectItem>
-                                        <SelectItem value="FL">Florida</SelectItem>
-                                        <SelectItem value="AZ">Arizona</SelectItem>
-                                        <SelectItem value="NV">Nevada</SelectItem>
+                                        <SelectItem value="CA">
+                                          California
+                                        </SelectItem>
+                                        <SelectItem value="NY">
+                                          New York
+                                        </SelectItem>
+                                        <SelectItem value="TX">
+                                          Texas
+                                        </SelectItem>
+                                        <SelectItem value="FL">
+                                          Florida
+                                        </SelectItem>
+                                        <SelectItem value="AZ">
+                                          Arizona
+                                        </SelectItem>
+                                        <SelectItem value="NV">
+                                          Nevada
+                                        </SelectItem>
                                       </SelectContent>
                                     </Select>
                                   </div>
@@ -424,7 +698,7 @@ export default function LandingPage() {
                               </div>
                             ))}
                           </div>
-                          
+
                           <Button
                             type="button"
                             variant="outline"
@@ -434,7 +708,7 @@ export default function LandingPage() {
                             <Plus className="h-4 w-4 mr-2" />
                             Add Another License
                           </Button>
-                          
+
                           <div className="flex gap-3 pt-4">
                             <Button
                               type="button"
@@ -444,8 +718,19 @@ export default function LandingPage() {
                             >
                               Back
                             </Button>
-                            <Button type="submit" className="flex-1 h-12 rounded-xl font-bold shadow-xl shadow-primary/30" style={{ backgroundColor: "oklch(68.351% 0.19585 34.956)" }}>
-                              Create Account
+                            <Button
+                              type="submit"
+                              disabled={isLoading}
+                              className="flex-1 h-12 rounded-xl font-bold shadow-xl shadow-primary/30"
+                            >
+                              {isLoading ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Creating Account...
+                                </>
+                              ) : (
+                                "Create Account"
+                              )}
                             </Button>
                           </div>
                         </motion.div>
@@ -456,12 +741,13 @@ export default function LandingPage() {
               </Tabs>
             </CardContent>
           </Card>
-          
+
           <p className="text-center text-sm text-muted-foreground/60 mt-8 font-medium">
-            &copy; {new Date().getFullYear()} SunPermit Portal. All rights reserved.
+            &copy; {new Date().getFullYear()} SunPermit Portal. All rights
+            reserved.
           </p>
         </motion.div>
       </div>
     </div>
-  )
+  );
 }

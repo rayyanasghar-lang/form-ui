@@ -3,29 +3,22 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   User,
   Building2,
-  ShieldCheck,
   FileBadge,
   Camera,
   Plus,
   Trash2,
   Save,
-  LogOut,
   Mail,
   Phone,
   MapPin,
   Lock,
   Check,
-  Settings,
   Bell,
   Search,
-  LayoutDashboard,
-  CreditCard,
-  Activity,
   Globe,
   CheckCircle2,
   Zap,
@@ -33,8 +26,8 @@ import {
   FileCheck,
   Download,
   Monitor,
-  PanelLeftClose,
   PanelLeft,
+  Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,28 +35,66 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import Sidebar from "@/components/layout/sidebar";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import AuthGuard from "@/components/auth/auth-guard";
+import { useEffect } from "react";
+import { getContractorProfileAction } from "@/app/actions/auth-service";
 
 export default function ProfilePage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("account");
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [contractor, setContractor] = useState<any>(null);
 
-  // Mock Licenses State
-  const [licenses, setLicenses] = useState([
-    {
-      id: 1,
-      type: "Electrical Engineer",
-      state: "California",
-      number: "EE-99201",
-    },
-    {
-      id: 2,
-      type: "Contractor (C-10)",
-      state: "Arizona",
-      number: "ROC-332145",
-    },
-  ]);
+  useEffect(() => {
+    async function loadProfile() {
+      setIsLoading(true);
+      const result = await getContractorProfileAction();
+      if (result.success && result.data) {
+        setContractor(result.data);
+        if (result.data.licenses && Array.isArray(result.data.licenses)) {
+          setLicenses(result.data.licenses.map((l: any, idx: number) => ({
+            id: idx + 1,
+            type: l.license_type,
+            state: l.state,
+            number: l.license_no
+          })));
+        }
+      } else {
+        const stored = localStorage.getItem("contractor");
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            setContractor(parsed);
+            if (parsed.licenses && Array.isArray(parsed.licenses)) {
+              setLicenses(parsed.licenses.map((l: any, idx: number) => ({
+                id: idx + 1,
+                type: l.license_type,
+                state: l.state,
+                number: l.license_no
+              })));
+            }
+          } catch (e) {}
+        }
+      }
+      setIsLoading(false);
+    }
+    loadProfile();
+  }, []);
+
+  // Licenses State
+  const [licenses, setLicenses] = useState<any[]>([]);
 
   const handleSave = () => {
     setIsSaving(true);
@@ -84,627 +115,536 @@ export default function ProfilePage() {
     setLicenses(licenses.filter((l) => l.id !== id));
   };
 
-  const navSections = [
-    {
-      title: "Main",
-      items: [
-        {
-          id: "dashboard",
-          label: "Dashboard",
-          icon: LayoutDashboard,
-          href: "/dashboard",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      items: [
-        { id: "account", label: "Account Info", icon: User },
-        { id: "business", label: "Business Details", icon: Building2 },
-        { id: "licenses", label: "Licenses", icon: FileBadge },
-        { id: "security", label: "Security", icon: ShieldCheck },
-      ],
-    },
-    {
-      title: "Organization",
-      items: [
-        { id: "billing", label: "Billing", icon: CreditCard },
-      ],
-    },
-  ];
+  if (isLoading) {
+    return (
+      <AuthGuard>
+        <div className="flex h-screen items-center justify-center bg-background">
+          <div className="flex flex-col items-center gap-4">
+            <Activity className="h-10 w-10 animate-spin text-primary" />
+            <p className="text-zinc-500 font-bold">Downloading Identity Profile...</p>
+          </div>
+        </div>
+      </AuthGuard>
+    )
+  }
 
   return (
-    <div className="flex h-screen overflow-hidden font-poppins selection:bg-primary/20">
+    <AuthGuard>
+      <div className="flex h-screen overflow-hidden bg-background">
       {/* --- SIDEBAR --- */}
-      <aside className={`flex flex-col border-r border-[#E8E0D5] bg-[#F5F0E8] z-40 relative transition-all duration-300 ease-in-out ${sidebarCollapsed ? 'w-0 overflow-hidden opacity-0' : 'w-72'}`}>
-        {/* Toggle Button - visible when NOT collapsed */}
-        <button
-          onClick={() => setSidebarCollapsed(true)}
-          className="absolute top-4 right-4 z-50 p-2 rounded-lg hover:bg-black/5 transition-colors text-zinc-500 hover:text-zinc-900"
-          title="Hide sidebar"
-        >
-          <PanelLeftClose className="h-4 w-4" />
-        </button>
-        
-        {/* Header */}
-        <div className="px-4 h-16 flex items-center border-b border-black/5 bg-transparent">
-          <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="bg-primary h-8 w-8 rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
-              <Settings className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-lg font-bold tracking-tight text-zinc-900">
-              Portal
-            </span>
-          </Link>
-        </div>
-
-        {/* Scrollable Nav Area */}
-        <div className="flex-1 overflow-y-auto py-6 px-4 space-y-8">
-              {navSections.map((section) => (
-                <div key={section.title} className="space-y-1">
-                  <h3 className="px-4 text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-400 mb-2">
-                    {section.title}
-                  </h3>
-                  {section.items.map((item: any) =>
-                    item.href ? (
-                      <Link
-                        key={item.id}
-                        href={item.href}
-                    className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-zinc-600 hover:bg-zinc-50 transition-all group"
-                  >
-                    <item.icon className="h-4 w-4 text-zinc-400 group-hover:text-primary transition-colors" />
-                    {item.label}
-                  </Link>
-                ) : (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all group ${
-                      activeTab === item.id
-                        ? "bg-primary/5 text-primary"
-                        : "text-zinc-600 hover:bg-zinc-50"
-                    }`}
-                  >
-                    <item.icon
-                      className={`h-4 w-4 transition-colors ${
-                        activeTab === item.id
-                          ? "text-primary"
-                          : "text-zinc-400 group-hover:text-primary"
-                      }`}
-                    />
-                    {item.label}
-                    {activeTab === item.id && (
-                      <motion.div
-                        layoutId="active-nav-indicator"
-                        className="ml-auto w-1 h-4 bg-primary rounded-full"
-                      />
-                    )}
-                  </button>
-                )
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Footer */}
-        <div className="p-4 border-t border-black/5">
-          <div className="mb-4 bg-white/10 backdrop-blur-md p-3 rounded-xl border border-white/20 flex items-center gap-3 group hover:bg-white/20 transition-all">
-            <div className="h-9 w-9 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold shadow-sm border border-black/5 shrink-0">
-              JD
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-zinc-900 truncate">
-                Solar Solutions Inc.
-              </p>
-              <p className="text-[10px] font-medium text-zinc-500 truncate uppercase tracking-wider">
-                Admin
-              </p>
-            </div>
-            <button className="text-zinc-400 hover:text-destructive transition-colors p-1.5 rounded-lg hover:bg-destructive/5">
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="px-2 flex items-center justify-between text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
-            <span>v1.2.0</span>
-            <span className="h-1 w-1 bg-primary/20 rounded-full" />
-            <span>Stable</span>
-          </div>
-        </div>
-      </aside>
+      <Sidebar 
+        variant="settings"
+        activeSettingsTab={activeTab}
+        onSettingsTabChange={setActiveTab}
+        collapsed={sidebarCollapsed}
+        onCollapsedChange={setSidebarCollapsed}
+      />
+      
 
       {/* --- MAIN CONTENT --- */}
       <main className="flex-1 flex flex-col overflow-hidden relative">
         {/* Content Header */}
-        <header className="h-16 px-6 border-b border-zinc-200/60 bg-white/10 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-4">
+        <header className="h-16 px-4 sm:px-6 border-b border-border bg-background flex items-center justify-between shrink-0 sticky top-0 z-10">
+          <div className="flex items-center gap-3 sm:gap-4">
             {/* Sidebar Toggle - visible when sidebar is collapsed */}
             {sidebarCollapsed && (
               <button
                 onClick={() => setSidebarCollapsed(false)}
-                className="p-2 rounded-lg hover:bg-black/5 transition-colors text-zinc-500 hover:text-zinc-900 -ml-2"
+                className="p-2 rounded-lg hover:bg-zinc-100 transition-colors text-zinc-500 hover:text-zinc-900 -ml-2"
                 title="Show sidebar"
               >
                 <PanelLeft className="h-5 w-5" />
               </button>
             )}
-            <h2 className="text-xl font-bold text-zinc-900">
-              {
-                navSections
-                  .flatMap((s) => s.items)
-                  .find((n) => n.id === activeTab)?.label
-              }
-            </h2>
-            <Separator orientation="vertical" className="h-4 bg-black/10" />
-            <p className="text-sm font-medium text-zinc-400">
-              Manage your organization and preferences
-            </p>
+            <div>
+              <h2 className="text-base sm:text-lg font-bold text-zinc-900 leading-tight">
+                {activeTab === "account" && "Account Info"}
+                {activeTab === "business" && "Business Details"}
+                {activeTab === "licenses" && "Licenses"}
+                {activeTab === "security" && "Security"}
+                {activeTab === "billing" && "Billing"}
+              </h2>
+              <p className="text-xs text-zinc-500 font-medium hidden sm:block">
+                Manage your organization and preferences
+              </p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="relative hidden md:block">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
               <Input
                 placeholder="Search settings..."
-                className="w-48 h-9 pl-9 rounded-lg border-zinc-200 bg-zinc-50 focus:bg-white focus:ring-1 focus:ring-primary/20 text-xs transition-all shadow-none"
+                className="w-48 h-8 pl-8 rounded-lg bg-zinc-50 border-zinc-200 focus:bg-white text-xs"
               />
             </div>
 
             <Button
               variant="ghost"
               size="icon"
-              className="h-10 w-10 rounded-full text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition-colors focus-visible:ring-2 focus-visible:ring-primary/20 outline-none relative"
+              className="h-8 w-8 rounded-full text-zinc-500 hover:text-zinc-900 relative"
             >
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full border-2 border-white" />
+              <Bell className="h-4 w-4" />
+              <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-primary rounded-full ring-2 ring-white" />
             </Button>
             <Button
               onClick={handleSave}
               disabled={isSaving}
-              className="h-9 rounded-full px-6 bg-primary hover:bg-primary/90 text-white font-bold text-xs shadow-lg transition-all active:scale-95"
+              size="sm"
+              className="h-8 rounded-lg px-3 sm:px-4 bg-primary hover:bg-primary/90 text-white font-semibold text-xs shadow-sm"
             >
               {isSaving ? (
-                "Saving..."
+                 <span className="sm:hidden">...</span>
               ) : (
-                <>
-                  <Save className="mr-2 h-3.5 w-3.5" /> Save Changes
-                </>
+                <Save className="h-3.5 w-3.5 sm:mr-2" />
               )}
+               <span className={isSaving ? "block" : "hidden sm:inline"}>{isSaving ? "Saving..." : "Save Changes"}</span>
             </Button>
           </div>
         </header>
 
         {/* Scrollable Area */}
-        <div className="flex-1 overflow-y-auto px-10 py-8 bg-transparent">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
-              initial={{ opacity: 0, y: 4 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
+              exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="max-w-7xl mx-auto space-y-6"
+              className="max-w-5xl mx-auto space-y-6"
             >
               {activeTab === "account" && (
-                <div className="grid grid-cols-12 gap-8 items-start">
-                  {/* MAIN COLUMN - STACKED SECTIONS */}
+                <div className="grid grid-cols-12 gap-6 items-start">
+                  {/* MAIN COLUMN */}
                   <div className="col-span-12 lg:col-span-8 space-y-6">
-                    {/* Section 1: Personal Branding */}
-                    <div className="bg-[#F5F0E8] border border-[#E8E0D5] rounded-[2.5rem] p-8 shadow-lg relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-bl-full -mr-8 -mt-8 transition-all duration-500 group-hover:scale-110" />
-                      <div className="flex items-center justify-between mb-8 pb-4 border-b border-black/5">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 bg-primary/10 rounded-2xl flex items-center justify-center">
+                    {/* Identity Card */}
+                    <Card>
+                      <CardHeader className="pb-4">
+                        <div className="flex items-center gap-4">
+                          <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center">
                             <User className="h-5 w-5 text-primary" />
                           </div>
                           <div>
-                            <h3 className="text-xl font-bold text-zinc-900 leading-none">Identity</h3>
-                            <p className="text-[10px] font-medium text-zinc-500 mt-1 uppercase tracking-widest">Public Persona</p>
+                            <CardTitle className="text-lg">Identity</CardTitle>
+                            <CardDescription>Public Persona</CardDescription>
                           </div>
                         </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-10">
-                        <div className="shrink-0 relative group">
-                          <Avatar className="h-32 w-32 border-4 border-white shadow-2xl rounded-full overflow-hidden group-hover:scale-[1.02] transition-transform duration-500">
-                            <AvatarImage src="/avatar-placeholder.png" />
-                            <AvatarFallback className="text-3xl font-bold bg-primary/10 text-primary">JD</AvatarFallback>
-                          </Avatar>
-                          <label className="absolute -bottom-1 -right-1 h-10 w-10 bg-white text-zinc-600 rounded-full flex items-center justify-center cursor-pointer shadow-xl hover:bg-zinc-50 hover:scale-110 transition-all border border-black/5">
-                            <Camera className="h-5 w-5" />
-                            <input type="file" className="hidden" />
-                          </label>
-                        </div>
-                        <div className="flex-1 grid grid-cols-1 gap-6">
-                          <div className="space-y-2">
-                            <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] ml-1">Full Name</Label>
-                            <Input defaultValue="John Doe" className="h-12 rounded-2xl border-white/40 bg-white/40 focus:bg-white text-sm shadow-inner" />
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex flex-col sm:flex-row items-start gap-6">
+                          <div className="shrink-0 relative group">
+                            <Avatar className="h-24 w-24 border-2 border-zinc-100 shadow-sm">
+                              <AvatarImage src={contractor?.logo_url || "/avatar-placeholder.png"} />
+                              <AvatarFallback className="text-2xl font-bold bg-zinc-50 text-zinc-400">
+                                {contractor?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || "JD"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <label className="absolute -bottom-1 -right-1 h-8 w-8 bg-white text-zinc-600 rounded-full flex items-center justify-center cursor-pointer shadow-md hover:bg-zinc-50 border border-zinc-200 transition-colors">
+                              <Camera className="h-4 w-4" />
+                              <input type="file" className="hidden" />
+                            </label>
                           </div>
-                          <div className="space-y-2">
-                            <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] ml-1">Professional Headline</Label>
-                            <Input defaultValue="Senior Electrical Engineer" className="h-12 rounded-2xl border-white/40 bg-white/40 focus:bg-white text-sm shadow-inner" />
+                          <div className="flex-1 w-full space-y-4">
+                            <div className="grid gap-2">
+                              <Label htmlFor="fullName">Full Name</Label>
+                              <Input id="fullName" defaultValue={contractor?.name || ""} key={contractor?.name} />
+                            </div>
+                            <div className="grid gap-2">
+                              <Label htmlFor="headline">Professional Headline</Label>
+                              <Input id="headline" defaultValue="Senior Electrical Engineer" />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
 
-                    {/* Section 2: Communication */}
-                    <div className="bg-[#F5F0E8] border border-[#E8E0D5] rounded-[2.5rem] p-8 shadow-lg relative overflow-hidden group">
-                      <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/10 rounded-tr-full -ml-8 -mb-8 transition-all duration-500 group-hover:scale-110" />
-                      <div className="flex items-center justify-between mb-8 pb-4 border-b border-black/5">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 bg-blue-500/10 rounded-2xl flex items-center justify-center">
+                    {/* Connectivity Card */}
+                    <Card>
+                      <CardHeader className="pb-4">
+                         <div className="flex items-center gap-4">
+                          <div className="h-10 w-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
                             <Globe className="h-5 w-5 text-blue-600" />
                           </div>
                           <div>
-                            <h3 className="text-xl font-bold text-zinc-900 leading-none">Connectivity</h3>
-                            <p className="text-[10px] font-medium text-zinc-500 mt-1 uppercase tracking-widest">Global Reach</p>
+                            <CardTitle className="text-lg">Connectivity</CardTitle>
+                            <CardDescription>Contact Details</CardDescription>
                           </div>
                         </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] ml-1">Work Email</Label>
-                          <div className="relative">
-                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-                            <Input type="email" defaultValue="j.doe@solarsolutions.com" className="h-12 pl-12 rounded-2xl border-white/40 bg-white/40 focus:bg-white text-sm" />
+                      </CardHeader>
+                      <CardContent className="grid sm:grid-cols-2 gap-4">
+                          <div className="grid gap-2">
+                            <Label>Work Email</Label>
+                            <div className="relative">
+                              <Mail className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
+                              <Input defaultValue={contractor?.email || ""} className="pl-9" key={contractor?.email} />
+                            </div>
                           </div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] ml-1">Direct Line</Label>
-                          <div className="relative">
-                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-                            <Input type="tel" defaultValue="+1 (555) 902-1234" className="h-12 pl-12 rounded-2xl border-white/40 bg-white/40 focus:bg-white text-sm" />
+                          <div className="grid gap-2">
+                            <Label>Direct Line</Label>
+                            <div className="relative">
+                              <Phone className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
+                              <Input defaultValue={contractor?.phone || ""} className="pl-9" key={contractor?.phone} />
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
 
-                    {/* Section 3: Localization */}
-                    <div className="bg-[#F5F0E8] border border-[#E8E0D5] rounded-[2.5rem] p-8 shadow-lg relative overflow-hidden group">
-                      <div className="absolute top-0 left-0 w-32 h-32 bg-orange-500/10 rounded-br-full -ml-8 -mt-8 transition-all duration-500 group-hover:scale-110" />
-                      <div className="flex items-center justify-between mb-8 pb-4 border-b border-black/5">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 bg-orange-500/10 rounded-2xl flex items-center justify-center">
-                            <Activity className="h-5 w-5 text-orange-600" />
+                    {/* Localization Card */}
+                    <Card>
+                      <CardHeader className="pb-4">
+                        <div className="flex items-center gap-4">
+                          <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <Activity className="h-5 w-5 text-primary" />
                           </div>
                           <div>
-                            <h3 className="text-xl font-bold text-zinc-900 leading-none">Context</h3>
-                            <p className="text-[10px] font-medium text-zinc-500 mt-1 uppercase tracking-widest">Regional Settings</p>
+                            <CardTitle className="text-lg">Preferences</CardTitle>
+                            <CardDescription>Regional Settings</CardDescription>
                           </div>
                         </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] ml-1">Preferred Timezone</Label>
-                          <select className="flex h-12 w-full rounded-2xl border border-white/40 bg-white/40 px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-primary/20">
-                            <option>Pacific Standard Time (PST)</option>
-                            <option>Eastern Standard Time (EST)</option>
-                          </select>
+                      </CardHeader>
+                      <CardContent className="grid sm:grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                          <Label>Timezone</Label>
+                          <Select defaultValue="pst">
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select timezone" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pst">Pacific Standard Time (PST)</SelectItem>
+                              <SelectItem value="est">Eastern Standard Time (EST)</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
-                        <div className="space-y-2">
-                          <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] ml-1">Display Language</Label>
-                          <select className="flex h-12 w-full rounded-2xl border border-border bg-white/40 px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-primary/20">
-                            <option>English (United States)</option>
-                            <option>Spanish (Mexico)</option>
-                          </select>
+                        <div className="grid gap-2">
+                          <Label>Language</Label>
+                          <Select defaultValue="en-us">
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select language" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="en-us">English (United States)</SelectItem>
+                              <SelectItem value="es-mx">Spanish (Mexico)</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
-                      </div>
-                    </div>
-
-                    
+                      </CardContent>
+                    </Card>
                   </div>
 
-                  {/* RIGHT CONTEXT PANEL */}
-                  <div className="col-span-12 lg:col-span-4 space-y-6 sticky top-0">
+                  {/* SIDE COLUMN */}
+                  <div className="col-span-12 lg:col-span-4 space-y-6">
                     {/* Status Widget */}
-                    <div className="bg-[#F5F0E8] border border-[#E8E0D5] rounded-[2.5rem] p-8 shadow-lg">
-                      <div className="flex items-center gap-4 mb-6">
-                        <div className="h-12 w-12 bg-green-500/10 rounded-[1.25rem] flex items-center justify-center">
-                          <CheckCircle2 className="h-6 w-6 text-green-600" />
+                    <Card>
+                      <CardHeader>
+                        <div className="flex items-center gap-4">
+                          <div className="h-10 w-10 bg-green-500/10 rounded-lg flex items-center justify-center">
+                            <CheckCircle2 className="h-5 w-5 text-green-600" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-base">Verified</CardTitle>
+                            <CardDescription>Account Status</CardDescription>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-lg font-bold text-zinc-900">Verified</p>
-                          <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest">Account Status</p>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="flex justify-between items-center text-sm py-2 border-b border-zinc-100 last:border-0 last:pb-0">
+                          <span className="text-zinc-500">Member Since</span>
+                          <span className="font-medium text-zinc-900">Oct 14, 2024</span>
                         </div>
-                      </div>
-                      <div className="space-y-4">
-                        <div className="p-4 rounded-2xl bg-white/30 border border-white/20">
-                          <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Member Since</p>
-                          <p className="text-sm font-bold text-zinc-900">October 14, 2024</p>
+                         <div className="flex justify-between items-center text-sm py-2 border-b border-zinc-100 last:border-0 last:pb-0">
+                          <span className="text-zinc-500">Last Audit</span>
+                          <span className="font-medium text-zinc-900">3 days ago</span>
                         </div>
-                        <div className="p-4 rounded-2xl bg-white/30 border border-white/20">
-                          <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Last Profile Audit</p>
-                          <p className="text-sm font-bold text-zinc-900">3 days ago</p>
-                        </div>
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
 
-                    {/* Guidance Widget */}
-                    <div className="bg-[#F5F0E8] border border-[#E8E0D5] rounded-[2.5rem] p-8 shadow-lg">
-                      <div className="flex items-center gap-4 mb-6">
-                        <div className="h-12 w-12 bg-amber-500/10 rounded-[1.25rem] flex items-center justify-center">
-                          <Zap className="h-6 w-6 text-amber-600" />
+                     {/* Tips Widget */}
+                    <Card className="bg-amber-50/50 border-amber-100">
+                      <CardHeader>
+                        <div className="flex items-center gap-4">
+                          <div className="h-10 w-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                            <Zap className="h-5 w-5 text-amber-600" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-base text-amber-900">Quick Tips</CardTitle>
+                            <CardDescription className="text-amber-700">Profile Guidance</CardDescription>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-lg font-bold text-zinc-900">Tips</p>
-                          <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest">Guidance</p>
-                        </div>
-                      </div>
-                      <div className="space-y-4 text-[11px] leading-relaxed text-zinc-600 font-medium">
-                        <p className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10">
-                          💡 Your <span className="text-zinc-900 font-bold">Identity</span> section is used in automated stamp generation. Ensure your name matches your license exactly.
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <p className="text-xs text-amber-800 leading-relaxed">
+                          💡 Your <strong>Identity</strong> section is used in automated stamp generation. Ensure your name matches your license exactly.
                         </p>
-                        <p className="p-4 rounded-2xl bg-white/20 border border-white/20">
-                          🛠 Use the <span className="text-zinc-900 font-bold">Context</span> settings to align your workspace with your physical office location.
+                        <p className="text-xs text-amber-800 leading-relaxed">
+                          🛠 Use the <strong>Preferences</strong> settings to align your workspace with your physical office location.
                         </p>
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 </div>
               )}
 
               {activeTab === "business" && (
-                <div className="grid grid-cols-12 gap-8 items-start">
-                  {/* MAIN COLUMN - STACKED SECTIONS */}
-                  <div className="col-span-12 lg:col-span-8 space-y-6">
-                    {/* Section 1: Core Branding */}
-                    <div className="bg-[#F5F0E8] border border-[#E8E0D5] rounded-[2.5rem] p-8 shadow-lg relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-bl-full -mr-8 -mt-8 transition-all duration-500 group-hover:scale-110" />
-                      <div className="flex items-center justify-between mb-8 pb-4 border-b border-black/5">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 bg-indigo-500/10 rounded-2xl flex items-center justify-center">
-                            <Building2 className="h-5 w-5 text-indigo-600" />
-                          </div>
-                          <div>
-                            <h3 className="text-xl font-bold text-zinc-900 leading-none">Corporate Identity</h3>
-                            <p className="text-[10px] font-medium text-zinc-500 mt-1 uppercase tracking-widest">Brand Management</p>
-                          </div>
+                <div className="grid grid-cols-1 gap-6">
+                  {/* Corporate Identity */}
+                  <Card>
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 bg-indigo-500/10 rounded-lg flex items-center justify-center">
+                          <Building2 className="h-5 w-5 text-indigo-600" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">Corporate Identity</CardTitle>
+                          <CardDescription>Brand Management</CardDescription>
                         </div>
                       </div>
-                      <div className="flex items-center gap-10">
-                        <div className="w-36 space-y-3 shrink-0">
-                          <div className="w-full aspect-square bg-white/40 border-2 border-dashed border-white rounded-4xl flex flex-col items-center justify-center relative group cursor-pointer hover:bg-white/60 transition-all shadow-inner">
-                             <Image src="/logo.png" alt="Company Logo" width={100} height={40} className="h-12 w-auto opacity-70 group-hover:opacity-100 transition-all" />
-                             <div className="absolute inset-0 bg-white/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-[10px] font-bold text-zinc-900 uppercase">
-                                Update
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-col sm:flex-row items-start gap-8">
+                        <div className="shrink-0 space-y-3">
+                          <div className="w-32 h-32 bg-zinc-50 border-2 border-dashed border-zinc-200 rounded-lg flex flex-col items-center justify-center relative group cursor-pointer hover:bg-zinc-100 transition-colors">
+                            <Image src={contractor?.logo_url || "/logo.png"} alt="Logo" width={100} height={40} className="h-8 w-auto opacity-50 group-hover:opacity-100 transition-opacity" />
+                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span className="text-xs font-semibold text-zinc-600 bg-white/80 px-2 py-1 rounded shadow-sm">Update</span>
                              </div>
                           </div>
                         </div>
-                        <div className="flex-1 space-y-4">
-                          <div className="space-y-2">
-                             <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] ml-1">Legal Company Name</Label>
-                             <Input defaultValue="Solar Solutions Inc." className="h-12 rounded-2xl border-white/40 bg-white/40 focus:bg-white text-sm" />
+                        <div className="flex-1 w-full grid gap-4">
+                          <div className="grid gap-2">
+                             <Label>Legal Company Name</Label>
+                             <Input defaultValue={contractor?.company_name || ""} key={contractor?.company_name} />
                           </div>
-                          <div className="space-y-2">
-                             <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] ml-1">Tax Identification Number</Label>
-                             <Input defaultValue="XX-XXXX931" className="h-12 rounded-2xl border-white/40 bg-white/40 focus:bg-white text-sm" />
+                          <div className="grid gap-2">
+                             <Label>Tax ID</Label>
+                             <Input defaultValue="XX-XXXX931" />
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </CardContent>
+                  </Card>
 
-                    {/* Section 2: Physical Presence */}
-                    <div className="bg-[#F5F0E8] border border-[#E8E0D5] rounded-[2.5rem] p-8 shadow-lg relative overflow-hidden group">
-                      <div className="absolute bottom-0 left-0 w-32 h-32 bg-rose-500/10 rounded-tr-full -ml-8 -mb-8 transition-all duration-500 group-hover:scale-110" />
-                      <div className="flex items-center justify-between mb-8 pb-4 border-b border-black/5">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 bg-rose-500/10 rounded-2xl flex items-center justify-center">
-                            <MapPin className="h-5 w-5 text-rose-600" />
-                          </div>
-                          <div>
-                            <h3 className="text-xl font-bold text-zinc-900 leading-none">HQ Location</h3>
-                            <p className="text-[10px] font-medium text-zinc-500 mt-1 uppercase tracking-widest">Registered Address</p>
-                          </div>
+                  {/* HQ Location */}
+                  <Card>
+                    <CardHeader className="pb-4">
+                       <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 bg-rose-500/10 rounded-lg flex items-center justify-center">
+                          <MapPin className="h-5 w-5 text-rose-600" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">HQ Location</CardTitle>
+                          <CardDescription>Registered Address</CardDescription>
                         </div>
                       </div>
-                      <div className="space-y-6">
-                        <div className="grid grid-cols-2 gap-6">
-                           <div className="space-y-2">
-                              <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] ml-1">Street Address</Label>
-                              <Input defaultValue="123 Solar Way" className="h-12 rounded-2xl border-white/40 bg-white/40 focus:bg-white text-sm" />
-                           </div>
-                           <div className="space-y-2">
-                              <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] ml-1">Suite / Floor</Label>
-                              <Input defaultValue="Building 4, Suite 201" className="h-12 rounded-2xl border-white/40 bg-white/40 focus:bg-white text-sm" />
-                           </div>
-                        </div>
-                        <div className="grid grid-cols-3 gap-6">
-                           <div className="space-y-2">
-                              <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] ml-1">City</Label>
-                              <Input defaultValue="Los Angeles" className="h-12 rounded-2xl border-white/40 bg-white/40 focus:bg-white text-sm" />
-                           </div>
-                           <div className="space-y-2">
-                              <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] ml-1">State</Label>
-                              <Input defaultValue="California" className="h-12 rounded-2xl border-white/40 bg-white/40 focus:bg-white text-sm" />
-                           </div>
-                           <div className="space-y-2">
-                              <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em] ml-1">Zip Code</Label>
-                              <Input defaultValue="90001" className="h-12 rounded-2xl border-white/40 bg-white/40 focus:bg-white text-sm" />
-                           </div>
-                        </div>
-                      </div>
-                    </div>
-
-                  </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                       <div className="grid sm:grid-cols-2 gap-4">
+                          <div className="grid gap-2">
+                             <Label>Street Address</Label>
+                             <Input defaultValue={contractor?.address || ""} key={contractor?.address} />
+                          </div>
+                          <div className="grid gap-2">
+                             <Label>Suite / Floor</Label>
+                             <Input defaultValue="Building 4, Suite 201" />
+                          </div>
+                       </div>
+                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                          <div className="grid gap-2">
+                             <Label>City</Label>
+                             <Input defaultValue="Los Angeles" />
+                          </div>
+                          <div className="grid gap-2">
+                             <Label>State</Label>
+                             <Input defaultValue="California" />
+                          </div>
+                          <div className="grid gap-2 col-span-2 sm:col-span-1">
+                             <Label>Zip Code</Label>
+                             <Input defaultValue="90001" />
+                          </div>
+                       </div>
+                    </CardContent>
+                  </Card>
                 </div>
               )}
 
               {activeTab === "licenses" && (
-                <div className="grid grid-cols-12 gap-8 items-start">
-                  {/* MAIN COLUMN - STACKED SECTIONS */}
+                <div className="grid grid-cols-12 gap-6 items-start">
                   <div className="col-span-12 lg:col-span-8 space-y-6">
-                    {/* Section 1: Verified Credentials */}
-                    <div className="bg-[#F5F0E8] border border-[#E8E0D5] rounded-[2.5rem] p-8 shadow-lg relative overflow-hidden group">
-                      <div className="absolute top-0 left-0 w-32 h-32 bg-primary/10 rounded-br-full -ml-8 -mt-8 transition-all duration-500 group-hover:scale-110" />
-                      <div className="flex items-center justify-between mb-8 pb-4 border-b border-black/5">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 bg-primary/10 rounded-2xl flex items-center justify-center">
-                            <FileBadge className="h-5 w-5 text-primary" />
-                          </div>
-                          <div>
-                            <h3 className="text-xl font-bold text-zinc-900 leading-none">Professional Credentials</h3>
-                            <p className="text-[10px] font-medium text-zinc-500 mt-1 uppercase tracking-widest">Active Licenses</p>
-                          </div>
-                        </div>
-                        <Button onClick={addLicense} className="h-10 rounded-xl px-6 bg-primary hover:bg-primary/90 text-white font-bold text-xs shadow-lg transition-all active:scale-95">
-                           <Plus className="mr-2 h-4 w-4" /> Add License
-                        </Button>
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-6">
-                        {licenses.map((license) => (
-                          <div key={license.id} className="p-6 rounded-3xl bg-white/30 border border-white/20 hover:bg-white/50 transition-all group relative overflow-hidden">
-                             <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-full -mr-8 -mt-8 transition-all duration-500 group-hover:scale-110" />
-                             <div className="flex items-center justify-between relative mb-6">
-                                <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest">{license.state}</span>
-                                <button 
-                                  onClick={() => removeLicense(license.id)}
-                                  className="text-zinc-300 hover:text-destructive transition-all p-2 opacity-0 group-hover:opacity-100"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
-                             </div>
-                             <div className="grid grid-cols-3 gap-6 relative">
-                                <div className="space-y-2">
-                                  <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">State</Label>
-                              <input defaultValue={license.state} className="h-11 border-white/40 rounded-xl text-sm bg-white/40 focus:bg-white shadow-inner pl-3"/>
-                                </div>
-                                <div className="space-y-2">
-                                  <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">License Type</Label>
-                                  <Input defaultValue={license.type} className="h-11 border-white/40 rounded-xl text-sm bg-white/40 focus:bg-white shadow-inner" />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 ml-1">License Number</Label>
-                                  <Input defaultValue={license.number} className="h-11 border-white/40 rounded-xl text-sm bg-white/40 focus:bg-white shadow-inner" />
-                                </div>
-                             </div>
-                          </div>
-                        ))}
-                        {licenses.length === 0 && (
-                           <div className="p-12 text-center border-2 border-dashed border-white/60 rounded-[2.5rem] bg-white/20">
-                              <FileBadge className="h-12 w-12 mx-auto text-zinc-300 mb-4" />
-                              <p className="text-sm font-bold text-zinc-900">No Credentials Added</p>
-                              <p className="text-[10px] font-medium text-zinc-500 mt-1 italic">Add your PE licenses to enable automated signatures.</p>
+                    <Card>
+                      <CardHeader className="pb-4">
+                         <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                                <FileBadge className="h-5 w-5 text-primary" />
+                              </div>
+                              <div>
+                                <CardTitle className="text-lg">Professional Credentials</CardTitle>
+                                <CardDescription>Active Licenses</CardDescription>
+                              </div>
                            </div>
-                        )}
-                      </div>
-                    </div>
+                           <Button onClick={addLicense} size="sm" variant="outline">
+                             <Plus className="mr-2 h-4 w-4" /> Add License
+                           </Button>
+                         </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {licenses.map((license) => (
+                           <div key={license.id} className="p-4 rounded-lg border border-zinc-200 bg-white hover:border-zinc-300 transition-colors group">
+                              <div className="flex items-start justify-between mb-4">
+                                 <Badge variant="secondary" className="font-semibold text-primary bg-primary/10 hover:bg-primary/20">{license.state || "New License"}</Badge>
+                                 <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-zinc-400 hover:text-red-600 -mr-2"
+                                    onClick={() => removeLicense(license.id)}
+                                 >
+                                    <Trash2 className="h-4 w-4" />
+                                 </Button>
+                              </div>
+                              <div className="grid sm:grid-cols-3 gap-4">
+                                 <div className="grid gap-2">
+                                    <Label className="text-xs text-zinc-500">State</Label>
+                                    <Input defaultValue={license.state} className="h-9" />
+                                 </div>
+                                 <div className="grid gap-2">
+                                    <Label className="text-xs text-zinc-500">License Type</Label>
+                                    <Input defaultValue={license.type} className="h-9" />
+                                 </div>
+                                 <div className="grid gap-2">
+                                    <Label className="text-xs text-zinc-500">License Number</Label>
+                                    <Input defaultValue={license.number} className="h-9" />
+                                 </div>
+                              </div>
+                           </div>
+                        ))}
+                         {licenses.length === 0 && (
+                            <div className="p-12 text-center border-2 border-dashed border-zinc-200 rounded-xl bg-zinc-50/50">
+                               <FileBadge className="h-10 w-10 mx-auto text-zinc-300 mb-3" />
+                               <p className="text-sm font-medium text-zinc-900">No Credentials Added</p>
+                               <p className="text-xs text-zinc-500 mt-1">Add your PE licenses to enable automated signatures.</p>
+                            </div>
+                         )}
+                      </CardContent>
+                    </Card>
 
-                    {/* Section 2: Document Vault */}
-                    <div className="bg-[#F5F0E8] border border-[#E8E0D5] rounded-[2.5rem] p-8 shadow-lg relative overflow-hidden group">
-                      <div className="absolute bottom-0 right-0 w-32 h-32 bg-blue-500/10 rounded-tl-full -mr-8 -mb-8 transition-all duration-500 group-hover:scale-110" />
-                      <div className="flex items-center justify-between mb-8 pb-4 border-b border-black/5">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 bg-blue-500/10 rounded-2xl flex items-center justify-center">
+                     <Card>
+                      <CardHeader className="pb-4">
+                         <div className="flex items-center gap-4">
+                          <div className="h-10 w-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
                             <FolderCheck className="h-5 w-5 text-blue-600" />
                           </div>
                           <div>
-                            <h3 className="text-xl font-bold text-zinc-900 leading-none">Document Vault</h3>
-                            <p className="text-[10px] font-medium text-zinc-500 mt-1 uppercase tracking-widest">Signed Records</p>
+                            <CardTitle className="text-lg">Document Vault</CardTitle>
+                            <CardDescription>Signed Records</CardDescription>
                           </div>
                         </div>
-                      </div>
-                      <div className="space-y-4">
+                      </CardHeader>
+                      <CardContent className="space-y-2">
                          {[1, 2].map((_, i) => (
-                           <div key={i} className="p-4 rounded-3xl bg-indigo-500/5 border border-indigo-500/10 flex items-center justify-between">
-                              <div className="flex items-center gap-4">
-                                 <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                                    <FileCheck className="h-5 w-5 text-indigo-500" />
+                           <div key={i} className="flex items-center justify-between p-3 rounded-lg border border-zinc-100 bg-zinc-50/50 hover:bg-zinc-50 transition-colors">
+                              <div className="flex items-center gap-3">
+                                 <div className="h-8 w-8 bg-white rounded flex items-center justify-center border border-zinc-200 shadow-sm">
+                                    <FileCheck className="h-4 w-4 text-primary" />
                                  </div>
                                  <div>
-                                    <p className="text-sm font-bold text-zinc-900 leading-none">Engineering_License_CA.pdf</p>
-                                    <p className="text-[10px] font-medium text-zinc-500 mt-1 uppercase tracking-widest">Uploaded 12/10/24</p>
+                                    <p className="text-sm font-medium text-zinc-900">Engineering_License_CA.pdf</p>
+                                    <p className="text-[10px] text-zinc-500">Uploaded 12/10/24</p>
                                  </div>
                               </div>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-zinc-400 hover:text-primary"><Download className="h-4 w-4" /></Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-primary">
+                                 <Download className="h-4 w-4" />
+                              </Button>
                            </div>
                          ))}
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
                   </div>
                 </div>
               )}
 
               {activeTab === "security" && (
-                <div className="grid grid-cols-12 gap-8 items-start">
-                  {/* MAIN COLUMN - STACKED SECTIONS */}
-                  <div className="col-span-12 lg:col-span-8 space-y-6">
-                    {/* Section 1: Authentication */}
-                    <div className="bg-[#F5F0E8] border border-[#E8E0D5] rounded-[2.5rem] p-8 shadow-lg relative overflow-hidden group">
-                      <div className="absolute top-0 left-0 w-32 h-32 bg-green-500/10 rounded-br-full -ml-8 -mt-8 transition-all duration-500 group-hover:scale-110" />
-                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-black/5">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 bg-green-500/10 rounded-2xl flex items-center justify-center">
+                <div className="grid gap-6">
+                   <Card>
+                      <CardHeader className="pb-4">
+                         <div className="flex items-center gap-4">
+                          <div className="h-10 w-10 bg-green-500/10 rounded-lg flex items-center justify-center">
                             <Lock className="h-5 w-5 text-green-600" />
                           </div>
                           <div>
-                            <h3 className="text-xl font-bold text-zinc-900 leading-none">Authentication</h3>
-                            <p className="text-[10px] font-medium text-zinc-500 mt-1 uppercase tracking-widest">Gatekeeper Settings</p>
+                            <CardTitle className="text-lg">Authentication</CardTitle>
+                            <CardDescription>Gatekeeper Settings</CardDescription>
                           </div>
                         </div>
-                      </div>
-                      
-                      <div className="space-y-6">
-                         <div className="flex items-center gap-6 p-6 rounded-3xl bg-green-500/5 border border-green-500/10">
-                            <div className="h-14 w-14 bg-white rounded-2xl flex items-center justify-center shadow-lg">
-                               <Check className="h-8 w-8 text-green-600" />
-                            </div>
-                            <div className="flex-1">
-                               <p className="text-sm font-bold text-zinc-900">Multi-Factor Auth Active</p>
-                               <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-widest mt-1">Primary: SMS Verification</p>
-                            </div>
-                            <Button variant="ghost" className="rounded-xl px-6 text-xs font-bold text-green-600 hover:bg-green-500/10">Manage</Button>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-lg bg-green-50 border border-green-100 gap-4">
+                             <div className="flex items-center gap-4">
+                                <div className="h-10 w-10 bg-white rounded-full flex items-center justify-center border border-green-200 shadow-sm">
+                                   <Check className="h-5 w-5 text-green-600" />
+                                </div>
+                                <div>
+                                   <p className="text-sm font-semibold text-green-900">Multi-Factor Auth Active</p>
+                                   <p className="text-xs text-green-700">Primary: SMS Verification</p>
+                                </div>
+                             </div>
+                             <Button size="sm" className="bg-white text-green-700 hover:bg-green-50 border border-green-200 shadow-sm">Manage</Button>
                          </div>
-                         
-                         <div className="grid grid-cols-1 gap-4 pt-4">
-                            <div className="space-y-2">
-                               <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Current Secret Key</Label>
-                               <Input type="password" placeholder="••••••••••••" className="h-12 rounded-2xl border-white/40 bg-white/40 focus:bg-white" />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                               <div className="space-y-2">
-                                  <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">New Passcode</Label>
-                                  <Input type="password" placeholder="Min 12 Chars" className="h-12 rounded-2xl border-white/40 bg-white/40 focus:bg-white" />
-                               </div>
-                               <div className="space-y-2">
-                                  <Label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest ml-1">Verify New</Label>
-                                  <Input type="password" placeholder="Redundant Check" className="h-12 rounded-2xl border-white/40 bg-white/40 focus:bg-white" />
-                               </div>
-                            </div>
-                         </div>
-                      </div>
-                    </div>
 
-                    {/* Section 2: Session Activity */}
-                    <div className="bg-[#F5F0E8] border border-[#E8E0D5] rounded-[2.5rem] p-8 shadow-lg relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-bl-full -mr-8 -mt-8 transition-all duration-500 group-hover:scale-110" />
-                       <div className="flex items-center justify-between mb-8 pb-4 border-b border-black/5">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 bg-indigo-500/10 rounded-2xl flex items-center justify-center">
+                         <div className="grid gap-4 max-w-xl">
+                            <div className="grid gap-2">
+                               <Label>Current Password</Label>
+                               <Input type="password" placeholder="••••••••••••" />
+                            </div>
+                            <div className="grid sm:grid-cols-2 gap-4">
+                               <div className="grid gap-2">
+                                  <Label>New Password</Label>
+                                  <Input type="password" placeholder="Min 12 chars" />
+                               </div>
+                               <div className="grid gap-2">
+                                  <Label>Confirm Password</Label>
+                                  <Input type="password" placeholder="Confirm new password" />
+                               </div>
+                            </div>
+                            <div>
+                               <Button variant="outline">Update Password</Button>
+                            </div>
+                         </div>
+                      </CardContent>
+                   </Card>
+
+                   <Card>
+                      <CardHeader className="pb-4">
+                         <div className="flex items-center gap-4">
+                           <div className="h-10 w-10 bg-indigo-500/10 rounded-lg flex items-center justify-center">
                             <Monitor className="h-5 w-5 text-indigo-600" />
                           </div>
                           <div>
-                            <h3 className="text-xl font-bold text-zinc-900 leading-none">Activity Stream</h3>
-                            <p className="text-[10px] font-medium text-zinc-500 mt-1 uppercase tracking-widest">Entry History</p>
+                            <CardTitle className="text-lg">Session Activity</CardTitle>
+                            <CardDescription>Active sessions</CardDescription>
                           </div>
                         </div>
-                      </div>
-                      <div className="space-y-3">
-                         {[1, 2, 3].map((_, i) => (
-                           <div key={i} className="p-4 rounded-2xl bg-white/20 border border-white/10 flex items-center justify-between group">
-                              <div className="flex items-center gap-4">
-                                 <div className={`h-2 w-2 rounded-full ${i === 0 ? 'bg-green-500 animate-pulse' : 'bg-zinc-300'}`} />
+                      </CardHeader>
+                      <CardContent>
+                         <div className="space-y-1">
+                          {[1, 2, 3].map((_, i) => (
+                            <div key={i} className="flex items-center justify-between p-3 rounded-lg hover:bg-zinc-50 transition-colors group">
+                               <div className="flex items-center gap-4">
+                                 <div className={`h-2.5 w-2.5 rounded-full ring-4 ring-white ${i === 0 ? 'bg-green-500' : 'bg-zinc-300'}`} />
                                  <div>
-                                    <p className="text-xs font-bold text-zinc-900">Chrome on MacOS Sonoma</p>
-                                    <p className="text-[9px] font-medium text-zinc-500 uppercase tracking-widest">Los Angeles, US • {i === 0 ? 'Active Now' : '2 hours ago'}</p>
+                                    <p className="text-sm font-medium text-zinc-900">Chrome on MacOS</p>
+                                    <p className="text-xs text-zinc-500">Los Angeles, US • {i === 0 ? 'Active Now' : '2 hours ago'}</p>
                                  </div>
-                              </div>
-                              {i !== 0 && <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 h-8 px-3 text-[10px] font-bold text-destructive hover:bg-destructive/10">Revoke</Button>}
-                           </div>
-                         ))}
-                      </div>
-                    </div>
-                  </div>
+                               </div>
+                               {i !== 0 && (
+                                 <Button variant="ghost" size="sm" className="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 opacity-0 group-hover:opacity-100">
+                                   Revoke
+                                 </Button>
+                               )}
+                            </div>
+                          ))}
+                         </div>
+                      </CardContent>
+                   </Card>
                 </div>
               )}
             </motion.div>
@@ -712,5 +652,6 @@ export default function ProfilePage() {
         </div>
       </main>
     </div>
+    </AuthGuard>
   );
 }

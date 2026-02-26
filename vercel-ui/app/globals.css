@@ -1,77 +1,43 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
-
 :root {
-  --background: oklch(93.496% 0.00734 80.578);
-  --foreground: oklch(0.25 0.04 45);
-  --card: oklch(0.96 0.01 75);
-  --card-foreground: oklch(0.25 0.04 45);
-  --popover: oklch(0.96 0.01 75 / 0.9);
-  --popover-foreground: oklch(0.25 0.04 45);
-  --primary: oklch(68.351% 0.19585 34.956);
-  --primary-foreground: oklch(0.98 0.01 75);
-  --secondary: oklch(0.78 0.16 65);
-  --secondary-foreground: oklch(0.25 0.04 45);
-  --muted: oklch(0.85 0.01 75);
-  --muted-foreground: oklch(0.45 0.04 45);
-  --accent: oklch(0.78 0.16 65 / 0.1);
-  --accent-foreground: oklch(68.351% 0.19585 34.956);
-  --destructive: oklch(0.55 0.22 25);
+  color-scheme: light;
+  --background: rgb(255, 255, 255); /* #F9FAFB */
+  --foreground: oklch(0.21 0.006 285.885); /* #111827 */
+  --card: #ffffff;
+  --card-foreground: oklch(0.21 0.006 285.885); /* #111827 */
+  --popover: oklch(1 0 0); /* #FFFFFF */
+  --popover-foreground: oklch(0.21 0.006 285.885); /* #111827 */
+  --primary: #5367e9;
+  --primary-foreground: oklch(1 0 0); /* #FFFFFF */
+  --secondary: oklch(0.28 0.07 263); /* #1E293B Deep Slate */
+  --secondary-foreground: oklch(0.98 0 0); /* #F9FAFB */
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.55 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.21 0.006 285.885);
+  --destructive: oklch(0.57 0.21 27);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.75 0.14 35 / 0.15);
-  --input: oklch(0.96 0.01 75);
-  --ring: oklch(68.351% 0.19585 34.956);
+  --border: oklch(0.92 0 0);
+  --input: oklch(0.92 0 0);
+  --ring: #5367e9;
   --radius: 0.75rem;
-  --sidebar: oklch(0.96 0.01 75);
-  --sidebar-foreground: oklch(0.25 0.04 45);
-  --sidebar-primary: oklch(68.351% 0.19585 34.956);
-  --sidebar-primary-foreground: oklch(0.98 0.01 75);
-  --sidebar-accent: oklch(0.78 0.16 65 / 0.1);
-  --sidebar-accent-foreground: oklch(68.351% 0.19585 34.956);
-  --sidebar-border: oklch(0.85 0.01 75);
-  --sidebar-ring: oklch(68.351% 0.19585 34.956);
-}
-
-.dark {
-  --background: oklch(30% 0.01 240);
-  --foreground: oklch(1 0 0);
-  --card: oklch(35% 0.015 240);
-  --card-foreground: oklch(1 0 0);
-  --popover: oklch(35% 0.015 240);
-  --popover-foreground: oklch(1 0 0);
-  --primary: oklch(0.85 0.15 75);
-  --primary-foreground: oklch(0.15 0.02 75);
-  --secondary: oklch(0.35 0.015 240);
-  --secondary-foreground: oklch(1 0 0);
-  --muted: oklch(0.35 0.012 240);
-  --muted-foreground: oklch(0.9 0 0);
-  --accent: oklch(0.75 0.12 75);
-  --accent-foreground: oklch(0.15 0.02 75);
-  --destructive: oklch(0.6 0.2 25);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.45 0.02 240 / 0.4);
-  --input: oklch(0.35 0.012 240);
-  --ring: oklch(0.82 0.15 75);
-  --chart-1: oklch(0.7 0.2 41.116);
-  --chart-2: oklch(0.65 0.15 184.704);
-  --chart-3: oklch(0.55 0.1 227.392);
-  --chart-4: oklch(0.75 0.18 84.429);
-  --chart-5: oklch(0.7 0.17 70.08);
-  --sidebar: oklch(0.22 0.012 240);
-  --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.82 0.15 75);
-  --sidebar-primary-foreground: oklch(0.15 0.02 75);
-  --sidebar-accent: oklch(0.28 0.015 240);
-  --sidebar-accent-foreground: oklch(0.9 0.01 240);
-  --sidebar-border: oklch(0.35 0.02 240);
-  --sidebar-ring: oklch(0.82 0.15 75);
+  --sidebar: #ffffff;
+  --sidebar-foreground: oklch(0.21 0.006 285.885);
+  --sidebar-primary: #5367e9;
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.95 0 0); /* Subtle Greyush */
+  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
+  --sidebar-border: oklch(0.92 0 0);
+  --sidebar-ring: #5367e9;
+  --success: oklch(0.65 0.18 150); /* #10B981 Emerald */
 }
 
 @theme inline {
-  --font-sans: var(--font-poppins), "Poppins", ui-sans-serif, system-ui,
-    sans-serif;
+  --variant-dark: null;
+  --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+
   --font-mono: "Geist Mono", "Geist Mono Fallback";
   --color-background: var(--background);
   --color-foreground: var(--foreground);

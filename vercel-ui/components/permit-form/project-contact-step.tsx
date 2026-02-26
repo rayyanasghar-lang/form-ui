@@ -1,429 +1,326 @@
-"use client"
+"use client";
 
-import FormCard from "../form-card"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { cn } from "@/lib/utils"
-import { Zap, NotebookIcon, Building2, User, Mail, Phone, ClipboardList, MapPin, Briefcase, CheckSquare, Loader2, CloudSun, Database, Search, CheckCircle2, Activity } from "lucide-react"
-import { Service } from "@/app/actions/fetch-services"
-import AddressAutocomplete from "../address-autocomplete"
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import {
+  ClipboardList,
+  Briefcase,
+  MapPin,
+  Home,
+  Building2,
+  Zap,
+  Sun,
+  Layers,
+  Car,
+} from "lucide-react";
+import AddressAutocomplete from "../address-autocomplete";
+import SolarDocument from "../layout/solar-document";
+
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface ProjectContactStepProps {
-    formData: any
-// ... (rest of props)
-
-    updateField: (field: string, value: any) => void
-    errors: Record<string, string>
-    submissionMode: "quick" | "provide details"
-    setSubmissionMode: (mode: "quick" | "provide details") => void
-    toggleService: (serviceName: string) => void
-    availableServices: Service[]
-    servicesLoading: boolean
-    scrapingStatus?: "idle" | "scraping" | "completed" | "error"
-    weatherStations?: any[]
-    weatherLoading?: boolean
+  formData: any;
+  updateField: (field: string, value: any) => void;
+  errors: Record<string, string>;
+  onSubmit?: () => void;
+  isSubmitting?: boolean;
 }
 
+/* ────────────────────────── Card data ────────────────────────── */
+
+const SYSTEM_TYPE_OPTIONS = [
+  {
+    value: "roof_mount",
+    label: "Roof Mount",
+    icon: Home,
+  },
+  {
+    value: "ground_mount",
+    label: "Ground Mount",
+    icon: Sun,
+  },
+  {
+    value: "car_pool",
+    label: "Car Port",
+    icon: Car,
+  },
+  {
+    value: "both",
+    label: "Roof & Ground",
+    icon: Layers,
+  },
+];
+
+const PROJECT_TYPE_OPTIONS = [
+  {
+    value: "residential",
+    label: "Residential",
+    icon: Home,
+  },
+  {
+    value: "commercial",
+    label: "Commercial",
+    icon: Building2,
+  },
+];
+
+/* ─────────────────────── Card Selector ─────────────────────── */
+
+interface CardOption {
+  value: string;
+  label: string;
+  description?: string;
+  icon: React.ElementType;
+}
+
+function CardSelector({
+  options,
+  selected,
+  onSelect,
+  cols = 2,
+}: {
+  options: CardOption[];
+  selected: string;
+  onSelect: (v: string) => void;
+  cols?: 2 | 4;
+}) {
+  return (
+    <div
+      className={cn(
+        "grid gap-3",
+        cols === 4 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2",
+      )}
+    >
+      {options.map(({ value, label, icon: Icon }) => {
+        const active = selected === value;
+        return (
+          <button
+            key={value}
+            type="button"
+            onClick={() => onSelect(value)}
+            className={cn(
+              "relative flex flex-col items-center gap-2 rounded-2xl border-2 px-3 py-4 text-center transition-all duration-200",
+              "hover:border-primary/60 hover:bg-primary/5 hover:shadow-md",
+              "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20",
+              active
+                ? "border-primary bg-primary/8 shadow-lg shadow-primary/10 scale-[1.02]"
+                : "border-zinc-200 bg-zinc-50/40",
+            )}
+          >
+            {/* Checkmark badge */}
+            {active && (
+              <span className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                <svg
+                  className="h-3 w-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={3}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </span>
+            )}
+
+            <span
+              className={cn(
+                "flex h-10 w-10 items-center justify-center rounded-xl transition-colors",
+                active
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-zinc-100 text-zinc-500",
+              )}
+            >
+              <Icon className="h-5 w-5" />
+            </span>
+
+            <span className="text-sm font-bold leading-tight text-foreground">
+              {label}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ───────────────────────── Main Step ───────────────────────── */
+
 export default function ProjectContactStep({
-    formData,
-    updateField,
-    errors,
-    submissionMode,
-    setSubmissionMode,
-    toggleService,
-    availableServices,
-    servicesLoading,
-    scrapingStatus = "idle",
-    weatherStations = [],
-    weatherLoading = false,
+  formData,
+  updateField,
+  errors,
+  onSubmit,
+  isSubmitting = false,
 }: ProjectContactStepProps) {
-    return (
-        <FormCard title="Project & Contact Information">
-            <div className="space-y-6">
-                {/* Project Information */}
-                <div>
-                    <h3 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-                        {/* <ClipboardList className="w-5 h-5 text-primary" /> */}
-                        Project Information
-                    </h3>
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="projectName" className="flex items-center gap-2">
-                                <ClipboardList className="w-4 h-4 text-muted-foreground" />
-                                Project Name
-                            </Label>
-                            <Input
-                                id="projectName"
-                                placeholder="Enter project name"
-                                value={formData.projectName}
-                                onChange={(e) => updateField("projectName", e.target.value)}
-                            />
-                            {errors.projectName && <p className="text-sm text-destructive">{errors.projectName}</p>}
-                        </div>
+  const lat = formData.latitude ? parseFloat(formData.latitude) : null;
+  const lng = formData.longitude ? parseFloat(formData.longitude) : null;
 
-                        <div className="space-y-2">
-                            <Label htmlFor="projectAddress" className="flex items-center gap-2">
-                                <MapPin className="w-4 h-4 text-muted-foreground" />
-                                Project Address
-                            </Label>
-                            <AddressAutocomplete
-                                value={formData.projectAddress}
-                                onChange={(value) => updateField("projectAddress", value)}
-                                className="bg-muted/50"
-                            />
-                            {errors.projectAddress && <p className="text-sm text-destructive">{errors.projectAddress}</p>}
-                            
-                            {/* Scraped Data display */}
-                            {/* Scraped Data display (Separate Boxes) */}
-                <Separator />
-                
-                {/* Property Intelligence (Scraped & Weather Data) */}
-                <div className="space-y-6 mt-6">
-                    {/* Live Analysis Status Bar (Always show while anything is loading) */}
-                    {(scrapingStatus === "scraping" || weatherLoading) && (
-                        <div className="p-4 rounded-xl border border-primary/10 bg-primary/5 animate-in fade-in slide-in-from-bottom-2">
-                            <div className="flex items-center justify-between mb-4">
-                                <h4 className="text-sm font-semibold text-primary flex items-center gap-2">
-                                    <Activity className="h-4 w-4 animate-pulse" />
-                                    Live Property Analysis
-                                </h4>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-[10px] text-muted-foreground animate-pulse font-medium uppercase tracking-wider">
-                                        {scrapingStatus === "scraping" && weatherLoading ? "Dual-Stream Syncing..." : "Syncing Data Streams..."}
-                                    </span>
-                                    <Loader2 className="h-3 w-3 animate-spin text-primary" />
-                                </div>
-                            </div>
+  const contractorInfo = {
+    companyName: formData.companyName || "",
+    companyLogo: formData.companyLogo || "",
+    contactName: formData.contactName || "",
+    email: formData.email || "",
+    phone: formData.phone || "",
+    address: formData.companyAddress || "",
+    licenseNo: formData.licenseNo || "",
+    hicNo: formData.hicNo || "",
+  };
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Weather Analysis Status */}
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-2 text-xs font-medium text-foreground">
-                                        {weatherLoading ? <Search className="h-3 w-3 text-primary animate-pulse" /> : <CheckCircle2 className="h-3 w-3 text-green-500" />}
-                                        Nearby Weather (NWS)
-                                    </div>
-                                    <div className="pl-5">
-                                        {weatherStations.length > 0 ? (
-                                            <div className="flex flex-wrap gap-1 items-center">
-                                                {weatherStations.slice(0, 3).map(s => (
-                                                    <Badge key={s.id} variant="secondary" className={cn("text-[9px] h-4 px-1.5 font-medium bg-background/50", weatherLoading && "animate-pulse")}>
-                                                        {s.id}
-                                                    </Badge>
-                                                ))}
-                                                {weatherStations.length > 3 && <span className="text-[9px] text-muted-foreground">+{weatherStations.length - 3}</span>}
-                                                {weatherLoading && <Loader2 className="h-2.5 w-2.5 animate-spin text-primary/40 ml-1" />}
-                                            </div>
-                                        ) : weatherLoading ? (
-                                            <p className="text-[10px] text-muted-foreground italic">Scanning frequency bands...</p>
-                                        ) : (
-                                            <p className="text-[10px] text-muted-foreground italic">Syncing stations...</p>
-                                        )}
-                                    </div>
-                                </div>
+  const projectInfo = {
+    customerName: formData.projectName || "",
+    address: formData.projectAddress || "",
+    systemSize: formData.systemSize || "",
+    acSystemSize: formData.acSystemSize || "",
+    systemType: formData.systemType || "",
+    parcelNumber: formData.parcelNumber || "",
+    utilityNo: formData.utilityNo || "",
+    projectType: formData.projectType || "",
+  };
 
-                                {/* Scraper Analysis Status */}
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-2 text-xs font-medium text-foreground">
-                                        {scrapingStatus === "scraping" ? <Database className="h-3 w-3 text-primary animate-spin" /> : <CheckCircle2 className="h-3 w-3 text-green-500" />}
-                                        Jurisdiction Records
-                                    </div>
-                                    <div className="pl-5 flex flex-col gap-1.5">
-                                        {[
-                                            { name: "Regrid", key: "regrid" },
-                                            { name: "ASCE 7-16", key: "asce716" },
-                                            { name: "ASCE 7-22", key: "asce" },
-                                            { name: "Zillow Data", key: "zillow" }
-                                        ].map(source => {
-                                            const isLoaded = !!formData.sources?.[source.key];
-                                            return (
-                                                <div key={source.key} className="flex items-center justify-between text-[10px]">
-                                                    <span className={cn("font-medium", isLoaded ? "text-green-600" : "text-muted-foreground")}>
-                                                        {source.name}
-                                                    </span>
-                                                    <div className="flex items-center gap-1.5">
-                                                        <span className={cn("italic", isLoaded ? "text-green-600/70" : "text-muted-foreground/60")}>
-                                                            {isLoaded ? "Synchronized" : "Connecting..."}
-                                                        </span>
-                                                        {isLoaded ? (
-                                                            <CheckCircle2 className="h-2.5 w-2.5 text-green-500" />
-                                                        ) : (
-                                                            <Loader2 className="h-2.5 w-2.5 animate-spin text-primary/40" />
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+  const coordinates = { lat, lng };
 
-                    {/* Report Sections (Pop in as data arrives) */}
-                    {(Object.keys(formData.sources || {}).length > 0 || weatherStations.length > 0) && (
-                        <div className="space-y-4 animate-in fade-in duration-500">
-                            <div className="flex items-center justify-between border-b pb-2 mb-2">
-                                <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
-                                    <CheckSquare className="h-4 w-4 text-green-500" />
-                                    Property Intelligence Report
-                                </h4>
-                                {(!weatherLoading && scrapingStatus !== "scraping") && (
-                                    <Badge variant="outline" className="text-[10px] bg-green-500/5 text-green-600 border-green-500/20 px-2 py-0 animate-in zoom-in-50">VERIFIED</Badge>
-                                )}
-                            </div>
+  return (
+    <div className="relative flex items-center justify-center w-full min-h-[950px] py-12 overflow-visible">
+      {/* Background Layer */}
+      <div
+        className="absolute top-1/2 left-1/2 z-0 scale-[1.1] transition-all duration-700 pointer-events-none opacity-100 hidden lg:block"
+        style={{
+          width: "850px",
+          transform: "translate(-32%, -60%) rotate(3deg)",
+        }}
+      >
+        <div className="shadow-[0_40px_120px_rgba(0,0,0,0.5)] border border-zinc-200/50 rounded-sm overflow-hidden">
+          <SolarDocument
+            contractorInfo={contractorInfo}
+            projectInfo={projectInfo}
+            coordinates={coordinates}
+          />
+        </div>
+      </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                {/* Regrid Card */}
-                                {formData.sources?.regrid && (
-                                    <div className="border rounded-md bg-card/50 p-3 shadow-sm group hover:border-primary/20 transition-all animate-in zoom-in-95 fill-mode-both">
-                                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
-                                            <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20 text-[10px] uppercase font-bold tracking-wider">Regrid</Badge>
-                                        </div>
-                                        <div className="space-y-2 text-sm">
-                                            <div className="grid grid-cols-[80px_1fr]">
-                                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Owner</span>
-                                                <span className="font-medium truncate" title={formData.sources.regrid.owner}>{formData.sources.regrid.owner || "-"}</span>
-                                            </div>
-                                            <div className="grid grid-cols-[80px_1fr]">
-                                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Parcel ID</span>
-                                                <span className="font-medium truncate" title={formData.sources.regrid.parcelNumber}>{formData.sources.regrid.parcelNumber || "-"}</span>
-                                            </div>
-                                            <div className="grid grid-cols-[80px_1fr]">
-                                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Lot Size</span>
-                                                <span className="font-medium">{formData.sources.regrid.lotSize || "-"}</span>
-                                            </div>
-                                            <div className="grid grid-cols-[80px_1fr]">
-                                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Land Use</span>
-                                                <span className="font-medium truncate" title={formData.sources.regrid.landUse}>{formData.sources.regrid.landUse || "-"}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
+      {/* ── Foreground Layer: Centered Form Container ── */}
+      <div className="relative z-10 w-full max-w-xl bg-background/95 backdrop-blur-xl rounded-[2.5rem] p-8 lg:p-12 border border-zinc-200/40">
+        <div className="space-y-8">
+          <div className="text-center space-y-2">
+            <h3 className="text-3xl font-extrabold text-foreground tracking-tight">
+              Project Information
+            </h3>
+            <p className="text-muted-foreground text-sm font-medium">
+              Complete the fields below to create your permit planset.
+            </p>
+          </div>
 
-                                {/* ASCE 7-16 Card */}
-                                {formData.sources?.asce716 && (
-                                    <div className="border rounded-md bg-card/50 p-3 shadow-sm group hover:border-primary/20 transition-all animate-in zoom-in-95 fill-mode-both">
-                                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
-                                            <Badge variant="outline" className="bg-orange-500/10 text-orange-500 border-orange-500/20 text-[10px] uppercase font-bold tracking-wider">ASCE 7-16</Badge>
-                                            <span className="text-[10px] text-muted-foreground ml-auto uppercase font-medium tracking-tighter">Loads</span>
-                                        </div>
-                                        <div className="space-y-2 text-sm">
-                                            <div className="grid grid-cols-[80px_1fr]">
-                                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Wind</span>
-                                                <span className="font-medium">{formData.sources.asce716.windSpeed ? `${formData.sources.asce716.windSpeed}` : "-"}</span>
-                                            </div>
-                                            <div className="grid grid-cols-[80px_1fr]">
-                                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Snow</span>
-                                                <span className="font-medium">{formData.sources.asce716.snowLoad ? `${formData.sources.asce716.snowLoad}` : "-"}</span>
-                                            </div>
-                                            <div className="pt-2 text-[10px] text-muted-foreground italic">
-                                                Legacy structural constants.
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* ASCE 7-22 Card */}
-                                {formData.sources?.asce && (
-                                    <div className="border rounded-md bg-card/50 p-3 shadow-sm group hover:border-primary/20 transition-all animate-in zoom-in-95 fill-mode-both">
-                                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
-                                            <Badge variant="outline" className="bg-orange-600/10 text-orange-600 border-orange-600/20 text-[10px] uppercase font-bold tracking-wider">ASCE 7-22</Badge>
-                                            <span className="text-[10px] text-muted-foreground ml-auto uppercase font-medium tracking-tighter">Loads</span>
-                                        </div>
-                                        <div className="space-y-2 text-sm">
-                                            <div className="grid grid-cols-[80px_1fr]">
-                                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Wind</span>
-                                                <span className="font-medium">{formData.sources.asce.windSpeed ? `${formData.sources.asce.windSpeed}` : "-"}</span>
-                                            </div>
-                                            <div className="grid grid-cols-[80px_1fr]">
-                                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Snow</span>
-                                                <span className="font-medium">{formData.sources.asce.snowLoad ? `${formData.sources.asce.snowLoad}` : "-"}</span>
-                                            </div>
-                                            <div className="pt-2 text-[10px] text-muted-foreground italic">
-                                                Modern structural standards.
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Zillow Card */}
-                                {formData.sources?.zillow && (
-                                    <div className="border rounded-md bg-card/50 p-3 shadow-sm group hover:border-primary/20 transition-all animate-in zoom-in-95 fill-mode-both">
-                                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/50">
-                                            <Badge variant="outline" className="bg-indigo-500/10 text-indigo-500 border-indigo-500/20 text-[10px] uppercase font-bold tracking-wider">Zillow</Badge>
-                                        </div>
-                                        <div className="space-y-2 text-sm">
-                                            <div className="grid grid-cols-[80px_1fr]">
-                                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Parcel</span>
-                                                <span className="font-medium truncate">{formData.sources.zillow.parcelNumber || "-"}</span>
-                                            </div>
-                                            <div className="grid grid-cols-[80px_1fr]">
-                                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Lot Size</span>
-                                                <span className="font-medium">{formData.sources.zillow.lotSize || "-"}</span>
-                                            </div>
-                                            {formData.sources.zillow.interiorArea && (
-                                                <div className="grid grid-cols-[80px_1fr]">
-                                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Interior</span>
-                                                    <span className="font-medium truncate">{formData.sources.zillow.interiorArea}</span>
-                                                </div>
-                                            )}
-                                            {formData.sources.zillow.structureArea && (
-                                                <div className="grid grid-cols-[80px_1fr]">
-                                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Structure</span>
-                                                    <span className="font-medium truncate">{formData.sources.zillow.structureArea}</span>
-                                                </div>
-                                            )}
-                                            {formData.sources.zillow.yearBuilt && (
-                                                <div className="grid grid-cols-[80px_1fr]">
-                                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">Built</span>
-                                                    <span className="font-medium">{formData.sources.zillow.yearBuilt}</span>
-                                                </div>
-                                            )}
-                                            {formData.sources.zillow.newConstruction !== null && formData.sources.zillow.newConstruction !== undefined && (
-                                                <div className="grid grid-cols-[80px_1fr]">
-                                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">New Const</span>
-                                                    <span className="font-medium">{formData.sources.zillow.newConstruction ? "Yes" : "No"}</span>
-                                                </div>
-                                            )}
-                                            <div className="pt-2 text-[10px] text-muted-foreground italic">
-                                                Secondary cross-verification.
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Weather Stations Grid (Show as soon as any stations exist) */}
-                            {weatherStations.length > 0 && (
-                                <div className="space-y-3 pt-4 animate-in fade-in slide-in-from-top-2 duration-700">
-                                    <h5 className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
-                                        <CloudSun className="h-3 w-3" />
-                                        Nearby Observatories (NWS)
-                                    </h5>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                        {weatherStations.map((station) => (
-                                            <div key={station.id} className="border rounded-md bg-card/30 p-2.5 shadow-sm group hover:border-primary/20 transition-all hover:bg-muted/50 animate-in zoom-in-95 fill-mode-both">
-                                                <div className="flex items-center justify-between mb-1.5">
-                                                    <span className="text-[10px] font-bold text-primary">{station.id}</span>
-                                                    <span className="text-[10px] text-muted-foreground font-medium">
-                                                        {(station.distance / 1609.34).toFixed(1)}mi
-                                                    </span>
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <div className="font-medium text-[11px] leading-tight line-clamp-1 text-foreground/90" title={station.name}>
-                                                        {station.name}
-                                                    </div>
-                                                    <div className="text-[9px] text-muted-foreground flex items-center justify-between italic">
-                                                        <span>{station.timeZone.split('/').pop()?.replace('_', ' ')}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
-
-                            {/* Fallback Merged View (Hidden if sources present, keeps backward compat if needed temporarily) */}
-                            {!formData.sources && (formData.lotSize || formData.parcelNumber) && (
-                                <div className="mt-4 p-4 border rounded-md bg-muted/30 animate-in fade-in-50">
-                                    <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                                        Property Data (Merged)
-                                    </h4>
-                                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-3">
-                                        <div className="space-y-1">
-                                            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Owner</Label>
-                                            <div className="font-medium text-sm truncate">{formData.owner || "-"}</div>
-                                        </div>
-                                        {/* ... other fields ... */}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-
-
-                        <div className="space-y-2">
-                            <Label htmlFor="projectType" className="flex items-center gap-2">
-                                <Briefcase className="w-4 h-4 text-muted-foreground" />
-                                Project Type
-                            </Label>
-                            <Select value={formData.projectType} onValueChange={(v) => updateField("projectType", v)}>
-                                <SelectTrigger id="projectType">
-                                    <SelectValue placeholder="Select project type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="residential">Residential</SelectItem>
-                                    <SelectItem value="commercial">Commercial</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            {errors.projectType && <p className="text-sm text-destructive">{errors.projectType}</p>}
-                        </div>
-                    </div>
-                </div>
-
-                <Separator />
-
-                {/* Permit Services Requested */}
-                <div>
-                    <h3 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-                        <CheckSquare className="w-5 h-5 text-primary" />
-                        Permit Services Requested
-                    </h3>
-                    {servicesLoading ? (
-                        <div className="flex gap-2 flex-wrap">
-                            {[1, 2, 3].map((i) => (
-                                <div key={i} className="h-9 w-32 rounded-full bg-muted/50 animate-pulse" />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="flex flex-wrap gap-2">
-                            {availableServices.map((service) => (
-                                <Badge
-                                    key={service.id}
-                                    variant={formData.services.includes(service.name) ? "selected" : "selectable"}
-                                    onClick={() => toggleService(service.name)}
-                                    className="px-4 py-2 text-sm"
-                                >
-                                    {service.name}
-                                </Badge>
-                            ))}
-                        </div>
-                    )}
-                    {errors.services && <p className="text-sm text-destructive mt-2">{errors.services}</p>}
-                </div>
-
-                <Separator />
-
-                {/* Submission Type */}
-                <div>
-                    <h3 className="text-xl font-bold text-foreground mb-4">Submission Type</h3>
-                    <Tabs value={submissionMode} onValueChange={(v) => setSubmissionMode(v as "quick" | "provide details")} className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="quick"><Zap className="mr-2 h-4 w-4" />Quick Upload (Recommended)</TabsTrigger>
-                            <TabsTrigger value="provide details"><NotebookIcon className="mr-2 h-4 w-4" /> Provide Full Details</TabsTrigger>
-                        </TabsList>
-
-                        <TabsContent value="quick" className="mt-4">
-                            <p className="text-sm text-muted-foreground">
-                                Upload your files and we'll handle the rest. Perfect for most projects.
-                            </p>
-                        </TabsContent>
-
-                        <TabsContent value="provide details" className="mt-4">
-                            <p className="text-sm text-muted-foreground">
-                                Provide comprehensive project details for complex installations.
-                            </p>
-                        </TabsContent>
-                    </Tabs>
-                </div>
+          <div className="space-y-6">
+            {/* Project Name */}
+            <div className="space-y-2">
+              <Label
+                htmlFor="projectName"
+                className="flex items-center gap-2 text-sm font-bold ml-1"
+              >
+                <ClipboardList className="w-4 h-4 text-primary" />
+                Project Name
+              </Label>
+              <Input
+                id="projectName"
+                className="h-14 rounded-2xl border-zinc-200 bg-zinc-50/30 focus:bg-white transition-all focus:ring-4 focus:ring-primary/10 px-5 text-lg"
+                placeholder="e.g. Smith Residence Solar"
+                value={formData.projectName}
+                onChange={(e) => updateField("projectName", e.target.value)}
+              />
+              {errors.projectName && (
+                <p className="text-sm text-destructive font-semibold ml-1">
+                  {errors.projectName}
+                </p>
+              )}
             </div>
-        </FormCard>
-    )
+
+            {/* System Type — Card Grid */}
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2 text-sm font-bold ml-1">
+                <Zap className="w-4 h-4 text-primary" />
+                System Type
+              </Label>
+              <CardSelector
+                options={SYSTEM_TYPE_OPTIONS}
+                selected={formData.systemType || ""}
+                onSelect={(v) => updateField("systemType", v)}
+                cols={4}
+              />
+              {errors.systemType && (
+                <p className="text-sm text-destructive font-semibold ml-1">
+                  {errors.systemType}
+                </p>
+              )}
+            </div>
+
+            {/* Project Type — Card Grid */}
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2 text-sm font-bold ml-1">
+                <Briefcase className="w-4 h-4 text-primary" />
+                Project Type
+              </Label>
+              <CardSelector
+                options={PROJECT_TYPE_OPTIONS}
+                selected={formData.projectType || ""}
+                onSelect={(v) => updateField("projectType", v)}
+                cols={2}
+              />
+              {errors.projectType && (
+                <p className="text-sm text-destructive font-semibold ml-1">
+                  {errors.projectType}
+                </p>
+              )}
+            </div>
+
+            {/* Project Location */}
+            <div className="space-y-2">
+              <Label
+                htmlFor="projectAddress"
+                className="flex items-center gap-2 text-sm font-bold ml-1"
+              >
+                <MapPin className="w-4 h-4 text-primary" />
+                Project Location
+              </Label>
+
+              <AddressAutocomplete
+                value={formData.projectAddress}
+                onChange={(value) => updateField("projectAddress", value)}
+                className="bg-zinc-50/30 h-14 rounded-2xl border-zinc-200 focus:bg-white transition-all px-5 text-lg"
+              />
+
+              {errors.projectAddress && (
+                <p className="text-sm text-destructive font-semibold ml-1">
+                  {errors.projectAddress}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Integrated Action Button */}
+          <div className="pt-6">
+            <Button
+              onClick={onSubmit}
+              disabled={isSubmitting}
+              className="w-full h-16 rounded-[1.5rem] text-xl font-bold shadow-2xl shadow-primary/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-6 h-6 animate-spin mr-3" />
+                  Creating Project...
+                </>
+              ) : (
+                "Create Project"
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

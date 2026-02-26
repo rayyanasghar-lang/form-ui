@@ -1,48 +1,51 @@
-import type { ProjectStatus } from "@/types/project"
-import { Badge } from "@/components/ui/badge"
+import * as React from "react"
+import { cn } from "@/lib/utils"
+import { Check, Loader2, X, FileText , Loader, Clock} from "lucide-react"
 
-interface StatusBadgeProps {
-  status: ProjectStatus
-  className?: string
+export interface StatusBadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+  status: "done" | "in-process" | "rejected" | "draft" | string
+  label: string
 }
 
-const statusConfig: Record<ProjectStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; className: string }> = {
-  draft: {
-    label: "Draft",
-    variant: "secondary",
-    className: "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
-  },
-  pending: {
-    label: "Pending",
-    variant: "outline",
-    className: "border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
-  },
-  in_review: {
-    label: "In Review",
-    variant: "outline",
-    className: "border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
-  },
-  approved: {
-    label: "Approved",
-    variant: "default",
-    className: "bg-green-100 text-green-700 hover:bg-green-200 border-green-200"
-  },
-  rejected: {
-    label: "Rejected",
-    variant: "destructive",
-    className: "bg-red-100 text-red-700 hover:bg-red-200 border-red-200"
-  }
-}
+const StatusBadge = React.forwardRef<HTMLDivElement, StatusBadgeProps>(
+  ({ status, label, className, ...props }, ref) => {
+    const getIconColor = () => {
+      // Normalize status to lowercase for comparison
+      const normalizedStatus = status.toLowerCase()
+      
+      if (normalizedStatus.includes("done") || normalizedStatus.includes("approved") || normalizedStatus.includes("submitted")) {
+        return "text-success"
+      }
+      if (normalizedStatus.includes("rejected") || normalizedStatus.includes("hold") || normalizedStatus.includes("challenge")) {
+        return "text-red-600"
+      }
+      if (normalizedStatus.includes("draft") || normalizedStatus.includes("new job")) {
+        return "text-zinc-500"
+      }
+      // Default for in-process states (New Design, Internal Review, Revision, Engineering, Print & Ship, etc.)
+      return "text-primary"
+    }
 
-export function StatusBadge({ status, className = "" }: StatusBadgeProps) {
-  const config = statusConfig[status]
-  
-  return (
-    <Badge 
-      variant={config.variant}
-      className={`${config.className} font-medium ${className}`}
-    >
-      {config.label}
-    </Badge>
-  )
-}
+    const iconColor = getIconColor()
+
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          "inline-flex items-center gap-2 px-0 py-1 bg-transparent",
+          className,
+        )}
+        {...props}
+      >
+        {status === "done" && <Check className={cn("h-4 w-4", iconColor)} strokeWidth={2.5} />}
+        {status === "in-process" && <Clock className={cn("h-4 w-4 ", iconColor)} />}
+        {status === "rejected" && <X className={cn("h-4 w-4", iconColor)} strokeWidth={2.5} />}
+        {status === "draft" && <FileText className={cn("h-4 w-4", iconColor)} />}
+        <span className={cn("text-sm font-medium", iconColor)}>{label}</span>
+      </div>
+    )
+  },
+)
+StatusBadge.displayName = "StatusBadge"
+
+export { StatusBadge }

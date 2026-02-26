@@ -13,19 +13,19 @@ interface StatCardProps {
   accentColor?: string
 }
 
-export function StatCard({
+  export function StatCard({
   title,
   value,
   trend,
   trendLabel = "vs last month",
   icon: Icon,
-  accentColor = "oklch(68.351% 0.19585 34.956)"
+  accentColor = "var(--primary)"
 }: StatCardProps) {
   const isPositive = trend && trend > 0
   const isNegative = trend && trend < 0
 
   return (
-    <Card className="relative overflow-hidden bg-[#F5F0E8] border-[#E8E0D5] shadow-lg hover:shadow-xl transition-all duration-300 group">
+    <Card className="relative overflow-hidden bg-card border-border shadow-lg hover:shadow-xl transition-all duration-300 group">
       {/* Decorative blob */}
       <div 
         className="absolute top-0 right-0 w-24 h-24 rounded-bl-full -mr-6 -mt-6 opacity-10 transition-all duration-500 group-hover:scale-125 group-hover:opacity-15"

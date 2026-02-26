@@ -13,6 +13,7 @@ interface FormButtonsProps {
   isLoading?: boolean
   saveStatus?: "saving" | "saved" | "idle"
   lastSaved?: Date | null
+  onSaveDraft?: () => void
 }
 
 function getRelativeTime(date: Date): string {
@@ -38,56 +39,51 @@ export default function FormButtons({
   isLoading = false,
   saveStatus = "idle",
   lastSaved = null,
+  onSaveDraft,
 }: FormButtonsProps) {
   const displayLabel = nextLabel ?? (isLastStep ? "Submit" : "Next")
 
   return (
-    <div className="flex gap-4 justify-between mt-8">
-      <Button
-        type="button"
-        variant="secondary"
-        onClick={onBack}
-        disabled={isFirstStep || isLoading}
-        className="px-8 min-w-[140px]"
-      >
-        {backLabel}
-      </Button>
-
-      <div className="flex gap-3 items-center">
-        {/* Auto-save indicator */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground px-4">
-          {saveStatus === "saving" ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Saving...</span>
-            </>
-          ) : saveStatus === "saved" && lastSaved ? (
-            <>
-              <Check className="w-4 h-4 text-green-500" />
-              <span>Saved {getRelativeTime(lastSaved)}</span>
-            </>
-          ) : (
-            <>
-              <Cloud className="w-4 h-4" />
-              <span>Auto-saved</span>
-            </>
-          )}
-        </div>
+    <div className="flex gap-2 sm:gap-4 justify-center items-center sm:mt-8">
+      <div className="flex gap-2 sm:gap-3 items-center justify-center">
+        {onSaveDraft && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onSaveDraft}
+            disabled={isLoading || saveStatus === "saving"}
+            className="flex px-3 sm:px-8 border-primary text-primary hover:bg-primary/5 sm:min-w-[140px] h-9 sm:h-10 items-center justify-center gap-2"
+          >
+            {saveStatus === "saving" ? (
+              <>
+                <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+                <span className="text-[10px] sm:text-xs">Saving...</span>
+              </>
+            ) : saveStatus === "saved" && lastSaved ? (
+              <>
+                <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-500" />
+                <span className="text-[10px] sm:text-xs">Saved {getRelativeTime(lastSaved)}</span>
+              </>
+            ) : (
+              <span className="text-[10px] sm:text-xs">Save Draft</span>
+            )}
+          </Button>
+        )}
 
         {/* Submit/Next button */}
         <Button
           type="button"
           onClick={onNext}
           disabled={isLoading}
-          className="px-8 bg-primary text-primary-foreground hover:bg-primary/90 min-w-[140px]"
+          className="px-8 sm:px-12 bg-primary text-primary-foreground hover:bg-primary/90 sm:min-w-[180px] shadow-lg shadow-primary/20"
         >
           {isLoading ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              Submitting...
+              <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin mr-1.5" />
+              <span className="text-xs sm:text-sm">...</span>
             </>
           ) : (
-            displayLabel
+            <span className="text-sm">{displayLabel}</span>
           )}
         </Button>
       </div>
