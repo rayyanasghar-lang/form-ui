@@ -1,0 +1,19 @@
+services:
+  sunpermit-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    env_file:
+      - .env
+    restart: always
+    environment:
+      - NODE_ENV=development
+      - WATCHPACK_POLLING=true # Helps with live-reloading on some systems
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

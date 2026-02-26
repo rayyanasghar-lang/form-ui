@@ -11,6 +11,7 @@ export const allQuestions: Question[] = [
     categoryName: "Project Context",
     categoryId: "group_1",
     sequence: 1,
+    extraData: { hidden: true },
   },
   {
     id: 2,
@@ -21,6 +22,7 @@ export const allQuestions: Question[] = [
     categoryName: "Project Context",
     categoryId: "group_1",
     sequence: 2,
+    extraData: { hidden: true },
   },
   {
     id: 3,
@@ -31,6 +33,7 @@ export const allQuestions: Question[] = [
     categoryName: "Project Context",
     categoryId: "group_1",
     sequence: 3,
+    extraData: { hidden: true },
     options: [
       { id: 31, value: "residential", label: "Residential" },
       { id: 32, value: "commercial", label: "Commercial" },
@@ -45,6 +48,7 @@ export const allQuestions: Question[] = [
     categoryName: "Project Context",
     categoryId: "group_1",
     sequence: 4,
+    extraData: { hidden: true },
   },
 
   // --- GROUP 2: CORE EQUIPMENT (Always Show) ---
@@ -56,7 +60,7 @@ export const allQuestions: Question[] = [
     isRequired: true,
     categoryName: "Group 2: Core Equipment",
     categoryId: "core_equipment",
-    sequence: 20,
+    sequence: 21,
     extraData: {
       equipmentType: "solar",
       frequentItems: [
@@ -73,7 +77,7 @@ export const allQuestions: Question[] = [
     isRequired: true,
     categoryName: "Group 2: Core Equipment",
     categoryId: "core_equipment",
-    sequence: 21,
+    sequence: 20,
   },
   {
     id: 60,
@@ -83,7 +87,7 @@ export const allQuestions: Question[] = [
     isRequired: true,
     categoryName: "Group 2: Core Equipment",
     categoryId: "core_equipment",
-    sequence: 22,
+    sequence: 23,
     extraData: {
       equipmentType: "inverter",
       frequentItems: [
@@ -100,7 +104,7 @@ export const allQuestions: Question[] = [
     isRequired: true,
     categoryName: "Group 2: Core Equipment",
     categoryId: "core_equipment",
-    sequence: 23,
+    sequence: 22,
   },
   {
     id: 101,
@@ -110,7 +114,7 @@ export const allQuestions: Question[] = [
     isRequired: false,
     categoryName: "Group 2: Core Equipment",
     categoryId: "core_equipment",
-    sequence: 24,
+    sequence: 25,
     extraData: {
       equipmentType: "optimizer",
       frequentItems: [
@@ -127,7 +131,7 @@ export const allQuestions: Question[] = [
     isRequired: false,
     categoryName: "Group 2: Core Equipment",
     categoryId: "core_equipment",
-    sequence: 25,
+    sequence: 24,
   },
   {
     id: 103,
@@ -137,7 +141,7 @@ export const allQuestions: Question[] = [
     isRequired: false,
     categoryName: "Group 2: Core Equipment",
     categoryId: "core_equipment",
-    sequence: 26,
+    sequence: 27,
     extraData: {
       equipmentType: "disconnect",
     },
@@ -150,7 +154,7 @@ export const allQuestions: Question[] = [
     isRequired: false,
     categoryName: "Group 2: Core Equipment",
     categoryId: "core_equipment",
-    sequence: 27,
+    sequence: 26,
   },
   {
     id: 40,
@@ -176,7 +180,7 @@ export const allQuestions: Question[] = [
     categoryName: "Group 2: Core Equipment",
     categoryId: "core_equipment",
     condition: "has_battery_backup == 'yes'",
-    sequence: 28,
+    sequence: 29,
     extraData: {
       equipmentType: "battery",
       frequentItems: [
@@ -194,7 +198,7 @@ export const allQuestions: Question[] = [
     categoryName: "Group 2: Core Equipment",
     categoryId: "core_equipment",
     condition: "has_battery_backup == 'yes'",
-    sequence: 29,
+    sequence: 28,
   },
   {
     id: 43,

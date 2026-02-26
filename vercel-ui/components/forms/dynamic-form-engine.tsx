@@ -21,12 +21,14 @@ import {
   Check,
   Plus,
   Minus,
+  Upload,
 } from "lucide-react";
 import { Question } from "@/types/site-centric";
 import { checkCondition } from "@/lib/form-utils";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { EquipmentSearchSelector } from "@/components/equipment-search-selector";
 import React from "react";
@@ -151,18 +153,384 @@ export const DynamicFormEngine = forwardRef<
 
     const watchedData = useWatch({ control });
 
+    const RenderField = ({
+      q,
+      control,
+      onValueChange,
+      errors,
+    }: {
+      q: Question;
+      control: any;
+      onValueChange: any;
+      errors: any;
+    }) => (
+      <Controller
+        control={control}
+        name={q.key}
+        render={({ field }) => (
+          <div className="space-y-1.5">
+            {/* Label */}
+            {q.inputType !== "boolean" && (
+              <div className="flex items-center justify-between px-1">
+                <label
+                  htmlFor={`field-${q.key}`}
+                  className="text-[15px] font-black text-zinc-800 flex items-center gap-2"
+                >
+                  {q.label}
+                  {q.isRequired && (
+                    <span className="text-primary text-xl leading-none">*</span>
+                  )}
+                </label>
+                {q.description && (
+                  <div className="group relative">
+                    <Info className="w-4 h-4 text-zinc-300 cursor-help hover:text-primary transition-colors" />
+                    <div className="absolute bottom-full right-0 mb-2 w-64 p-3 bg-zinc-900 text-white text-[10px] rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-2xl leading-relaxed">
+                      {q.description}
+                      <div className="absolute top-full right-1.5 border-[6px] border-transparent border-t-zinc-900" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Field Rendering */}
+            {q.inputType === "char" && (
+              <input
+                id={`field-${q.key}`}
+                type="text"
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                ref={field.ref}
+                placeholder={
+                  q.placeholder || `Enter ${q.label.toLowerCase()}...`
+                }
+                className="w-full max-w-lg h-10.5 px-4 rounded-2xl border border-zinc-200 bg-white/50 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all text-base outline-none"
+              />
+            )}
+
+            {q.inputType === "text" && (
+              <textarea
+                id={`field-${q.key}`}
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                ref={field.ref}
+                placeholder={q.placeholder || "Enter details..."}
+                className="w-full max-w-lg px-4 py-3 rounded-2xl border border-zinc-200 bg-white/50 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary/30 min-h-[120px] transition-all text-base outline-none resize-y"
+              />
+            )}
+
+            {q.inputType === "number" && (
+              <div className="flex items-center gap-1 w-fit">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10 rounded-2xl border-zinc-200 bg-white/50 hover:bg-white hover:border-primary/30 transition-all shrink-0 shadow-sm"
+                  onClick={() => {
+                    const current = Number(field.value) || 0;
+                    const next = Math.max(0, current - 1);
+                    field.onChange(next);
+                    onValueChange?.(q.key, next);
+                  }}
+                >
+                  <Minus className="w-4 h-4" />
+                </Button>
+                <input
+                  id={`field-${q.key}`}
+                  type="number"
+                  value={field.value ?? ""}
+                  onChange={(e) => {
+                    const val =
+                      e.target.value === "" ? "" : Number(e.target.value);
+                    field.onChange(val);
+                    onValueChange?.(q.key, val);
+                  }}
+                  onBlur={field.onBlur}
+                  ref={field.ref}
+                  placeholder="0"
+                  className="w-24 h-11 px-2 rounded-2xl border-2 border-zinc-100 bg-zinc-50/30 focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary/40 transition-all text-lg text-center outline-none font-black"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10 rounded-2xl border-zinc-200 bg-white/50 hover:bg-white hover:border-primary/30 transition-all shrink-0 shadow-sm"
+                  onClick={() => {
+                    const current = Number(field.value) || 0;
+                    const next = current + 1;
+                    field.onChange(next);
+                    onValueChange?.(q.key, next);
+                  }}
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+
+            {q.inputType === "select" &&
+              (q.options && q.options.length <= 8 ? (
+                <div className="flex flex-wrap gap-3 w-fit py-1">
+                  {q.options.map((opt: any) => {
+                    const isSelected = field.value === opt.value;
+                    const hasImage = !!opt.image;
+
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => field.onChange(opt.value)}
+                        className={cn(
+                          "flex flex-col rounded-[24px] text-sm font-black transition-all duration-500 border-2 relative overflow-hidden group",
+                          hasImage
+                            ? "min-h-[110px] min-w-[150px]"
+                            : "min-h-[44px] min-w-[120px] items-center justify-center px-6 py-2",
+                          isSelected
+                            ? "bg-primary border-primary text-white shadow-xl shadow-primary/20 scale-[0.98]"
+                            : "bg-white border-zinc-100 text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 hover:bg-zinc-50 shadow-sm",
+                        )}
+                      >
+                        {hasImage && (
+                          <div className="absolute inset-0 w-full h-full">
+                            <img
+                              src={opt.image}
+                              alt={opt.label}
+                              className={cn(
+                                "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110",
+                                isSelected
+                                  ? "opacity-100"
+                                  : "opacity-80 grayscale-20 group-hover:grayscale-0 group-hover:opacity-100",
+                              )}
+                            />
+                            {/* Unique Division: Gradient Overlay */}
+                            <div
+                              className={cn(
+                                "absolute inset-0 bg-linear-to-t transition-opacity duration-500",
+                                isSelected
+                                  ? "from-primary/90 via-primary/40 to-transparent"
+                                  : "from-zinc-900/80 via-zinc-900/20 to-transparent opacity-80 group-hover:opacity-60",
+                              )}
+                            />
+                          </div>
+                        )}
+
+                        {isSelected && (
+                          <motion.div
+                            layoutId={`check-${q.key}`}
+                            className="absolute top-2 right-2 z-30"
+                          >
+                            <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-lg border border-primary/10">
+                              <Check className="w-3 h-3 text-primary" />
+                            </div>
+                          </motion.div>
+                        )}
+
+                        <div
+                          className={cn(
+                            "relative z-20 w-full",
+                            hasImage
+                              ? "mt-auto p-2 bg-white/10 backdrop-blur-md border-t border-white/20"
+                              : "",
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "text-center block leading-tight",
+                              hasImage &&
+                                "text-white drop-shadow-md text-[10px] uppercase tracking-widest font-black",
+                            )}
+                          >
+                            {opt.label}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="relative group max-w-lg">
+                  <select
+                    id={`field-${q.key}`}
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    ref={field.ref}
+                    className="w-full h-11 px-4 rounded-2xl border-2 border-zinc-100 bg-zinc-50/30 focus:bg-white focus:ring-8 focus:ring-primary/5 focus:border-primary/40 transition-all text-base outline-none appearance-none cursor-pointer pr-10 font-bold"
+                  >
+                    <option value="" disabled>
+                      {q.placeholder || "Select an option"}
+                    </option>
+                    {q.options?.map((opt: any) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 group-hover:text-primary transition-colors">
+                    <ChevronRight className="w-4 h-4 rotate-90" />
+                  </div>
+                </div>
+              ))}
+
+            {q.inputType === "multi_select" && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-1">
+                {q.options?.map((opt: any) => {
+                  const currentValues = Array.isArray(field.value)
+                    ? field.value
+                    : [];
+                  const isSelected = currentValues.includes(opt.value);
+
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => {
+                        if (isSelected) {
+                          field.onChange(
+                            currentValues.filter((v) => v !== opt.value),
+                          );
+                        } else {
+                          field.onChange([...currentValues, opt.value]);
+                        }
+                      }}
+                      className={cn(
+                        "flex flex-col items-center justify-center min-h-[60px] px-4 py-2 rounded-2xl text-sm font-black transition-all duration-300 border-2 relative",
+                        isSelected
+                          ? "bg-primary/5 border-primary text-primary shadow-lg shadow-primary/5 scale-[1.02]"
+                          : "bg-white border-zinc-100 text-zinc-500 hover:border-zinc-200 hover:text-zinc-700 hover:bg-zinc-50",
+                      )}
+                    >
+                      {isSelected && (
+                        <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                          <Check className="w-3 h-3 text-white" />
+                        </div>
+                      )}
+                      <span className="text-center leading-tight">
+                        {opt.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {q.inputType === "boolean" && (
+              <div
+                className={cn(
+                  "flex items-center justify-between p-3.5 rounded-[24px] border-2 transition-all group w-fit min-w-[180px] gap-8",
+                  field.value
+                    ? "bg-primary/5 border-primary/20 shadow-lg shadow-primary/5"
+                    : "border-zinc-100 bg-white/40 shadow-sm hover:shadow-md hover:border-zinc-200",
+                )}
+              >
+                <label
+                  htmlFor={`switch-${q.key}`}
+                  className="space-y-1.5 cursor-pointer flex-1"
+                >
+                  <span
+                    className={cn(
+                      "text-[15px] font-black block transition-colors",
+                      field.value
+                        ? "text-primary"
+                        : "text-zinc-800 group-hover:text-zinc-900",
+                    )}
+                  >
+                    {q.label}
+                  </span>
+                  {q.description && (
+                    <p className="text-[11px] font-bold text-zinc-400 leading-tight pr-8">
+                      {q.description}
+                    </p>
+                  )}
+                </label>
+                <Switch
+                  id={`switch-${q.key}`}
+                  checked={!!field.value}
+                  onCheckedChange={(checked) => {
+                    field.onChange(checked);
+                    onValueChange?.(q.key, checked);
+                  }}
+                  className="scale-110"
+                />
+              </div>
+            )}
+
+            {q.inputType === "file" && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 max-w-lg">
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-zinc-200 rounded-2xl cursor-pointer bg-white hover:bg-zinc-50 transition-all group overflow-hidden relative">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="w-8 h-8 mb-3 text-zinc-300 group-hover:text-primary transition-colors" />
+                        <p className="mb-2 text-sm text-zinc-500">
+                          <span className="font-black text-primary">
+                            Click to upload
+                          </span>{" "}
+                          or drag and drop
+                        </p>
+                        <p className="text-xs text-zinc-400">
+                          {q.extraData?.accept || "IMAGE, PDF (MAX. 10MB)"}
+                        </p>
+                      </div>
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept={q.extraData?.accept}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            field.onChange(file);
+                            onValueChange?.(q.key, file);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+                {field.value && (
+                  <div className="flex items-center gap-2 text-primary font-bold text-xs bg-primary/5 w-fit px-3 py-1.5 rounded-full border border-primary/20">
+                    <Check className="w-3.5 h-3.5" />
+                    {typeof field.value === "string"
+                      ? "File uploaded"
+                      : field.value.name}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {q.inputType === "equipment_search" && (
+              <EquipmentSearchSelector
+                value={field.value ?? ""}
+                apiType={q.extraData?.equipmentType || "solar"}
+                onSelect={(val: string, equipmentId?: string) => {
+                  field.onChange(val);
+                  onValueChange?.(q.key, val, { equipmentId });
+                }}
+                onSelectFull={(item: any) => {
+                  onValueChange?.(q.key, item.display_label, item);
+                }}
+                placeholder={q.placeholder || `Search ${q.label}...`}
+                frequentItems={q.extraData?.frequentItems}
+                className="max-w-lg"
+              />
+            )}
+
+            {errors[q.key] && (
+              <p className="text-red-500 text-xs font-bold mt-1 px-1">
+                {errors[q.key]?.message as string}
+              </p>
+            )}
+          </div>
+        )}
+      />
+    );
+
     // Flatten structure into granular "steps" (chunks)
     // Each step is either a subCategory or a category with no subcategories
     const categories = useMemo(() => {
       if (!Array.isArray(questions)) return [];
 
-      const steps: {
-        name: string;
-        categoryName: string;
-        questions: Question[];
-      }[] = [];
-
-      // First group by category
       const categoryGroups: Record<
         string,
         { name: string; sequence: number; questions: Question[] }
@@ -186,53 +554,23 @@ export const DynamicFormEngine = forwardRef<
         categoryGroups[key].questions.push(q);
       });
 
-      const sortedCategories = Object.values(categoryGroups).sort(
-        (a, b) => a.sequence - b.sequence,
-      );
-
-      sortedCategories.forEach((cat) => {
-        // Group questions within this category by sub-category
-        const subGroups: Record<
-          string,
-          { name: string; questions: Question[] }
-        > = {};
-
-        cat.questions.forEach((q) => {
-          const subCat = q.subCategory || "default";
-          if (!subGroups[subCat]) {
-            subGroups[subCat] = {
-              name: subCat === "default" ? cat.name : subCat,
-              questions: [],
-            };
-          }
-          subGroups[subCat].questions.push(q);
+      const sortedCategories = Object.values(categoryGroups)
+        .sort((a, b) => a.sequence - b.sequence)
+        .map((cat) => ({
+          name: cat.name,
+          categoryName: cat.name,
+          questions: [...cat.questions].sort(
+            (a, b) =>
+              (a.priority || a.sequence || 0) - (b.priority || b.sequence || 0),
+          ),
+        }))
+        .filter((cat) => {
+          // Only keep categories that have at least one question that is NOT hidden by extraData
+          return cat.questions.some((q) => !q.extraData?.hidden);
         });
 
-        // Create a step for each sub-group
-        Object.keys(subGroups).forEach((subCatKey) => {
-          // Only include steps that have at least one visible question based on conditions
-          // A question is truly "visible for step creation" if it's not hidden
-          const visibleQuestions = subGroups[subCatKey].questions.filter(
-            (q) =>
-              checkCondition(q.condition, watchedData) && !q.extraData?.hidden,
-          );
-
-          if (visibleQuestions.length > 0) {
-            steps.push({
-              name: subGroups[subCatKey].name,
-              categoryName: cat.name,
-              questions: subGroups[subCatKey].questions.sort(
-                (a, b) =>
-                  (a.priority || a.sequence || 0) -
-                  (b.priority || b.sequence || 0),
-              ),
-            });
-          }
-        });
-      });
-
-      return steps;
-    }, [questions, watchedData]);
+      return sortedCategories;
+    }, [questions]);
 
     // Safety: Ensure activeCategoryIndex is always in range
     useEffect(() => {
@@ -291,7 +629,7 @@ export const DynamicFormEngine = forwardRef<
       <div className="space-y-6">
         {/* Form Category Header */}
         <div className="pb-4 border-b border-zinc-100 mb-1">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-2">
+          <div className="flex flex-row md:flex-row md:items-center justify-between gap-4 px-2">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center shadow-lg shadow-zinc-900/10">
                 <Layout className="w-5 h-5 text-white" />
@@ -318,409 +656,84 @@ export const DynamicFormEngine = forwardRef<
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 py-1">
-                {currentCategory?.questions.map((q: Question) => {
-                  const isVisible = checkCondition(q.condition, watchedData);
-                  if (!isVisible || q.extraData?.hidden) return null;
+              <div className="flex flex-col gap-y-6 py-1">
+                {currentCategory?.questions.reduce(
+                  (acc: any[], q: Question, idx: number, arr: Question[]) => {
+                    const isVisible = checkCondition(q.condition, watchedData);
+                    if (!isVisible || q.extraData?.hidden) return acc;
 
-                  const val = watchedData[q.key];
-                  const isCompleted =
-                    q.inputType === "boolean"
-                      ? val !== undefined
-                      : val !== undefined &&
-                        val !== "" &&
-                        val !== null &&
-                        (Array.isArray(val) ? val.length > 0 : true);
+                    // Lookahead for pairing: if this is a quantity field and next is a product field
+                    const isQty =
+                      q.key.endsWith("_count") ||
+                      q.key.endsWith("_qty") ||
+                      q.key.includes("quantity");
+                    const nextQ = arr[idx + 1];
+                    const nextIsProduct =
+                      nextQ && nextQ.key.includes("_product");
 
-                  return (
-                    <div
-                      key={q.key}
-                      className={cn(
-                        "flex flex-col gap-1 relative group",
-                        (q.inputType === "text" ||
-                          q.inputType === "multi_select" ||
-                          q.extraData?.fullWidth) &&
-                          "md:col-span-2",
-                      )}
-                    >
-                      <Controller
-                        control={control}
-                        name={q.key}
-                        render={({ field }) => (
-                          <div className="space-y-1.5">
-                            {/* Label */}
-                            {q.inputType !== "boolean" && (
-                              <div className="flex items-center justify-between px-1">
-                                <label
-                                  htmlFor={`field-${q.key}`}
-                                  className="text-[15px] font-black text-zinc-800 flex items-center gap-2"
-                                >
-                                  {q.label}
-                                  {q.isRequired && (
-                                    <span className="text-primary text-xl leading-none">
-                                      *
-                                    </span>
-                                  )}
-                                </label>
-                                {q.description && (
-                                  <div className="group relative">
-                                    <Info className="w-4 h-4 text-zinc-300 cursor-help hover:text-primary transition-colors" />
-                                    <div className="absolute bottom-full right-0 mb-2 w-64 p-3 bg-zinc-900 text-white text-[10px] rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-2xl leading-relaxed">
-                                      {q.description}
-                                      <div className="absolute top-full right-1.5 border-[6px] border-transparent border-t-zinc-900" />
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            )}
+                    // If this is a product field and previous was quantity, skip (handled by quantity)
+                    const prevQ = arr[idx - 1];
+                    const isProduct = q.key.includes("_product");
+                    const prevWasQty =
+                      prevQ &&
+                      (prevQ.key.endsWith("_count") ||
+                        prevQ.key.endsWith("_qty") ||
+                        prevQ.key.includes("quantity"));
 
-                            {/* Field Rendering */}
-                            {q.inputType === "char" && (
-                              <input
-                                id={`field-${q.key}`}
-                                type="text"
-                                value={field.value ?? ""}
-                                onChange={field.onChange}
-                                onBlur={field.onBlur}
-                                ref={field.ref}
-                                placeholder={
-                                  q.placeholder ||
-                                  `Enter ${q.label.toLowerCase()}...`
-                                }
-                                className="w-full h-10.5 px-4 rounded-2xl border border-zinc-200 bg-white/50 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all text-base outline-none"
-                              />
-                            )}
+                    if (isProduct && prevWasQty) return acc;
 
-                            {q.inputType === "text" && (
-                              <textarea
-                                id={`field-${q.key}`}
-                                value={field.value ?? ""}
-                                onChange={field.onChange}
-                                onBlur={field.onBlur}
-                                ref={field.ref}
-                                placeholder={
-                                  q.placeholder || "Enter details..."
-                                }
-                                className="w-full px-4 py-3 rounded-2xl border border-zinc-200 bg-white/50 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary/30 min-h-[120px] transition-all text-base outline-none resize-y"
-                              />
-                            )}
+                    const subCategory = q.subCategory;
+                    const prevSubCategory = prevQ?.subCategory;
+                    const showDivider =
+                      subCategory &&
+                      subCategory !== "default" &&
+                      subCategory !== prevSubCategory;
 
-                            {q.inputType === "number" && (
-                              <div className="flex items-center gap-2 w-fit">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-11 w-11 rounded-2xl border-zinc-200 bg-white/50 hover:bg-white hover:border-primary/30 transition-all shrink-0 shadow-sm"
-                                  onClick={() => {
-                                    const current = Number(field.value) || 0;
-                                    const next = Math.max(0, current - 1);
-                                    field.onChange(next);
-                                    onValueChange?.(q.key, next);
-                                  }}
-                                >
-                                  <Minus className="w-4 h-4" />
-                                </Button>
-                                <input
-                                  id={`field-${q.key}`}
-                                  type="number"
-                                  value={field.value ?? ""}
-                                  onChange={(e) => {
-                                    const val =
-                                      e.target.value === ""
-                                        ? ""
-                                        : Number(e.target.value);
-                                    field.onChange(val);
-                                    onValueChange?.(q.key, val);
-                                  }}
-                                  onBlur={field.onBlur}
-                                  ref={field.ref}
-                                  placeholder="0"
-                                  className="w-24 h-11 px-2 rounded-2xl border-2 border-zinc-100 bg-zinc-50/30 focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary/40 transition-all text-lg text-center outline-none font-black"
-                                />
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-5 w-5 rounded-2xl border-zinc-200 bg-white/50 hover:bg-white hover:border-primary/30 transition-all shrink-0 shadow-sm"
-                                  onClick={() => {
-                                    const current = Number(field.value) || 0;
-                                    const next = current + 1;
-                                    field.onChange(next);
-                                    onValueChange?.(q.key, next);
-                                  }}
-                                >
-                                  <Plus className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            )}
-
-                            {q.inputType === "select" &&
-                              (q.options && q.options.length <= 8 ? (
-                                <div className="flex flex-wrap gap-3 w-fit py-1">
-                                  {q.options.map((opt: any) => {
-                                    const isSelected =
-                                      field.value === opt.value;
-                                    const hasImage = !!opt.image;
-
-                                    return (
-                                      <button
-                                        key={opt.value}
-                                        type="button"
-                                        onClick={() =>
-                                          field.onChange(opt.value)
-                                        }
-                                        className={cn(
-                                          "flex flex-col rounded-[24px] text-sm font-black transition-all duration-500 border-2 relative overflow-hidden group",
-                                          hasImage
-                                            ? "min-h-[110px] min-w-[150px]"
-                                            : "min-h-[44px] min-w-[120px] items-center justify-center px-6 py-2",
-                                          isSelected
-                                            ? "bg-primary border-primary text-white shadow-xl shadow-primary/20 scale-[0.98]"
-                                            : "bg-white border-zinc-100 text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 hover:bg-zinc-50 shadow-sm",
-                                        )}
-                                      >
-                                        {hasImage && (
-                                          <div className="absolute inset-0 w-full h-full">
-                                            <img
-                                              src={opt.image}
-                                              alt={opt.label}
-                                              className={cn(
-                                                "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110",
-                                                isSelected
-                                                  ? "opacity-100"
-                                                  : "opacity-80 grayscale-20 group-hover:grayscale-0 group-hover:opacity-100",
-                                              )}
-                                            />
-                                            {/* Unique Division: Gradient Overlay */}
-                                            <div
-                                              className={cn(
-                                                "absolute inset-0 bg-linear-to-t transition-opacity duration-500",
-                                                isSelected
-                                                  ? "from-primary/90 via-primary/40 to-transparent"
-                                                  : "from-zinc-900/80 via-zinc-900/20 to-transparent opacity-80 group-hover:opacity-60",
-                                              )}
-                                            />
-                                          </div>
-                                        )}
-
-                                        {isSelected && (
-                                          <motion.div
-                                            layoutId={`check-${q.key}`}
-                                            className="absolute top-2 right-2 z-30"
-                                          >
-                                            <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-lg border border-primary/10">
-                                              <Check className="w-3 h-3 text-primary" />
-                                            </div>
-                                          </motion.div>
-                                        )}
-
-                                        <div
-                                          className={cn(
-                                            "relative z-20 w-full",
-                                            hasImage
-                                              ? "mt-auto p-2 bg-white/10 backdrop-blur-md border-t border-white/20"
-                                              : "",
-                                          )}
-                                        >
-                                          <span
-                                            className={cn(
-                                              "text-center block leading-tight",
-                                              hasImage &&
-                                                "text-white drop-shadow-md text-[10px] uppercase tracking-widest font-black",
-                                            )}
-                                          >
-                                            {opt.label}
-                                          </span>
-                                        </div>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              ) : (
-                                <div className="relative group max-w-lg">
-                                  <select
-                                    id={`field-${q.key}`}
-                                    value={field.value ?? ""}
-                                    onChange={field.onChange}
-                                    onBlur={field.onBlur}
-                                    ref={field.ref}
-                                    className="w-full h-11 px-4 rounded-2xl border-2 border-zinc-100 bg-zinc-50/30 focus:bg-white focus:ring-8 focus:ring-primary/5 focus:border-primary/40 transition-all text-base outline-none appearance-none cursor-pointer pr-10 font-bold"
-                                  >
-                                    <option value="" disabled>
-                                      {q.placeholder || "Select an option"}
-                                    </option>
-                                    {q.options?.map((opt: any) => (
-                                      <option key={opt.value} value={opt.value}>
-                                        {opt.label}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 group-hover:text-primary transition-colors">
-                                    <ChevronRight className="w-4 h-4 rotate-90" />
-                                  </div>
-                                </div>
-                              ))}
-
-                            {q.inputType === "multi_select" && (
-                              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-1">
-                                {q.options?.map((opt: any) => {
-                                  const currentValues = Array.isArray(
-                                    field.value,
-                                  )
-                                    ? field.value
-                                    : [];
-                                  const isSelected = currentValues.includes(
-                                    opt.value,
-                                  );
-
-                                  return (
-                                    <button
-                                      key={opt.value}
-                                      type="button"
-                                      onClick={() => {
-                                        if (isSelected) {
-                                          field.onChange(
-                                            currentValues.filter(
-                                              (v) => v !== opt.value,
-                                            ),
-                                          );
-                                        } else {
-                                          field.onChange([
-                                            ...currentValues,
-                                            opt.value,
-                                          ]);
-                                        }
-                                      }}
-                                      className={cn(
-                                        "flex flex-col items-center justify-center min-h-[60px] px-4 py-2 rounded-2xl text-sm font-black transition-all duration-300 border-2 relative",
-                                        isSelected
-                                          ? "bg-primary/5 border-primary text-primary shadow-lg shadow-primary/5 scale-[1.02]"
-                                          : "bg-white border-zinc-100 text-zinc-500 hover:border-zinc-200 hover:text-zinc-700 hover:bg-zinc-50",
-                                      )}
-                                    >
-                                      {isSelected && (
-                                        <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                                          <Check className="w-3 h-3 text-white" />
-                                        </div>
-                                      )}
-                                      <span className="text-center leading-tight">
-                                        {opt.label}
-                                      </span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            )}
-
-                            {q.inputType === "file" && (
-                              <div className="relative">
-                                <input
-                                  id={`field-${q.key}`}
-                                  type="file"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                      field.onChange(file.name);
-                                    }
-                                  }}
-                                  onBlur={field.onBlur}
-                                  ref={field.ref}
-                                  className="hidden"
-                                />
-                                <label
-                                  htmlFor={`field-${q.key}`}
-                                  className="flex items-center justify-between w-full h-11 px-6 rounded-2xl border-2 border-dashed border-zinc-200 bg-white/50 hover:bg-white hover:border-primary/30 transition-all cursor-pointer group"
-                                >
-                                  <span className="text-zinc-500 font-medium truncate max-w-[80%]">
-                                    {field.value ||
-                                      q.placeholder ||
-                                      "Choose a file to upload..."}
-                                  </span>
-                                  <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider">
-                                    <Plus className="w-4 h-4" />
-                                    Upload
-                                  </div>
-                                </label>
-                              </div>
-                            )}
-
-                            {q.inputType === "boolean" && (
-                              <div
-                                className={cn(
-                                  "flex items-center justify-between p-3.5 rounded-[24px] border-2 transition-all group w-fit min-w-[180px] gap-8",
-                                  field.value
-                                    ? "bg-primary/5 border-primary/20 shadow-lg shadow-primary/5"
-                                    : "border-zinc-100 bg-white/40 shadow-sm hover:shadow-md hover:border-zinc-200",
-                                )}
-                              >
-                                <label
-                                  htmlFor={`switch-${q.key}`}
-                                  className="space-y-1.5 cursor-pointer flex-1"
-                                >
-                                  <span
-                                    className={cn(
-                                      "text-[15px] font-black block transition-colors",
-                                      field.value
-                                        ? "text-primary"
-                                        : "text-zinc-800 group-hover:text-zinc-900",
-                                    )}
-                                  >
-                                    {q.label}
-                                  </span>
-                                  {q.description && (
-                                    <p className="text-[11px] font-bold text-zinc-400 leading-tight pr-8">
-                                      {q.description}
-                                    </p>
-                                  )}
-                                </label>
-                                <Switch
-                                  id={`switch-${q.key}`}
-                                  checked={!!field.value}
-                                  onCheckedChange={(checked) => {
-                                    field.onChange(checked);
-                                    onValueChange?.(q.key, checked);
-                                  }}
-                                  className="scale-110"
-                                />
-                              </div>
-                            )}
-
-                            {q.inputType === "equipment_search" && (
-                              <EquipmentSearchSelector
-                                value={field.value ?? ""}
-                                apiType={q.extraData?.equipmentType || "solar"}
-                                onSelect={(label: string, uuid?: string) => {
-                                  field.onChange(label);
-                                  onValueChange?.(q.key, label, { uuid });
-                                }}
-                                onSelectFull={(item) => {
-                                  onValueChange?.(
-                                    q.key,
-                                    item.display_label,
-                                    item,
-                                  );
-                                }}
-                                placeholder={
-                                  q.placeholder || `Search ${q.label}...`
-                                }
-                                frequentItems={q.extraData?.frequentItems}
-                                className="w-full max-w-lg h-11 rounded-2xl border-2 border-zinc-100 bg-zinc-50/30 focus:border-primary/40 focus:ring-8 focus:ring-primary/5 text-base font-bold"
-                              />
-                            )}
-
-                            {/* Error Message */}
-                            {errors[q.key] && (
-                              <p className="text-xs font-bold text-red-500 px-1">
-                                {errors[q.key]?.message as string}
-                              </p>
-                            )}
+                    const questionEl = (
+                      <div key={q.key} className="space-y-4">
+                        {showDivider && (
+                          <div className="pt-4 pb-2 border-b border-zinc-100 mb-2">
+                            <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest">
+                              {subCategory}
+                            </h4>
                           </div>
                         )}
-                      />
-                    </div>
-                  );
-                })}
+
+                        {isQty && nextIsProduct ? (
+                          <div className="flex flex-row items-end gap-3 w-full max-w-2xl">
+                            <div className="flex-none">
+                              <RenderField
+                                q={q}
+                                control={control}
+                                onValueChange={onValueChange}
+                                errors={errors}
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <RenderField
+                                q={nextQ}
+                                control={control}
+                                onValueChange={onValueChange}
+                                errors={errors}
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <RenderField
+                            q={q}
+                            control={control}
+                            onValueChange={onValueChange}
+                            errors={errors}
+                          />
+                        )}
+                      </div>
+                    );
+
+                    acc.push(questionEl);
+                    return acc;
+                  },
+                  [],
+                )}
               </div>
             </motion.div>
           </AnimatePresence>
