@@ -1,307 +1,363 @@
-"use client"
-import { useState, useMemo, forwardRef, useImperativeHandle, useEffect } from "react"
-import { useForm, useWatch, Controller, Control } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { motion, AnimatePresence } from "framer-motion"
-import { 
-  Loader2, 
-  Save, 
-  ChevronRight, 
+"use client";
+import {
+  useState,
+  useMemo,
+  forwardRef,
+  useImperativeHandle,
+  useEffect,
+} from "react";
+import { useForm, useWatch, Controller, Control } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Loader2,
+  Save,
+  ChevronRight,
   ChevronLeft,
   Info,
   Layout,
   ClipboardList,
   Check,
   Plus,
-  Minus
-} from "lucide-react"
-import { Question } from "@/types/site-centric"
-import { checkCondition } from "@/lib/form-utils"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { Switch } from "@/components/ui/switch"
-import { cn } from "@/lib/utils"
-import { EquipmentSearchSelector } from "@/components/equipment-search-selector"
-import React from "react"
+  Minus,
+} from "lucide-react";
+import { Question } from "@/types/site-centric";
+import { checkCondition } from "@/lib/form-utils";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
+import { EquipmentSearchSelector } from "@/components/equipment-search-selector";
+import React from "react";
 
 interface DynamicFormEngineProps {
-  questions: Question[]
-  onSubmit: (data: Record<string, any>) => void
-  isSubmitting?: boolean
-  defaultValues?: Record<string, any>
-  onValueChange?: (key: string, value: any, extraData?: any) => void
+  questions: Question[];
+  onSubmit: (data: Record<string, any>) => void;
+  isSubmitting?: boolean;
+  defaultValues?: Record<string, any>;
+  onValueChange?: (key: string, value: any, extraData?: any) => void;
 }
 
 export interface DynamicFormEngineHandle {
-  setValue: (name: string, value: any) => void
-  getValues: () => any
+  setValue: (name: string, value: any) => void;
+  getValues: () => any;
 }
 
 // FormProgressBar removed for seamless integration
 
-export const DynamicFormEngine = forwardRef<DynamicFormEngineHandle, DynamicFormEngineProps>(({ 
-  questions, 
-  onSubmit, 
-  isSubmitting = false,
-  defaultValues,
-  onValueChange
-}, ref) => {
-  const [activeCategoryIndex, setActiveCategoryIndex] = useState(0)
-  
-  // Compute stable default values
-  const computedDefaults = useMemo(() => {
-    const defaults: Record<string, any> = {}
-    questions?.forEach((q) => {
-      if (q.inputType === "boolean") defaults[q.key] = false
-      else if (q.inputType === "number") defaults[q.key] = ""
-      else defaults[q.key] = ""
-    })
-    return { ...defaults, ...(defaultValues || {}) }
-  }, [questions, defaultValues])
-  
-  // Create Zod Schema dynamically
-  const formSchema = useMemo(() => {
-    const schemaObject: any = {}
-    questions?.forEach((q) => {
-      let fieldSchema: any = z.any()
+export const DynamicFormEngine = forwardRef<
+  DynamicFormEngineHandle,
+  DynamicFormEngineProps
+>(
+  (
+    { questions, onSubmit, isSubmitting = false, defaultValues, onValueChange },
+    ref,
+  ) => {
+    const [activeCategoryIndex, setActiveCategoryIndex] = useState(0);
 
-      if (q.inputType === "number") {
-        fieldSchema = z.coerce.number()
-      } else if (q.inputType === "boolean") {
-        fieldSchema = z.boolean()
-      } else if (q.inputType === "char" || q.inputType === "text" || q.inputType === "select" || q.inputType === "equipment_search" || q.inputType === "multi_select") {
-        fieldSchema = q.inputType === "multi_select" ? z.array(z.string()) : z.string()
-      }
+    // Compute stable default values
+    const computedDefaults = useMemo(() => {
+      const defaults: Record<string, any> = {};
+      questions?.forEach((q) => {
+        if (q.inputType === "boolean") defaults[q.key] = false;
+        else if (q.inputType === "number") defaults[q.key] = "";
+        else defaults[q.key] = "";
+      });
+      return { ...defaults, ...(defaultValues || {}) };
+    }, [questions, defaultValues]);
 
-      if (q.isRequired) {
-        if (q.inputType === "char" || q.inputType === "text" || q.inputType === "select") {
-          fieldSchema = fieldSchema.min(1, { message: `${q.label} is required` })
-        } else if (q.inputType === "number") {
-          fieldSchema = fieldSchema.refine((val: any) => val !== undefined && val !== null, {
-            message: `${q.label} is required`
-          })
+    // Create Zod Schema dynamically
+    const formSchema = useMemo(() => {
+      const schemaObject: any = {};
+      questions?.forEach((q) => {
+        let fieldSchema: any = z.any();
+
+        if (q.inputType === "number") {
+          fieldSchema = z.coerce.number();
+        } else if (q.inputType === "boolean") {
+          fieldSchema = z.boolean();
+        } else if (
+          q.inputType === "char" ||
+          q.inputType === "text" ||
+          q.inputType === "select" ||
+          q.inputType === "equipment_search" ||
+          q.inputType === "multi_select"
+        ) {
+          fieldSchema =
+            q.inputType === "multi_select" ? z.array(z.string()) : z.string();
         }
-      } else {
-        fieldSchema = fieldSchema.optional()
-      }
 
-      schemaObject[q.key] = fieldSchema
-    })
-    return z.object(schemaObject)
-  }, [questions])
-
-  const { 
-    control, 
-    handleSubmit, 
-    setValue,
-    getValues,
-    reset,
-    formState: { errors } 
-  } = useForm({
-    resolver: zodResolver(formSchema),
-    defaultValues: computedDefaults,
-  })
-
-  // Sync defaultValues when they arrive asynchronously
-  // Using a ref to prevent infinite loops if reset triggers a parent re-render
-  const lastResetDefaults = React.useRef<string>("")
-  useEffect(() => {
-    const defaultsStr = JSON.stringify(computedDefaults)
-    if (computedDefaults && Object.keys(computedDefaults).length > 0 && lastResetDefaults.current !== defaultsStr) {
-      lastResetDefaults.current = defaultsStr
-      reset(computedDefaults)
-    }
-  }, [computedDefaults, reset])
-
-  useImperativeHandle(ref, () => ({
-    setValue: (name: string, value: any) => setValue(name as any, value),
-    getValues: () => getValues()
-  }))
-
-  const watchedData = useWatch({ control })
-
-  // Flatten structure into granular "steps" (chunks)
-  // Each step is either a subCategory or a category with no subcategories
-  const categories = useMemo(() => {
-    if (!Array.isArray(questions)) return []
-    
-    const steps: { name: string; categoryName: string; questions: Question[] }[] = []
-    
-    // First group by category
-    const categoryGroups: Record<string, { name: string; sequence: number; questions: Question[] }> = {}
-    
-    questions.forEach(q => {
-      const cat = q.category || { 
-        id: q.categoryId || "general", 
-        name: q.categoryName || "General Information",
-        sequence: q.sequence || 99
-      }
-      
-      const key = String(cat.id)
-      if (!categoryGroups[key]) {
-        categoryGroups[key] = {
-          name: cat.name,
-          sequence: cat.sequence,
-          questions: []
-        }
-      }
-      categoryGroups[key].questions.push(q)
-    })
-
-    const sortedCategories = Object.values(categoryGroups).sort((a, b) => a.sequence - b.sequence)
-
-    sortedCategories.forEach(cat => {
-      // Group questions within this category by sub-category
-      const subGroups: Record<string, { name: string; questions: Question[] }> = {}
-      
-      cat.questions.forEach(q => {
-        const subCat = q.subCategory || "default"
-        if (!subGroups[subCat]) {
-          subGroups[subCat] = {
-            name: subCat === "default" ? cat.name : subCat,
-            questions: []
+        if (q.isRequired) {
+          if (
+            q.inputType === "char" ||
+            q.inputType === "text" ||
+            q.inputType === "select"
+          ) {
+            fieldSchema = fieldSchema.min(1, {
+              message: `${q.label} is required`,
+            });
+          } else if (q.inputType === "number") {
+            fieldSchema = fieldSchema.refine(
+              (val: any) => val !== undefined && val !== null,
+              {
+                message: `${q.label} is required`,
+              },
+            );
           }
+        } else {
+          fieldSchema = fieldSchema.optional();
         }
-        subGroups[subCat].questions.push(q)
-      })
 
-      // Create a step for each sub-group
-      Object.keys(subGroups).forEach(subCatKey => {
-        // Only include steps that have at least one visible question based on conditions
-        // A question is truly "visible for step creation" if it's not hidden
-        const visibleQuestions = subGroups[subCatKey].questions.filter(q => 
-          checkCondition(q.condition, watchedData) && !q.extraData?.hidden
-        )
-        
-        if (visibleQuestions.length > 0) {
-          steps.push({
-            name: subGroups[subCatKey].name,
-            categoryName: cat.name,
-            questions: subGroups[subCatKey].questions.sort((a, b) => (a.priority || a.sequence || 0) - (b.priority || b.sequence || 0))
-          })
+        schemaObject[q.key] = fieldSchema;
+      });
+      return z.object(schemaObject);
+    }, [questions]);
+
+    const {
+      control,
+      handleSubmit,
+      setValue,
+      getValues,
+      reset,
+      formState: { errors },
+    } = useForm({
+      resolver: zodResolver(formSchema),
+      defaultValues: computedDefaults,
+    });
+
+    // Sync defaultValues when they arrive asynchronously
+    // Using a ref to prevent infinite loops if reset triggers a parent re-render
+    const lastResetDefaults = React.useRef<string>("");
+    useEffect(() => {
+      const defaultsStr = JSON.stringify(computedDefaults);
+      if (
+        computedDefaults &&
+        Object.keys(computedDefaults).length > 0 &&
+        lastResetDefaults.current !== defaultsStr
+      ) {
+        lastResetDefaults.current = defaultsStr;
+        reset(computedDefaults);
+      }
+    }, [computedDefaults, reset]);
+
+    useImperativeHandle(ref, () => ({
+      setValue: (name: string, value: any) => setValue(name as any, value),
+      getValues: () => getValues(),
+    }));
+
+    const watchedData = useWatch({ control });
+
+    // Flatten structure into granular "steps" (chunks)
+    // Each step is either a subCategory or a category with no subcategories
+    const categories = useMemo(() => {
+      if (!Array.isArray(questions)) return [];
+
+      const steps: {
+        name: string;
+        categoryName: string;
+        questions: Question[];
+      }[] = [];
+
+      // First group by category
+      const categoryGroups: Record<
+        string,
+        { name: string; sequence: number; questions: Question[] }
+      > = {};
+
+      questions.forEach((q) => {
+        const cat = q.category || {
+          id: q.categoryId || "general",
+          name: q.categoryName || "General Information",
+          sequence: q.sequence || 99,
+        };
+
+        const key = String(cat.id);
+        if (!categoryGroups[key]) {
+          categoryGroups[key] = {
+            name: cat.name,
+            sequence: cat.sequence,
+            questions: [],
+          };
         }
-      })
-    })
+        categoryGroups[key].questions.push(q);
+      });
 
-    return steps
-  }, [questions, watchedData])
+      const sortedCategories = Object.values(categoryGroups).sort(
+        (a, b) => a.sequence - b.sequence,
+      );
 
-  // Safety: Ensure activeCategoryIndex is always in range
-  useEffect(() => {
-    if (activeCategoryIndex >= categories.length && categories.length > 0) {
-      setActiveCategoryIndex(0)
-    }
-  }, [categories, activeCategoryIndex])
+      sortedCategories.forEach((cat) => {
+        // Group questions within this category by sub-category
+        const subGroups: Record<
+          string,
+          { name: string; questions: Question[] }
+        > = {};
 
-  if (!Array.isArray(questions) || questions.length === 0) {
-    return (
-      <div className="p-12 text-center bg-white/50 backdrop-blur-xl rounded-[32px] border border-dashed border-zinc-200">
-        <div className="w-16 h-16 bg-zinc-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        cat.questions.forEach((q) => {
+          const subCat = q.subCategory || "default";
+          if (!subGroups[subCat]) {
+            subGroups[subCat] = {
+              name: subCat === "default" ? cat.name : subCat,
+              questions: [],
+            };
+          }
+          subGroups[subCat].questions.push(q);
+        });
+
+        // Create a step for each sub-group
+        Object.keys(subGroups).forEach((subCatKey) => {
+          // Only include steps that have at least one visible question based on conditions
+          // A question is truly "visible for step creation" if it's not hidden
+          const visibleQuestions = subGroups[subCatKey].questions.filter(
+            (q) =>
+              checkCondition(q.condition, watchedData) && !q.extraData?.hidden,
+          );
+
+          if (visibleQuestions.length > 0) {
+            steps.push({
+              name: subGroups[subCatKey].name,
+              categoryName: cat.name,
+              questions: subGroups[subCatKey].questions.sort(
+                (a, b) =>
+                  (a.priority || a.sequence || 0) -
+                  (b.priority || b.sequence || 0),
+              ),
+            });
+          }
+        });
+      });
+
+      return steps;
+    }, [questions, watchedData]);
+
+    // Safety: Ensure activeCategoryIndex is always in range
+    useEffect(() => {
+      if (activeCategoryIndex >= categories.length && categories.length > 0) {
+        setActiveCategoryIndex(0);
+      }
+    }, [categories, activeCategoryIndex]);
+
+    if (!Array.isArray(questions) || questions.length === 0) {
+      return (
+        <div className="p-12 text-center bg-white/50 backdrop-blur-xl rounded-[32px] border border-dashed border-zinc-200">
+          <div className="w-16 h-16 bg-zinc-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <ClipboardList className="w-8 h-8 text-zinc-400" />
+          </div>
+          <h3 className="text-xl font-bold text-zinc-900 mb-2">
+            No questions available
+          </h3>
+          <p className="text-zinc-500">
+            There are no technical questions configured for this service yet.
+          </p>
         </div>
-        <h3 className="text-xl font-bold text-zinc-900 mb-2">No questions available</h3>
-        <p className="text-zinc-500">There are no technical questions configured for this service yet.</p>
-      </div>
-    )
-  }
-
-  const currentCategory = categories[activeCategoryIndex]
-
-  const nextCategory = () => {
-    if (activeCategoryIndex < categories.length - 1) {
-      setActiveCategoryIndex(prev => prev + 1)
+      );
     }
-  }
 
-  const prevCategory = () => {
-    if (activeCategoryIndex > 0) {
-      setActiveCategoryIndex(prev => prev - 1)
-    }
-  }
+    const currentCategory = categories[activeCategoryIndex];
 
-  const isCurrentCategoryComplete = useMemo(() => {
-    if (!currentCategory) return false
-    return currentCategory.questions
-        .filter((q: Question) => q.isRequired && checkCondition(q.condition, watchedData))
+    const nextCategory = () => {
+      if (activeCategoryIndex < categories.length - 1) {
+        setActiveCategoryIndex((prev) => prev + 1);
+      }
+    };
+
+    const prevCategory = () => {
+      if (activeCategoryIndex > 0) {
+        setActiveCategoryIndex((prev) => prev - 1);
+      }
+    };
+
+    const isCurrentCategoryComplete = useMemo(() => {
+      if (!currentCategory) return false;
+      return currentCategory.questions
+        .filter(
+          (q: Question) =>
+            q.isRequired && checkCondition(q.condition, watchedData),
+        )
         .every((q: Question) => {
-          const val = watchedData[q.key]
+          const val = watchedData[q.key];
           if (q.inputType === "multi_select") {
-            return Array.isArray(val) && val.length > 0
+            return Array.isArray(val) && val.length > 0;
           }
-          return val !== undefined && val !== "" && val !== null
-        })
-  }, [currentCategory, watchedData])
+          return val !== undefined && val !== "" && val !== null;
+        });
+    }, [currentCategory, watchedData]);
 
-  return (
-    <div className="space-y-6">
-      {/* Form Category Header */}
-      <div className="pb-6 border-b border-zinc-100 mb-2">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
-            <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-zinc-900 flex items-center justify-center shadow-xl shadow-zinc-900/10">
-                    <Layout className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                    <h3 className="text-2xl font-black text-zinc-900 tracking-tight">{currentCategory?.categoryName}</h3>
-                    <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Step {activeCategoryIndex + 1} of {categories.length} • {currentCategory?.name}</p>
-                </div>
+    return (
+      <div className="space-y-6">
+        {/* Form Category Header */}
+        <div className="pb-4 border-b border-zinc-100 mb-1">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-2">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center shadow-lg shadow-zinc-900/10">
+                <Layout className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-zinc-900 tracking-tight">
+                  {currentCategory?.categoryName}
+                </h3>
+                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                  Step {activeCategoryIndex + 1} of {categories.length} •{" "}
+                  {currentCategory?.name}
+                </p>
+              </div>
             </div>
-            {/* Progress Bar removed */}
+          </div>
         </div>
-      </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeCategoryIndex}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-          >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-10 py-2">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeCategoryIndex}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 py-1">
                 {currentCategory?.questions.map((q: Question) => {
-                    const isVisible = checkCondition(q.condition, watchedData)
-                    if (!isVisible || q.extraData?.hidden) return null
+                  const isVisible = checkCondition(q.condition, watchedData);
+                  if (!isVisible || q.extraData?.hidden) return null;
 
-                    const val = watchedData[q.key]
-                    const isCompleted = q.inputType === "boolean" 
-                      ? val !== undefined 
-                      : (val !== undefined && val !== "" && val !== null && (Array.isArray(val) ? val.length > 0 : true))
+                  const val = watchedData[q.key];
+                  const isCompleted =
+                    q.inputType === "boolean"
+                      ? val !== undefined
+                      : val !== undefined &&
+                        val !== "" &&
+                        val !== null &&
+                        (Array.isArray(val) ? val.length > 0 : true);
 
-                    return (
-                      <div
-                        key={q.key}
-                        className={cn(
-                          "flex flex-col gap-2 relative group",
-                          (q.inputType === "text" || q.inputType === "multi_select") && "md:col-span-2"
-                        )}
-                      >
-                        {/* Completion Indicator */}
-                        {isCompleted && (
-                          <motion.div 
-                            initial={{ opacity: 0, scale: 0.5 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="absolute -right-2 -top-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center border-2 border-white shadow-lg z-10"
-                          >
-                            <Check className="w-3.5 h-3.5 text-white" />
-                          </motion.div>
-                        )}
-                        <Controller
-                          control={control}
-                          name={q.key}
-                          render={({ field }) => (
-                          <div className="space-y-3">
+                  return (
+                    <div
+                      key={q.key}
+                      className={cn(
+                        "flex flex-col gap-1 relative group",
+                        (q.inputType === "text" ||
+                          q.inputType === "multi_select" ||
+                          q.extraData?.fullWidth) &&
+                          "md:col-span-2",
+                      )}
+                    >
+                      <Controller
+                        control={control}
+                        name={q.key}
+                        render={({ field }) => (
+                          <div className="space-y-1.5">
                             {/* Label */}
                             {q.inputType !== "boolean" && (
                               <div className="flex items-center justify-between px-1">
-                                <label 
+                                <label
                                   htmlFor={`field-${q.key}`}
                                   className="text-[15px] font-black text-zinc-800 flex items-center gap-2"
                                 >
                                   {q.label}
-                                  {q.isRequired && <span className="text-primary text-xl leading-none">*</span>}
+                                  {q.isRequired && (
+                                    <span className="text-primary text-xl leading-none">
+                                      *
+                                    </span>
+                                  )}
                                 </label>
                                 {q.description && (
                                   <div className="group relative">
@@ -324,8 +380,11 @@ export const DynamicFormEngine = forwardRef<DynamicFormEngineHandle, DynamicForm
                                 onChange={field.onChange}
                                 onBlur={field.onBlur}
                                 ref={field.ref}
-                                placeholder={q.placeholder || `Enter ${q.label.toLowerCase()}...`}
-                                className="w-full h-12 px-4 rounded-2xl border border-zinc-200 bg-white/50 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all text-base outline-none"
+                                placeholder={
+                                  q.placeholder ||
+                                  `Enter ${q.label.toLowerCase()}...`
+                                }
+                                className="w-full h-10.5 px-4 rounded-2xl border border-zinc-200 bg-white/50 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all text-base outline-none"
                               />
                             )}
 
@@ -336,103 +395,123 @@ export const DynamicFormEngine = forwardRef<DynamicFormEngineHandle, DynamicForm
                                 onChange={field.onChange}
                                 onBlur={field.onBlur}
                                 ref={field.ref}
-                                placeholder={q.placeholder || "Enter details..."}
+                                placeholder={
+                                  q.placeholder || "Enter details..."
+                                }
                                 className="w-full px-4 py-3 rounded-2xl border border-zinc-200 bg-white/50 focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary/30 min-h-[120px] transition-all text-base outline-none resize-y"
                               />
                             )}
 
                             {q.inputType === "number" && (
-                              <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2 w-fit">
                                 <Button
                                   type="button"
                                   variant="outline"
                                   size="icon"
-                                  className="h-14 w-14 rounded-2xl border-zinc-200 bg-white/50 hover:bg-white hover:border-primary/30 transition-all shrink-0 shadow-sm"
+                                  className="h-11 w-11 rounded-2xl border-zinc-200 bg-white/50 hover:bg-white hover:border-primary/30 transition-all shrink-0 shadow-sm"
                                   onClick={() => {
-                                    const current = Number(field.value) || 0
-                                    const next = Math.max(0, current - 1)
-                                    field.onChange(next)
-                                    onValueChange?.(q.key, next)
+                                    const current = Number(field.value) || 0;
+                                    const next = Math.max(0, current - 1);
+                                    field.onChange(next);
+                                    onValueChange?.(q.key, next);
                                   }}
                                 >
-                                  <Minus className="w-6 h-6" />
+                                  <Minus className="w-4 h-4" />
                                 </Button>
                                 <input
                                   id={`field-${q.key}`}
                                   type="number"
                                   value={field.value ?? ""}
                                   onChange={(e) => {
-                                    const val = e.target.value === "" ? "" : Number(e.target.value)
-                                    field.onChange(val)
-                                    onValueChange?.(q.key, val)
+                                    const val =
+                                      e.target.value === ""
+                                        ? ""
+                                        : Number(e.target.value);
+                                    field.onChange(val);
+                                    onValueChange?.(q.key, val);
                                   }}
                                   onBlur={field.onBlur}
                                   ref={field.ref}
-                                  placeholder="0.00"
-                                  className="w-full h-14 px-4 rounded-2xl border-2 border-zinc-100 bg-zinc-50/30 focus:bg-white focus:ring-8 focus:ring-primary/5 focus:border-primary/40 transition-all text-xl text-center outline-none font-black"
+                                  placeholder="0"
+                                  className="w-24 h-11 px-2 rounded-2xl border-2 border-zinc-100 bg-zinc-50/30 focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary/40 transition-all text-lg text-center outline-none font-black"
                                 />
                                 <Button
                                   type="button"
                                   variant="outline"
                                   size="icon"
-                                  className="h-14 w-14 rounded-2xl border-zinc-200 bg-white/50 hover:bg-white hover:border-primary/30 transition-all shrink-0 shadow-sm"
+                                  className="h-11 w-11 rounded-2xl border-zinc-200 bg-white/50 hover:bg-white hover:border-primary/30 transition-all shrink-0 shadow-sm"
                                   onClick={() => {
-                                    const current = Number(field.value) || 0
-                                    const next = current + 1
-                                    field.onChange(next)
-                                    onValueChange?.(q.key, next)
+                                    const current = Number(field.value) || 0;
+                                    const next = current + 1;
+                                    field.onChange(next);
+                                    onValueChange?.(q.key, next);
                                   }}
                                 >
-                                  <Plus className="w-6 h-6" />
+                                  <Plus className="w-4 h-4" />
                                 </Button>
                               </div>
                             )}
 
-                            {q.inputType === "select" && (
-                              q.options && q.options.length <= 8 ? (
-                                <div className={cn(
-                                  "grid gap-4 p-1",
-                                  q.options.some((opt: any) => opt.image) ? "grid-cols-2 md:grid-cols-3" : "grid-cols-2"
-                                )}>
+                            {q.inputType === "select" &&
+                              (q.options && q.options.length <= 8 ? (
+                                <div
+                                  className={cn(
+                                    "grid gap-4 p-1",
+                                    q.options.some((opt: any) => opt.image)
+                                      ? "grid-cols-2 md:grid-cols-3"
+                                      : q.options.length <= 2
+                                        ? "grid-cols-2"
+                                        : "grid-cols-1",
+                                  )}
+                                >
                                   {q.options.map((opt: any) => {
-                                    const isSelected = field.value === opt.value
-                                    const hasImage = !!opt.image
-                                    
+                                    const isSelected =
+                                      field.value === opt.value;
+                                    const hasImage = !!opt.image;
+
                                     return (
                                       <button
                                         key={opt.value}
                                         type="button"
-                                        onClick={() => field.onChange(opt.value)}
+                                        onClick={() =>
+                                          field.onChange(opt.value)
+                                        }
                                         className={cn(
                                           "flex flex-col rounded-[24px] text-sm font-black transition-all duration-500 border-2 relative overflow-hidden group",
-                                          hasImage ? "min-h-[160px]" : "min-h-[70px] items-center justify-center px-4 py-3",
-                                          isSelected 
-                                            ? "bg-primary/5 border-primary text-primary shadow-2xl shadow-primary/10 scale-[1.02]" 
-                                            : "bg-white border-zinc-100 text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 hover:bg-zinc-50 shadow-sm"
+                                          hasImage
+                                            ? "min-h-[130px]"
+                                            : "min-h-[50px] items-center justify-center px-4 py-2",
+                                          isSelected
+                                            ? "bg-primary/5 border-primary text-primary shadow-2xl shadow-primary/10 scale-[1.02]"
+                                            : "bg-white border-zinc-100 text-zinc-500 hover:border-zinc-300 hover:text-zinc-700 hover:bg-zinc-50 shadow-sm",
                                         )}
                                       >
                                         {hasImage && (
                                           <div className="absolute inset-0 w-full h-full">
-                                              <img 
-                                                src={opt.image} 
-                                                alt={opt.label}
-                                                className={cn(
-                                                  "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110",
-                                                  isSelected ? "opacity-100" : "opacity-80 grayscale-20 group-hover:grayscale-0 group-hover:opacity-100"
-                                                )}
-                                              />
-                                              {/* Unique Division: Gradient Overlay */}
-                                              <div className={cn(
+                                            <img
+                                              src={opt.image}
+                                              alt={opt.label}
+                                              className={cn(
+                                                "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110",
+                                                isSelected
+                                                  ? "opacity-100"
+                                                  : "opacity-80 grayscale-20 group-hover:grayscale-0 group-hover:opacity-100",
+                                              )}
+                                            />
+                                            {/* Unique Division: Gradient Overlay */}
+                                            <div
+                                              className={cn(
                                                 "absolute inset-0 bg-linear-to-t transition-opacity duration-500",
-                                                isSelected 
-                                                  ? "from-primary/90 via-primary/40 to-transparent" 
-                                                  : "from-zinc-900/80 via-zinc-900/20 to-transparent opacity-80 group-hover:opacity-60"
-                                              )} />
+                                                isSelected
+                                                  ? "from-primary/90 via-primary/40 to-transparent"
+                                                  : "from-zinc-900/80 via-zinc-900/20 to-transparent opacity-80 group-hover:opacity-60",
+                                              )}
+                                            />
                                           </div>
                                         )}
 
                                         {isSelected && (
-                                          <motion.div 
+                                          <motion.div
                                             layoutId={`check-${q.key}`}
                                             className="absolute top-3 right-3 z-30"
                                           >
@@ -441,20 +520,27 @@ export const DynamicFormEngine = forwardRef<DynamicFormEngineHandle, DynamicForm
                                             </div>
                                           </motion.div>
                                         )}
-                                        
-                                        <div className={cn(
-                                          "relative z-20 w-full",
-                                          hasImage ? "mt-auto p-4 bg-white/10 backdrop-blur-md border-t border-white/20" : ""
-                                        )}>
-                                          <span className={cn(
-                                            "text-center block leading-tight",
-                                            hasImage && "text-white drop-shadow-md text-xs uppercase tracking-widest font-black"
-                                          )}>
+
+                                        <div
+                                          className={cn(
+                                            "relative z-20 w-full",
+                                            hasImage
+                                              ? "mt-auto p-3 bg-white/10 backdrop-blur-md border-t border-white/20"
+                                              : "",
+                                          )}
+                                        >
+                                          <span
+                                            className={cn(
+                                              "text-center block leading-tight",
+                                              hasImage &&
+                                                "text-white drop-shadow-md text-xs uppercase tracking-widest font-black",
+                                            )}
+                                          >
                                             {opt.label}
                                           </span>
                                         </div>
                                       </button>
-                                    )
+                                    );
                                   })}
                                 </div>
                               ) : (
@@ -465,9 +551,11 @@ export const DynamicFormEngine = forwardRef<DynamicFormEngineHandle, DynamicForm
                                     onChange={field.onChange}
                                     onBlur={field.onBlur}
                                     ref={field.ref}
-                                    className="w-full h-14 px-4 rounded-2xl border-2 border-zinc-100 bg-zinc-50/30 focus:bg-white focus:ring-8 focus:ring-primary/5 focus:border-primary/40 transition-all text-base outline-none appearance-none cursor-pointer pr-10 font-bold"
+                                    className="w-full h-11 px-4 rounded-2xl border-2 border-zinc-100 bg-zinc-50/30 focus:bg-white focus:ring-8 focus:ring-primary/5 focus:border-primary/40 transition-all text-base outline-none appearance-none cursor-pointer pr-10 font-bold"
                                   >
-                                    <option value="" disabled>{q.placeholder || "Select an option"}</option>
+                                    <option value="" disabled>
+                                      {q.placeholder || "Select an option"}
+                                    </option>
                                     {q.options?.map((opt: any) => (
                                       <option key={opt.value} value={opt.value}>
                                         {opt.label}
@@ -475,34 +563,46 @@ export const DynamicFormEngine = forwardRef<DynamicFormEngineHandle, DynamicForm
                                     ))}
                                   </select>
                                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 group-hover:text-primary transition-colors">
-                                      <ChevronRight className="w-4 h-4 rotate-90" />
+                                    <ChevronRight className="w-4 h-4 rotate-90" />
                                   </div>
                                 </div>
-                              )
-                            )}
+                              ))}
 
                             {q.inputType === "multi_select" && (
                               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-1">
                                 {q.options?.map((opt: any) => {
-                                  const currentValues = Array.isArray(field.value) ? field.value : []
-                                  const isSelected = currentValues.includes(opt.value)
-                                  
+                                  const currentValues = Array.isArray(
+                                    field.value,
+                                  )
+                                    ? field.value
+                                    : [];
+                                  const isSelected = currentValues.includes(
+                                    opt.value,
+                                  );
+
                                   return (
                                     <button
                                       key={opt.value}
                                       type="button"
                                       onClick={() => {
                                         if (isSelected) {
-                                          field.onChange(currentValues.filter(v => v !== opt.value))
+                                          field.onChange(
+                                            currentValues.filter(
+                                              (v) => v !== opt.value,
+                                            ),
+                                          );
                                         } else {
-                                          field.onChange([...currentValues, opt.value])
+                                          field.onChange([
+                                            ...currentValues,
+                                            opt.value,
+                                          ]);
                                         }
                                       }}
                                       className={cn(
-                                        "flex flex-col items-center justify-center min-h-[80px] px-4 py-3 rounded-2xl text-sm font-black transition-all duration-300 border-2 relative",
-                                        isSelected 
-                                          ? "bg-primary/5 border-primary text-primary shadow-lg shadow-primary/5 scale-[1.02]" 
-                                          : "bg-white border-zinc-100 text-zinc-500 hover:border-zinc-200 hover:text-zinc-700 hover:bg-zinc-50"
+                                        "flex flex-col items-center justify-center min-h-[60px] px-4 py-2 rounded-2xl text-sm font-black transition-all duration-300 border-2 relative",
+                                        isSelected
+                                          ? "bg-primary/5 border-primary text-primary shadow-lg shadow-primary/5 scale-[1.02]"
+                                          : "bg-white border-zinc-100 text-zinc-500 hover:border-zinc-200 hover:text-zinc-700 hover:bg-zinc-50",
                                       )}
                                     >
                                       {isSelected && (
@@ -510,9 +610,11 @@ export const DynamicFormEngine = forwardRef<DynamicFormEngineHandle, DynamicForm
                                           <Check className="w-3 h-3 text-white" />
                                         </div>
                                       )}
-                                      <span className="text-center leading-tight">{opt.label}</span>
+                                      <span className="text-center leading-tight">
+                                        {opt.label}
+                                      </span>
                                     </button>
-                                  )
+                                  );
                                 })}
                               </div>
                             )}
@@ -523,9 +625,9 @@ export const DynamicFormEngine = forwardRef<DynamicFormEngineHandle, DynamicForm
                                   id={`field-${q.key}`}
                                   type="file"
                                   onChange={(e) => {
-                                    const file = e.target.files?.[0]
+                                    const file = e.target.files?.[0];
                                     if (file) {
-                                      field.onChange(file.name)
+                                      field.onChange(file.name);
                                     }
                                   }}
                                   onBlur={field.onBlur}
@@ -534,10 +636,12 @@ export const DynamicFormEngine = forwardRef<DynamicFormEngineHandle, DynamicForm
                                 />
                                 <label
                                   htmlFor={`field-${q.key}`}
-                                  className="flex items-center justify-between w-full h-14 px-6 rounded-2xl border-2 border-dashed border-zinc-200 bg-white/50 hover:bg-white hover:border-primary/30 transition-all cursor-pointer group"
+                                  className="flex items-center justify-between w-full h-11 px-6 rounded-2xl border-2 border-dashed border-zinc-200 bg-white/50 hover:bg-white hover:border-primary/30 transition-all cursor-pointer group"
                                 >
                                   <span className="text-zinc-500 font-medium truncate max-w-[80%]">
-                                    {field.value || q.placeholder || "Choose a file to upload..."}
+                                    {field.value ||
+                                      q.placeholder ||
+                                      "Choose a file to upload..."}
                                   </span>
                                   <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider">
                                     <Plus className="w-4 h-4" />
@@ -547,67 +651,77 @@ export const DynamicFormEngine = forwardRef<DynamicFormEngineHandle, DynamicForm
                               </div>
                             )}
 
-                             {q.inputType === "boolean" && (
-                               <div
-                                 className={cn(
-                                   "flex items-center justify-between p-5 rounded-[28px] border-2 transition-all cursor-pointer group",
-                                   field.value 
-                                     ? "bg-primary/5 border-primary/20 shadow-lg shadow-primary/5" 
-                                     : "border-zinc-100 bg-white/40 shadow-sm hover:shadow-md hover:border-zinc-200"
-                                 )}
-                                 onClick={() => {
-                                   field.onChange(!field.value)
-                                   onValueChange?.(q.key, !field.value)
-                                 }}
-                                 role="checkbox"
-                                 aria-checked={!!field.value}
-                                 tabIndex={0}
-                                 onKeyDown={(e) => {
-                                   if (e.key === " " || e.key === "Enter") {
-                                     e.preventDefault()
-                                     field.onChange(!field.value)
-                                     onValueChange?.(q.key, !field.value)
-                                   }
-                                 }}
-                               >
-                                 <div className="space-y-1.5 pointer-events-none">
-                                   <span className={cn(
-                                     "text-[15px] font-black transition-colors",
-                                     field.value ? "text-primary" : "text-zinc-800 group-hover:text-zinc-900"
-                                   )}>
-                                     {q.label}
-                                   </span>
-                                   {q.description && (
-                                     <p className="text-[11px] font-bold text-zinc-400 leading-tight pr-8">
-                                       {q.description}
-                                     </p>
-                                   )}
-                                 </div>
-                                 <Switch 
-                                   checked={!!field.value}
-                                   onCheckedChange={(val) => {
-                                     field.onChange(val)
-                                     onValueChange?.(q.key, val)
-                                   }}
-                                   className="scale-110 pointer-events-none"
-                                 />
-                               </div>
-                             )}
+                            {q.inputType === "boolean" && (
+                              <div
+                                className={cn(
+                                  "flex items-center justify-between p-3.5 rounded-[24px] border-2 transition-all cursor-pointer group",
+                                  field.value
+                                    ? "bg-primary/5 border-primary/20 shadow-lg shadow-primary/5"
+                                    : "border-zinc-100 bg-white/40 shadow-sm hover:shadow-md hover:border-zinc-200",
+                                )}
+                                onClick={() => {
+                                  field.onChange(!field.value);
+                                  onValueChange?.(q.key, !field.value);
+                                }}
+                                role="checkbox"
+                                aria-checked={!!field.value}
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                  if (e.key === " " || e.key === "Enter") {
+                                    e.preventDefault();
+                                    field.onChange(!field.value);
+                                    onValueChange?.(q.key, !field.value);
+                                  }
+                                }}
+                              >
+                                <div className="space-y-1.5 pointer-events-none">
+                                  <span
+                                    className={cn(
+                                      "text-[15px] font-black transition-colors",
+                                      field.value
+                                        ? "text-primary"
+                                        : "text-zinc-800 group-hover:text-zinc-900",
+                                    )}
+                                  >
+                                    {q.label}
+                                  </span>
+                                  {q.description && (
+                                    <p className="text-[11px] font-bold text-zinc-400 leading-tight pr-8">
+                                      {q.description}
+                                    </p>
+                                  )}
+                                </div>
+                                <Switch
+                                  checked={!!field.value}
+                                  onCheckedChange={(val) => {
+                                    field.onChange(val);
+                                    onValueChange?.(q.key, val);
+                                  }}
+                                  className="scale-110 pointer-events-none"
+                                />
+                              </div>
+                            )}
 
                             {q.inputType === "equipment_search" && (
                               <EquipmentSearchSelector
                                 value={field.value ?? ""}
                                 apiType={q.extraData?.equipmentType || "solar"}
                                 onSelect={(label: string, uuid?: string) => {
-                                  field.onChange(label)
-                                  onValueChange?.(q.key, label, { uuid })
+                                  field.onChange(label);
+                                  onValueChange?.(q.key, label, { uuid });
                                 }}
                                 onSelectFull={(item) => {
-                                  onValueChange?.(q.key, item.display_label, item)
+                                  onValueChange?.(
+                                    q.key,
+                                    item.display_label,
+                                    item,
+                                  );
                                 }}
-                                placeholder={q.placeholder || `Search ${q.label}...`}
+                                placeholder={
+                                  q.placeholder || `Search ${q.label}...`
+                                }
                                 frequentItems={q.extraData?.frequentItems}
-                                className="h-14 rounded-2xl border-2 border-zinc-100 bg-zinc-50/30 focus:border-primary/40 focus:ring-8 focus:ring-primary/5 text-base font-bold"
+                                className="h-11 rounded-2xl border-2 border-zinc-100 bg-zinc-50/30 focus:border-primary/40 focus:ring-8 focus:ring-primary/5 text-base font-bold"
                               />
                             )}
 
@@ -620,75 +734,77 @@ export const DynamicFormEngine = forwardRef<DynamicFormEngineHandle, DynamicForm
                           </div>
                         )}
                       />
-                      </div>
-                    )
-                  })}
-                </div>
-          </motion.div>
-        </AnimatePresence>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </AnimatePresence>
 
-        <div className="pt-6 border-t border-zinc-100 flex items-center justify-between">
+          <div className="pt-4 border-t border-zinc-100 flex items-center justify-between">
             <div className="flex gap-3">
-              {activeCategoryIndex > 0 && (
-                  <Button 
-                      type="button" 
-                      variant="ghost" 
-                      onClick={prevCategory}
-                      className="rounded-full px-6 h-14 font-black text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-all"
-                  >
-                      <ChevronLeft className="w-5 h-5 mr-1" />
-                      Previous
-                  </Button>
-              )}
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={prevCategory}
+                disabled={activeCategoryIndex === 0}
+                className="rounded-full px-6 h-11 font-black text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-all disabled:opacity-30 disabled:pointer-events-none"
+              >
+                <ChevronLeft className="w-5 h-5 mr-1" />
+                Previous
+              </Button>
             </div>
-            
+
             <div className="flex gap-4">
               {activeCategoryIndex < categories.length - 1 ? (
-                  <Button 
-                      type="button" 
-                      onClick={nextCategory}
-                      className={cn(
-                        "rounded-full px-8 h-14 font-black shadow-xl transition-all hover:scale-105 active:scale-95 flex items-center gap-2",
-                        isCurrentCategoryComplete 
-                          ? "bg-green-500 hover:bg-green-600 text-white shadow-green-200 animate-pulse" 
-                          : "bg-primary hover:bg-primary/90 shadow-primary/20"
-                      )}
-                  >
-                      {activeCategoryIndex === categories.length - 1 ? "Review & Complete" : "Next Section"}
-                      <ChevronRight className="w-5 h-5" />
-                  </Button>
+                <Button
+                  type="button"
+                  onClick={nextCategory}
+                  className={cn(
+                    "rounded-full px-8 h-11 font-black shadow-xl transition-all hover:scale-105 active:scale-95 flex items-center gap-2",
+                    isCurrentCategoryComplete
+                      ? "bg-green-500 hover:bg-green-600 text-white shadow-green-200 animate-pulse"
+                      : "bg-primary hover:bg-primary/90 shadow-primary/20",
+                  )}
+                >
+                  {activeCategoryIndex === categories.length - 1
+                    ? "Review & Complete"
+                    : "Next Section"}
+                  <ChevronRight className="w-5 h-5" />
+                </Button>
               ) : (
-                  <Button 
-                      type="submit" 
-                      disabled={isSubmitting}
-                      className={cn(
-                        "rounded-full px-10 h-14 text-lg font-black shadow-2xl group overflow-hidden relative transition-all",
-                        isCurrentCategoryComplete && !isSubmitting 
-                          ? "bg-green-500 hover:bg-green-600 shadow-green-200 animate-pulse" 
-                          : "shadow-primary/30"
-                      )}
-                  >
-                      <span className="relative z-10 flex items-center gap-3">
-                          {isSubmitting ? (
-                          <>
-                              <Loader2 className="w-6 h-6 animate-spin" />
-                              Syncing to Core...
-                          </>
-                          ) : (
-                          <>
-                              <Save className="w-6 h-6 group-hover:scale-110 transition-transform" />
-                              Complete Workflow
-                          </>
-                          )}
-                      </span>
-                      <div className="absolute inset-0 bg-linear-to-r from-primary via-primary/80 to-primary group-hover:scale-110 transition-transform duration-500" />
-                  </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={cn(
+                    "rounded-full px-10 h-11 text-base font-black shadow-2xl group overflow-hidden relative transition-all",
+                    isCurrentCategoryComplete && !isSubmitting
+                      ? "bg-green-500 hover:bg-green-600 shadow-green-200 animate-pulse"
+                      : "shadow-primary/30",
+                  )}
+                >
+                  <span className="relative z-10 flex items-center gap-3">
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                        Syncing to Core...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                        Complete Workflow
+                      </>
+                    )}
+                  </span>
+                  <div className="absolute inset-0 bg-linear-to-r from-primary via-primary/80 to-primary group-hover:scale-110 transition-transform duration-500" />
+                </Button>
               )}
             </div>
-        </div>
-      </form>
-    </div>
-  )
-})
+          </div>
+        </form>
+      </div>
+    );
+  },
+);
 
-DynamicFormEngine.displayName = "DynamicFormEngine"
+DynamicFormEngine.displayName = "DynamicFormEngine";

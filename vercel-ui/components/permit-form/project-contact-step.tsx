@@ -186,16 +186,16 @@ export default function ProjectContactStep({
   const coordinates = { lat, lng };
 
   return (
-    <div className="relative flex items-center justify-center w-full min-h-[950px] py-12 overflow-visible">
+    <div className="relative flex items-center justify-baseline  w-full min-h-[950px] py-12 overflow-visible">
       {/* Background Layer */}
       <div
         className="absolute top-1/2 left-1/2 z-0 scale-[1.1] transition-all duration-700 pointer-events-none opacity-100 hidden lg:block"
         style={{
-          width: "850px",
-          transform: "translate(-32%, -60%) rotate(3deg)",
+          width: "1103px",
+          transform: "translate(-40%, -47%) rotate(3.5deg)",
         }}
       >
-        <div className="shadow-[0_40px_120px_rgba(0,0,0,0.5)] border border-zinc-200/50 rounded-sm overflow-hidden">
+        <div className=" border border-zinc-200/50 rounded-sm overflow-hidden">
           <SolarDocument
             contractorInfo={contractorInfo}
             projectInfo={projectInfo}
@@ -205,7 +205,7 @@ export default function ProjectContactStep({
       </div>
 
       {/* ── Foreground Layer: Centered Form Container ── */}
-      <div className="relative z-10 w-full max-w-xl bg-background/95 backdrop-blur-xl rounded-[2.5rem] p-8 lg:p-12 border border-zinc-200/40">
+      <div className="relative z-10 w-full max-w-xl max-h-[950px] shadow-2xl bg-background/95 backdrop-blur-xl rounded-[2.5rem] p-8 lg:p-12 border border-zinc-200/40 ">
         <div className="space-y-8">
           <div className="text-center space-y-2">
             <h3 className="text-3xl font-extrabold text-foreground tracking-tight">
@@ -236,6 +236,29 @@ export default function ProjectContactStep({
               {errors.projectName && (
                 <p className="text-sm text-destructive font-semibold ml-1">
                   {errors.projectName}
+                </p>
+              )}
+            </div>
+
+            {/* Project Location */}
+            <div className="space-y-2">
+              <Label
+                htmlFor="projectAddress"
+                className="flex items-center gap-2 text-sm font-bold ml-1"
+              >
+                <MapPin className="w-4 h-4 text-primary" />
+                Project Location
+              </Label>
+
+              <AddressAutocomplete
+                value={formData.projectAddress}
+                onChange={(value) => updateField("projectAddress", value)}
+                className="bg-zinc-50/30 h-14 rounded-2xl border-zinc-200 focus:bg-white transition-all px-5 text-lg"
+              />
+
+              {errors.projectAddress && (
+                <p className="text-sm text-destructive font-semibold ml-1">
+                  {errors.projectAddress}
                 </p>
               )}
             </div>
@@ -274,29 +297,6 @@ export default function ProjectContactStep({
               {errors.projectType && (
                 <p className="text-sm text-destructive font-semibold ml-1">
                   {errors.projectType}
-                </p>
-              )}
-            </div>
-
-            {/* Project Location */}
-            <div className="space-y-2">
-              <Label
-                htmlFor="projectAddress"
-                className="flex items-center gap-2 text-sm font-bold ml-1"
-              >
-                <MapPin className="w-4 h-4 text-primary" />
-                Project Location
-              </Label>
-
-              <AddressAutocomplete
-                value={formData.projectAddress}
-                onChange={(value) => updateField("projectAddress", value)}
-                className="bg-zinc-50/30 h-14 rounded-2xl border-zinc-200 focus:bg-white transition-all px-5 text-lg"
-              />
-
-              {errors.projectAddress && (
-                <p className="text-sm text-destructive font-semibold ml-1">
-                  {errors.projectAddress}
                 </p>
               )}
             </div>
